@@ -25,6 +25,8 @@
       <li id="stepShim"><span class="dot"></span>model shim</li>
       <li id="stepStudio"><span class="dot"></span>InkOS Studio</li>
     </ul>
+    <div class="bar" id="bar"><i></i></div>
+    <p class="tiny" id="elapsed"></p>
     <div id="notes" class="empty"></div>
   </div>
 </div>
@@ -68,8 +70,12 @@
   </div>
 
   <div class="update-row" id="updateRow">
-    <span class="grow" id="updateMsg">Checking for updates…</span>
+    <div class="grow">
+      <div id="updateMsg">Checking for updates…</div>
+      <div class="tiny" id="verLine">Quire</div>
+    </div>
     <label class="auto-up"><input type="checkbox" id="autoUpdate"> Automatic</label>
+    <button class="mag-like btn" id="checkBtn">Check</button>
     <button class="mag-like btn" id="updateBtn" hidden>Install</button>
   </div>
 

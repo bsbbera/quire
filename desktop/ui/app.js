@@ -140,6 +140,20 @@ function mark(el, ok) {
  * when "Automatic" is ticked.
  */
 const AUTO_KEY = "quire-auto-update";
+const LAST_CHECK = "quire-last-check";
+let appVersion = "";
+
+// getVersion is core API, not a plugin, so withGlobalTauri really does expose
+// it - unlike the updater, which is why that one goes through invoke.
+async function showVersion() {
+  try {
+    appVersion = await window.__TAURI__.app.getVersion();
+  } catch { return; }
+  const v = "Quire " + appVersion;
+  const line = $("#verLine"); if (line) line.textContent = v;
+  const foot = $("#foot"); if (foot && foot.textContent === "—") foot.textContent = v;
+  const sub = $("#sub"); if (sub) sub.dataset.version = v;
+}
 let pendingUpdate = null;
 
 async function checkUpdate({ silent } = {}) {
@@ -150,12 +164,14 @@ async function checkUpdate({ silent } = {}) {
   try {
     const meta = await invoke("plugin:updater|check", {});
     row.classList.remove("busy");
+    localStorage.setItem(LAST_CHECK, String(Date.now()));
     if (!meta || !meta.available) {
-      msg.textContent = "Quire is up to date";
+      msg.textContent = appVersion ? `Quire ${appVersion} is up to date` : "Quire is up to date";
       btn.hidden = true;
       return null;
     }
     pendingUpdate = meta;              // meta.rid is the handle install needs
+    localStorage.setItem(LAST_CHECK, String(Date.now()));
     msg.textContent = `Version ${meta.version} available`;
     btn.hidden = false;
     if (localStorage.getItem(AUTO_KEY) === "1" && !silent) installUpdate();
@@ -211,6 +227,10 @@ function wireUpdates() {
     });
   }
   $("#updateBtn")?.addEventListener("click", installUpdate);
+  // A launch-only check is not syncing: the app can sit open for days. Manual
+  // button for "why have I not got it yet", plus a slow poll while it runs.
+  $("#checkBtn")?.addEventListener("click", () => checkUpdate({ silent: false }));
+  setInterval(() => checkUpdate({ silent: true }), 6 * 60 * 60 * 1000);
 }
 
 // Any failure here used to leave the window sitting on "starting…" forever, so
@@ -228,15 +248,39 @@ window.addEventListener("unhandledrejection", (e) => fatal(String(e.reason)));
 
 (async () => {
   if (!invoke) return fatal("Tauri API unavailable — the app shell did not inject window.__TAURI__.");
+  showVersion();
+
+  // `boot` spawns and returns at once now, so the cover can report progress
+  // instead of freezing until both ports answer.
   const boot = await invoke("boot");
   state.shim = boot.shim_url;
   state.studio = boot.studio_url;
-  mark($("#stepShim"), boot.shim_ready);
-  mark($("#stepStudio"), boot.studio_ready);
   if (boot.notes.length) $("#notes").textContent = boot.notes.join("\n");
 
-  if (!boot.studio_ready) {
+  const t0 = Date.now();
+  const tick = setInterval(() => {
+    const s = Math.round((Date.now() - t0) / 1000);
+    $("#elapsed").textContent = s > 2 ? `${s}s` : "";
+  }, 500);
+
+  // Studio is the slow half: it spawns node and builds its own server, which
+  // is tens of seconds cold. 180s before giving up, matching the old blocking
+  // timeouts rather than shortening them behind the user's back.
+  let ready = boot;
+  for (let i = 0; i < 360 && !(ready.shim_ready && ready.studio_ready); i++) {
+    mark($("#stepShim"), ready.shim_ready);
+    mark($("#stepStudio"), ready.studio_ready);
+    $("#sub").textContent = ready.shim_ready ? "starting InkOS Studio…" : "starting the model shim…";
+    await new Promise((r) => setTimeout(r, 500));
+    ready = await invoke("status");
+  }
+  clearInterval(tick);
+  mark($("#stepShim"), ready.shim_ready);
+  mark($("#stepStudio"), ready.studio_ready);
+
+  if (!ready.studio_ready) {
     $("#sub").textContent = "InkOS Studio did not start";
+    $("#bar").hidden = true;
     return;
   }
 
@@ -254,7 +298,7 @@ window.addEventListener("unhandledrejection", (e) => fatal(String(e.reason)));
   // Silent on launch: a failed check must never block getting to work.
   checkUpdate({ silent: true });
 
-  if (boot.shim_ready) {
+  if (ready.shim_ready) {
     $("#openSettings").hidden = false;
     try {
       await loadShim(false);

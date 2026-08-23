@@ -13,7 +13,7 @@ use std::net::TcpStream;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use tauri::{Manager, RunEvent, State};
 
@@ -40,16 +40,6 @@ fn port_open(port: u16) -> bool {
     .is_ok()
 }
 
-fn wait_for_port(port: u16, timeout: Duration) -> bool {
-    let deadline = Instant::now() + timeout;
-    while Instant::now() < deadline {
-        if port_open(port) {
-            return true;
-        }
-        std::thread::sleep(Duration::from_millis(300));
-    }
-    false
-}
 
 /// Windows will not spawn a `.cmd` shim (npm installs `inkos.cmd`) directly, so
 /// those must go through `cmd /C`. A real `.exe` must not, or quoting breaks.
@@ -158,21 +148,29 @@ fn boot(app: tauri::AppHandle, children: State<Children>) -> Boot {
         notes.push(format!("studio launcher not found at {}", studio_launcher.display()));
     }
 
-    let shim_ready = wait_for_port(SHIM_PORT, Duration::from_secs(45));
-    let studio_ready = wait_for_port(STUDIO_PORT, Duration::from_secs(120));
-    if !shim_ready {
-        notes.push(format!("the model shim did not come up (script: {})", shim.display()));
-    }
-    if !studio_ready {
-        notes.push("InkOS Studio did not come up".into());
-    }
-
+    // Deliberately does NOT wait for the ports. Blocking here for up to 165s
+    // meant the window sat on a motionless "starting..." for the whole of a
+    // cold start with no way to tell a slow boot from a hung one. The frontend
+    // polls `status` instead and can show progress while this returns at once.
     Boot {
         shim_url: format!("http://127.0.0.1:{SHIM_PORT}"),
         studio_url: format!("http://127.0.0.1:{STUDIO_PORT}"),
-        shim_ready,
-        studio_ready,
+        shim_ready: port_open(SHIM_PORT),
+        studio_ready: port_open(STUDIO_PORT),
         notes,
+    }
+}
+
+/// Cheap readiness poll for the boot cover. Both ports are local, so a failed
+/// connect returns in well under the 400ms timeout.
+#[tauri::command]
+fn status() -> Boot {
+    Boot {
+        shim_url: format!("http://127.0.0.1:{SHIM_PORT}"),
+        studio_url: format!("http://127.0.0.1:{STUDIO_PORT}"),
+        shim_ready: port_open(SHIM_PORT),
+        studio_ready: port_open(STUDIO_PORT),
+        notes: Vec::new(),
     }
 }
 
@@ -206,7 +204,7 @@ fn main() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .manage(Children::default())
-        .invoke_handler(tauri::generate_handler![boot])
+        .invoke_handler(tauri::generate_handler![boot, status])
         .build(tauri::generate_context!())
         .expect("failed to build Quire")
         .run(|app, event| {

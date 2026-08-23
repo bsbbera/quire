@@ -152,3 +152,13 @@ button.btn:disabled{opacity:.5;cursor:default}
 .update-row .btn:hover{border-color:var(--accent,#c96442)}
 .auto-up{display:flex;align-items:center;gap:.35rem;color:var(--muted);white-space:nowrap}
 .update-row.busy #updateMsg{opacity:.6}
+
+/* Boot progress. Indeterminate on purpose: a cold start is dominated by Studio
+   spawning node, and there is nothing honest to measure a percentage against. */
+.bar{width:180px;height:3px;margin:14px auto 0;border-radius:2px;overflow:hidden;
+  background:color-mix(in srgb,currentColor 12%,transparent)}
+.bar i{display:block;width:40%;height:100%;border-radius:2px;background:var(--accent,#c96442);
+  animation:slide 1.25s ease-in-out infinite}
+@keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+.cover .tiny{margin-top:8px;opacity:.45;font-size:11px}
+.tiny{font-size:11px;opacity:.55}
