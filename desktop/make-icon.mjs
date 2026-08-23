@@ -35,9 +35,9 @@ for (let y = 0; y < S; y++) {
   }
 }
 
-// Quire mark: three nested folded sheets seen end-on from the spine — the
-// gathering the product is named after. Drawn as stroked chevrons so the shape
-// stays legible at 32px, where an outline or a fill both turn to mush.
+// Quire mark: a folded sheet with a second one behind it — a gathering of
+// leaves, which is what a quire is. Stroked outlines rather than fills: at
+// 32px a filled page turns into a coloured blob with no readable silhouette.
 function distToSeg(px_, py, ax, ay, bx, by) {
   const vx = bx - ax, vy = by - ay;
   const wx = px_ - ax, wy = py - ay;
@@ -45,29 +45,22 @@ function distToSeg(px_, py, ax, ay, bx, by) {
   return Math.hypot(px_ - (ax + t * vx), py - (ay + t * vy));
 }
 
-const cx = S / 2;
-const STROKE = S * 0.037;
-// Outer sheet widest and deepest, each inner one tucked inside. The tops are
-// staggered as well as the widths: level tops plus a fat stroke close the gaps
-// and the three sheets read as one solid arrow instead of a gathering.
-const SHEETS = [
-  { w: S * 0.270, top: S * 0.300, bot: S * 0.700 },
-  { w: S * 0.180, top: S * 0.338, bot: S * 0.612 },
-  { w: S * 0.092, top: S * 0.376, bot: S * 0.524 },
-];
+const STROKE = S * 0.068;
+const CX = S / 2, CY = S / 2, RAD = S * 0.20;
+
+// A Q whose tail is the fold of a page. A rectangle with a turned corner is
+// what every document icon already is; the letter is the part that belongs to
+// this product and nothing else, and a ring survives 32px where detail cannot.
+const TAIL = [CX + S * 0.075, CY + S * 0.075, CX + S * 0.235, CY + S * 0.235];
 
 for (let y = 0; y < S; y++) {
   for (let x = 0; x < S; x++) {
-    let a = 0;
-    for (const sh of SHEETS) {
-      const d = Math.min(
-        distToSeg(x, y, cx - sh.w, sh.top, cx, sh.bot),
-        distToSeg(x, y, cx, sh.bot, cx + sh.w, sh.top),
-      );
-      const half = STROKE / 2;
-      const cov = d <= half ? 255 : d <= half + 1.2 ? 255 * ((half + 1.2 - d) / 1.2) : 0;
-      if (cov > a) a = cov;
-    }
+    const half = STROKE / 2;
+    const d = Math.min(
+      Math.abs(Math.hypot(x - CX, y - CY) - RAD),
+      distToSeg(x, y, TAIL[0], TAIL[1], TAIL[2], TAIL[3]),
+    );
+    const a = d <= half ? 255 : d <= half + 1.2 ? 255 * ((half + 1.2 - d) / 1.2) : 0;
     if (a > 0) put(x, y, INK, a);
   }
 }
