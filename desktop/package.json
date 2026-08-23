@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node clean-resources.mjs && tauri dev",
     "build": "node clean-resources.mjs && tauri build",
-    "icons": "tauri icon assets/icon.png"
+    "icons": "tauri icon assets/icon.png",
+    "tauri": "node clean-resources.mjs && tauri"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.1.0"

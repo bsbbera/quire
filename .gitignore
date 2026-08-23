@@ -33,3 +33,6 @@ ideaverse-skills/
 
 # Machine-specific dev preview config.
 .claude/launch.json
+
+# The bundler needs these; the blanket *.png above is for artwork, not icons.
+!desktop/src-tauri/icons/**/*.png
