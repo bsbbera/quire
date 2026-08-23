@@ -599,8 +599,11 @@
 
     // The wordmark is whichever leaf node says "InkOS" — matching on text
     // rather than a class, because the bundle is minified and its hashes move.
+    // Matches either name. renameInkos now rewrites "InkOS" everywhere, and it
+    // can win the race - matching only the old text meant branding silently
+    // did nothing, taking the mark, the version AND the AGPL notice with it.
     const leaf = [...aside.querySelectorAll("*")]
-      .find((e) => !e.children.length && e.textContent.trim() === "InkOS");
+      .find((e) => !e.children.length && /^(InkOS|Quire)$/.test(e.textContent.trim()));
     if (!leaf) return;                      // sidebar not rendered yet
     aside.dataset.quireBranded = "1";
     leaf.textContent = "Quire";
@@ -663,16 +666,16 @@
 
   function start() {
     translateTree(document.body);
+    brandSidebar();                 // before renameInkos: it owns the wordmark
     renameInkos(document.body);
     addResizer();
-    brandSidebar();
     buildPanel();
     connectEvents();
 
     // Studio is a SPA: everything above has to survive re-renders.
     const mo = new MutationObserver((records) => {
       for (const r of records) {
-        for (const node of r.addedNodes) { translateTree(node); renameInkos(node); }
+        for (const node of r.addedNodes) translateTree(node);
         if (r.type === "characterData" && r.target.nodeType === Node.TEXT_NODE) {
           const t = translate(r.target.textContent);
           if (t !== r.target.textContent) r.target.textContent = t;
