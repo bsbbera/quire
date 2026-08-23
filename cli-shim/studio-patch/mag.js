@@ -77,7 +77,15 @@
       b.setAttribute("data-quire-mag", "1");
       b.querySelector("span.shrink-0").innerHTML = ICONS[key];
       b.querySelector("span.truncate").textContent = label;
-      b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); open(key); });
+      // Route, do not just mount. Studio's own nav items navigate to a hash
+      // route (#/book/new and friends); a section that hijacks <main> without
+      // touching the URL has no back button, no deep link, and gets silently
+      // wiped the next time Studio's router renders. Going through the hash
+      // makes Magazine a peer of Long Novel rather than an overlay on top.
+      b.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        location.hash = key === "create" ? "#/magazine/new" : "#/magazine";
+      });
       grid.append(b);
     }
 
@@ -89,10 +97,8 @@
     });
 
 
-    // Any other sidebar click is Studio navigating — get out of its way.
-    document.querySelector("aside").addEventListener("click", (e) => {
-      if (root && !e.target.closest("[data-quire-mag]")) unmount();
-    }, true);
+    // Leaving is the router's job now: route() unmounts as soon as the hash
+    // stops being ours, which also covers back/forward and deep links.
   }
 
   /* ================================================================== mount */
@@ -181,12 +187,12 @@
     }
     return h("div", { class: "mag-head" },
       h("div", { class: "mag-crumb" },
-        h("button", { class: "mag-link", onclick: () => { S.issue = null; S.page = null; open("issues"); } }, "Magazine"),
+        h("button", { class: "mag-link", onclick: () => { location.hash = "#/magazine"; } }, "Magazine"),
         S.issue && h("span", { class: "mag-sep" }, "/"),
         S.issue && h("span", {}, S.issue.title || S.issue.subject)),
       h("div", { class: "mag-spacer" }),
       running && h("span", { class: "mag-run" }, h("i", {}), typeof running === "string" ? running : "running"),
-      h("button", { class: "mag-btn", onclick: () => open("create") }, "New issue"));
+      h("button", { class: "mag-btn", onclick: () => { location.hash = "#/magazine/new"; } }, "New issue"));
   }
 
 
@@ -197,15 +203,12 @@
         h("h2", {}, "No issues yet"),
         h("p", {}, "An issue starts from a subject and an angle. The pipeline researches it, "
           + "builds a flatplan, writes every page to its density, renders the art and lays out the PDF."),
-        h("button", { class: "mag-btn", onclick: () => open("create") }, "Start one"));
+        h("button", { class: "mag-btn", onclick: () => { location.hash = "#/magazine/new"; } }, "Start one"));
     }
     return h("div", { class: "mag-grid" }, S.issues.map((i) =>
       h("button", {
         class: "mag-card",
-        onclick: async () => {
-          S.issue = await api("/mag/issue/" + i.id); S.view = "issue";
-          await loadStyles(); render();
-        },
+        onclick: () => { location.hash = "#/magazine/" + i.id; },
       },
         h("div", { class: "mag-card-t" }, i.title || i.subject),
         h("div", { class: "mag-card-s" }, i.subject + (i.angle ? " — " + i.angle : "")),
@@ -220,33 +223,77 @@
     h("span", {}, label), h("i", { style: `width:${of ? (100 * n / of) : 0}%` }),
     h("b", {}, `${n}/${of || "?"}`));
 
-  function createForm() {
-    const subject = h("input", { class: "mag-in", placeholder: "Film photography", autofocus: "1" });
-    const angle = h("input", { class: "mag-in", placeholder: "the thing light touched (optional)" });
-    const extent = h("input", { class: "mag-in", type: "number", value: "40", min: "16", step: "2" });
-    const go = h("button", { class: "mag-btn" }, "Create");
-    const msg = h("div", { class: "mag-note" });
+  /* Every other "Start Creating" entry opens a composer: a centred prompt and
+     one input at the foot of the window. A three-field form in that slot is
+     what made Magazine feel bolted on, so this is the same shape - one line of
+     natural language, parsed into subject / angle / extent. The old fields are
+     still reachable underneath for anyone who wants to be exact. */
+  function parseBrief(text) {
+    let t = text.trim();
+    let extent = 0;
+    // "40pp", "40 pages", "in 24 pages"
+    t = t.replace(/\b(?:in\s+)?(\d{2,3})\s*(?:pp|pages?)\b/i, (_, n) => { extent = +n; return ""; });
+    // subject — angle, on an em dash, en dash, hyphen or comma
+    const m = /^(.*?)\s*(?:—|–|\s-\s|,)\s*(.+)$/.exec(t.trim().replace(/[\s,;.]+$/, ''));
+    const subject = (m ? m[1] : t).trim().replace(/[.,;]+$/, "");
+    const angle = m ? m[2].trim().replace(/[.,;]+$/, "") : "";
+    return { subject, angle, extent: extent || 40 };
+  }
 
-    go.addEventListener("click", async () => {
-      go.disabled = true; msg.textContent = "creating…";
-      try {
-        const issue = await api("/mag/issues", {
-          method: "POST",
-          body: JSON.stringify({ subject: subject.value.trim(), angle: angle.value.trim(), extent: +extent.value }),
-        });
-        S.issue = issue; S.view = "issue"; render();
-      } catch (e) { msg.textContent = e.message; go.disabled = false; }
+  function createForm() {
+    const box = h("textarea", {
+      class: "mag-composer-in",
+      rows: "1",
+      placeholder: "Film photography — the thing light touched, 40pp",
+      autofocus: "1",
+    });
+    const msg = h("div", { class: "mag-note" });
+    const echo = h("div", { class: "mag-composer-echo" });
+    const go = h("button", { class: "mag-btn", type: "button" }, "Create issue");
+
+    const readback = () => {
+      const b = parseBrief(box.value);
+      echo.textContent = b.subject
+        ? `subject: ${b.subject}${b.angle ? "   ·   angle: " + b.angle : ""}   ·   ${b.extent}pp`
+        : "";
+      go.disabled = !b.subject;
+    };
+    box.addEventListener("input", () => {
+      box.style.height = "auto";
+      box.style.height = Math.min(box.scrollHeight, 180) + "px";
+      readback();
     });
 
-    return h("div", { class: "mag-form" },
-      h("h2", {}, "New issue"),
-      h("label", {}, "Subject", subject),
-      h("label", {}, "Angle", angle),
-      h("label", {}, "Extent (pages)", extent),
-      h("p", { class: "mag-note" },
-        "Extent is rounded to an even number: every section opens with a full-page plate "
-        + "on a right-hand page, so sections — and the issue — have to be even."),
-      h("div", { class: "mag-row" }, go, msg));
+    const submit = async () => {
+      const b = parseBrief(box.value);
+      if (!b.subject) return;
+      go.disabled = true; msg.textContent = "creating…";
+      try {
+        const issue = await api("/mag/issues", { method: "POST", body: JSON.stringify(b) });
+        location.hash = "#/magazine/" + issue.id;
+      } catch (e) { msg.textContent = e.message; go.disabled = false; }
+    };
+    go.addEventListener("click", submit);
+    // Enter sends, shift+Enter breaks the line - the same contract as Studio's.
+    box.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
+    });
+    readback();
+
+    return h("div", { class: "mag-composer" },
+      h("div", { class: "mag-composer-hero" },
+        h("div", { class: "mag-composer-badge", html: ICONS.issues }),
+        h("p", {},
+          "Tell me what the issue is about — subject, the angle you want on it, how long."),
+        h("p", { class: "mag-composer-eg" },
+          "Film photography — the thing light touched, 40pp")),
+      h("div", { class: "mag-composer-bar" },
+        h("div", { class: "mag-composer-field" },
+          box,
+          h("div", { class: "mag-composer-foot" }, echo, h("span", { class: "mag-spacer" }), msg, go)),
+        h("p", { class: "mag-note" },
+          "Extent rounds to an even number: every section opens with a full-page plate on a "
+          + "right-hand page, so sections — and the issue — have to be even.")));
   }
 
   /* ---------------------------------------------------------------- issue */
@@ -766,10 +813,38 @@
     };
   }
 
+  /* ================================================================= router */
+  /** Our slice of Studio's hash router: #/magazine, /new, /<issue id>. */
+  function route() {
+    const m = /^#\/magazine(?:\/([^/?]+))?/.exec(location.hash || "");
+    if (!m) return unmount();                 // Studio owns the view again
+    const seg = m[1];
+    if (seg === "new") return open("create");
+    if (seg) {
+      // Deep link straight to an issue.
+      return (async () => {
+        try { S.issue = await api("/mag/issue/" + seg); } catch { S.issue = null; }
+        S.view = "issue";
+        markNav("issues"); mount(); await loadStyles(); render();
+      })();
+    }
+    S.issue = null; S.page = null;
+    return open("issues");
+  }
+
   /* ================================================================== boot */
   function boot() {
     addNav();
-    new MutationObserver(addNav).observe(document.body, { childList: true, subtree: true });
+    addEventListener("hashchange", route);
+    route();
+    new MutationObserver(() => {
+      addNav();
+      // A cold load straight onto #/magazine reaches boot() before Studio's
+      // React has painted <main>, so the first route() has nothing to mount
+      // into and the deep link silently lands on an empty page. Retry while
+      // the hash is ours and nothing is mounted; route() is a no-op otherwise.
+      if (!root && /^#\/magazine/.test(location.hash || "")) route();
+    }).observe(document.body, { childList: true, subtree: true });
     connect();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });

@@ -9,8 +9,8 @@ import { fileURLToPath } from "node:url";
 const S = 1024;
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-const BG = [18, 20, 22];        // cool graphite, matches the UI --bg
-const INK = [224, 177, 60];     // --accent
+const BG = [11, 15, 25];        // polar night, oklch(17% .022 265) = --bg
+const INK = [54, 222, 222];     // aurora cyan, oklch(82% .13 195) = --accent
 
 const px = Buffer.alloc(S * S * 4);
 const put = (x, y, [r, g, b], a = 255) => {

@@ -12,12 +12,24 @@
   font-family:"Geist Variable"; font-style:normal; font-weight:100 900;
   font-display:swap; src:url("geist.woff2") format("woff2");
 }
+/* Aurora. Tokens mirrored literal-for-literal from
+   cli-shim/studio-patch/patch.css - the workbench is the larger surface and
+   owns the design system; the shell matches it so the window is one product.
+   Change one, change both. */
+@font-face {
+  font-family:"Geist Variable"; font-style:normal; font-weight:100 900;
+  font-display:swap; src:url("geist.woff2") format("woff2");
+}
 :root {
-  --bg:oklch(97.5% .002 255); --panel:oklch(100% 0 0); --panel-2:oklch(94% .004 255);
-  --ink:oklch(20% .008 255); --muted:oklch(48% .008 255); --line:oklch(89% .005 255);
-  --accent:oklch(62% .12 82); --accent-ink:oklch(20% .02 82);
-  --ok:oklch(55% .11 155); --warn:oklch(58% .16 45);
-  --radius:10px; --radius-sm:7px; --gap:clamp(.6rem,1.6vw,1.1rem);
+  --bg:oklch(98% .006 230); --panel:oklch(100% 0 0); --panel-2:oklch(94% .012 225);
+  --ink:oklch(22% .02 250); --muted:oklch(47% .015 240); --line:oklch(90% .012 230);
+  --accent:oklch(52% .11 205); --accent-ink:oklch(99% .01 205);
+  --ok:oklch(55% .11 160); --warn:oklch(58% .16 45);
+  --aurora:radial-gradient(70rem 34rem at 12% -8%, oklch(72% .13 195 / .16) 0%, transparent 62%),
+    radial-gradient(58rem 30rem at 88% -4%, oklch(66% .13 295 / .13) 0%, transparent 60%),
+    radial-gradient(46rem 26rem at 52% 108%, oklch(70% .14 155 / .10) 0%, transparent 64%);
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px -12px rgba(0,0,0,.18);
+  --radius:12px; --radius-sm:8px; --gap:clamp(.6rem,1.6vw,1.1rem);
   --pad:clamp(.85rem,2.4vw,1.5rem);
   --font:"Geist Variable","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
   --display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,ui-serif,serif;
@@ -26,25 +38,33 @@
   --fs-sm:clamp(.74rem,.25vw + .69rem,.83rem);
   --fs-lg:clamp(1.15rem,1.1vw + .9rem,1.6rem);
   --card-min:min(230px,100%);       /* the only "column" knob: grid auto-fits */
-  --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px -12px rgba(0,0,0,.18);
   --speed:.18s;
 }
 :root[data-theme="dark"], :root:not([data-theme="light"]) {
   @media (prefers-color-scheme: dark) {
-  --bg:oklch(15% .008 255); --panel:oklch(19% .010 255); --panel-2:oklch(23% .012 255);
-  --ink:oklch(96% .004 255); --muted:oklch(72% .008 255); --line:oklch(30% .012 255);
-  --accent:oklch(80% .13 82); --accent-ink:oklch(18% .02 82);
-  --ok:oklch(72% .11 155); --warn:oklch(74% .13 45);
+  --bg:oklch(17% .022 265); --panel:oklch(21% .024 265); --panel-2:oklch(25% .026 265);
+  --ink:oklch(95% .008 230); --muted:oklch(73% .014 235); --line:oklch(31% .028 265);
+  --accent:oklch(82% .13 195); --accent-ink:oklch(19% .03 220);
+  --ok:oklch(72% .11 160); --warn:oklch(74% .13 45);
+  --aurora:radial-gradient(72rem 36rem at 10% -10%, oklch(72% .13 195 / .20) 0%, transparent 60%),
+    radial-gradient(60rem 32rem at 90% -6%, oklch(66% .13 295 / .17) 0%, transparent 58%),
+    radial-gradient(48rem 28rem at 50% 110%, oklch(70% .14 155 / .12) 0%, transparent 62%);
   --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.8);
   }
 }
 :root[data-theme="dark"] {
-  --bg:oklch(15% .008 255); --panel:oklch(19% .010 255); --panel-2:oklch(23% .012 255);
-  --ink:oklch(96% .004 255); --muted:oklch(72% .008 255); --line:oklch(30% .012 255);
-  --accent:oklch(80% .13 82); --accent-ink:oklch(18% .02 82);
-  --ok:oklch(72% .11 155); --warn:oklch(74% .13 45);
+  --bg:oklch(17% .022 265); --panel:oklch(21% .024 265); --panel-2:oklch(25% .026 265);
+  --ink:oklch(95% .008 230); --muted:oklch(73% .014 235); --line:oklch(31% .028 265);
+  --accent:oklch(82% .13 195); --accent-ink:oklch(19% .03 220);
+  --ok:oklch(72% .11 160); --warn:oklch(74% .13 45);
+  --aurora:radial-gradient(72rem 36rem at 10% -10%, oklch(72% .13 195 / .20) 0%, transparent 60%),
+    radial-gradient(60rem 32rem at 90% -6%, oklch(66% .13 295 / .17) 0%, transparent 58%),
+    radial-gradient(48rem 28rem at 50% 110%, oklch(70% .14 155 / .12) 0%, transparent 62%);
   --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.8);
 }
+/* The aurora wash sits behind the boot cover and the drawer, matching the one
+   painted over the workbench, so the two surfaces read as one window. */
+.cover, .drawer { background-image: var(--aurora); }
 *,*::before,*::after{box-sizing:border-box}
 /* Author `display` on .cover/.drawer/.fab outranks the UA [hidden] rule, so
    toggling the attribute did nothing without this. */
