@@ -30,3 +30,6 @@ ideaverse-skills/
 # Signing keys live in ~/.quire, never in the repo.
 *.key
 *.key.pub
+
+# Machine-specific dev preview config.
+.claude/launch.json

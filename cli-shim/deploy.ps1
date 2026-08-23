@@ -7,10 +7,10 @@
 #
 # ponytail: copy + restart, no build step. This repo IS the source; the app dir
 # is a deploy target and must never be edited directly.
-$src = "C:\Users\SUBHADIP\IDEAVERSE\cli-shim"
+$src = Split-Path -Parent $MyInvocation.MyCommand.Path
 # The install folder is named after productName. That becomes "Quire" only on
 # the next build, so both names are accepted while the old build is installed.
-$base = "C:\Users\SUBHADIP\AppData\Local\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Local"
+$base = Join-Path $env:LOCALAPPDATA "Packages\Claude_pzs8sxrjxfjjc\LocalCache\Local"
 $dst = @("$base\Quire\cli-shim", "$base\InkDesk\cli-shim") | Where-Object { Test-Path $_ } | Select-Object -First 1
 
 if (-not (Test-Path $dst)) { Write-Error "Quire is not installed at $dst"; exit 1 }

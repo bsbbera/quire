@@ -80,9 +80,11 @@ function installStudioPatch(entry) {
 
     let html = readFileSync(indexHtml, "utf8");
     if (html.includes("quire-mag.js")) return; // already wired
-    // An older build wired only the first patch — strip those tags so the full
-    // set is injected once rather than appended alongside them.
-    html = html.replace(/^.*quire-patch\.(css|js).*\r?\n/gm, "");
+    // Strip EVERY previously injected tag before adding the current set, under
+    // either name. The product was renamed from InkDesk to Quire, so a Studio
+    // bundle patched before the rename still carries inkdesk-* tags; leaving
+    // them loads two copies of the patch and the Magazine nav appears twice.
+    html = html.replace(/^.*\/assets\/(inkdesk|quire)-(patch|mag)\.(css|js).*\r?\n/gm, "");
 
     html = html.replace("</head>", [
       '    <link rel="stylesheet" href="/assets/quire-patch.css">',
