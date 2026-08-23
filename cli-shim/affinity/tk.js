@@ -1,4 +1,4 @@
-// InkDesk — Affinity build toolkit.
+// Quire — Affinity build toolkit.
 //
 // Adopted wholesale from the user's LENS 01 toolkit rather than rewritten: every
 // comment in here records an SDK trap found by probing the real application

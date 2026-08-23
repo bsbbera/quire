@@ -104,7 +104,7 @@ const NEGATIVE = "text, watermark, signature, logo, letters, words, caption, ugl
  */
 export async function generate({
   prompt, negative = NEGATIVE, width = 1536, height = 1024,
-  seed = Math.floor(Math.random() * 2 ** 32), outFile, prefix = "inkdesk", timeoutMs = 600000,
+  seed = Math.floor(Math.random() * 2 ** 32), outFile, prefix = "quire", timeoutMs = 600000,
 }) {
   if (!prompt) throw new Error("prompt required");
   if (!(await ping())) throw new Error("ComfyUI is not running — start it first");

@@ -89,7 +89,7 @@ export async function status() {
  * this every image silently fails to place.
  */
 function stageAssets(issue, issueDir, desktop) {
-  const dest = join(desktop, "InkDesk", issue.id, "_assets");
+  const dest = join(desktop, "Quire", issue.id, "_assets");
   mkdirSync(dest, { recursive: true });
   const src = join(issueDir, "_assets");
   const staged = {};
@@ -266,12 +266,12 @@ export async function build(issue, { pdf, issueDir }) {
 
   const stage = stageAssets(issue, issueDir, st.desktop);
   // Affinity can only write to the Desktop, so export there and copy back.
-  const deskPdf = join(st.desktop, "InkDesk", issue.id, basename(pdf));
+  const deskPdf = join(st.desktop, "Quire", issue.id, basename(pdf));
 
   const script = [
     CREATE(issue.pages.length),
     `globalThis.TK_CFG = ${JSON.stringify({
-      root: win(join(st.desktop, "InkDesk", issue.id)) + "\\",
+      root: win(join(st.desktop, "Quire", issue.id)) + "\\",
       img: win(stage.dir) + "\\",
       sections: (issue.sections || []).map((s) => ({ n: s.n, from: s.from, to: s.to })),
     })};`,
@@ -302,7 +302,7 @@ let session = null;
 const FIND = () => `
   const { Document } = require("/document");
   const _all = Array.from(Document.all);
-  const _want = ${JSON.stringify("INKDESK-BUILD")};
+  const _want = ${JSON.stringify("QUIRE-BUILD")};
   // Documents are matched on a marker written into the document's own metadata
   // at creation: index and creation order both move when the user touches
   // another file mid-build.
@@ -322,12 +322,12 @@ const CREATE_TAGGED = (pages) => `
   const _d = Document.createFromOptions(_o);
   // The marker FIND() looks for. Without it a second open document makes the
   // build write into whichever one the SDK happens to hand back.
-  try { _d.metadata.title = "INKDESK-BUILD"; } catch (e) {}
+  try { _d.metadata.title = "QUIRE-BUILD"; } catch (e) {}
   globalThis.TK_DOC = _d;`;
 
 function cfgFor(issue, stageDir, desktop) {
   return {
-    root: win(join(desktop, "InkDesk", issue.id)) + "\\",
+    root: win(join(desktop, "Quire", issue.id)) + "\\",
     img: win(stageDir) + "\\",
     sections: (issue.sections || []).map((s) => ({ n: s.n, from: s.from, to: s.to })),
     // The design stage's worlds, so the layout paints in the register the
@@ -356,7 +356,7 @@ export async function closeIssue({ pdf } = {}) {
   const target = pdf || session.pdf;
   let out = { ok: true };
   if (target) {
-    const deskPdf = join(session.desktop, "InkDesk", session.id, basename(target));
+    const deskPdf = join(session.desktop, "Quire", session.id, basename(target));
     out = await run(FIND() + "\n" + EXPORT(deskPdf), 900000);
     if (out.exported && existsSync(deskPdf)) {
       mkdirSync(dirname(target), { recursive: true });

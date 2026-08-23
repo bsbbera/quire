@@ -1,4 +1,4 @@
-/* InkDesk patch for InkOS Studio.
+/* Quire patch for InkOS Studio.
  *
  * Studio ships as a minified SPA, so this runs against the rendered DOM rather
  * than the source. It adds three things Studio does not have:
@@ -15,8 +15,8 @@
  */
 (() => {
   "use strict";
-  if (window.__inkdeskPatched) return;
-  window.__inkdeskPatched = true;
+  if (window.__quirePatched) return;
+  window.__quirePatched = true;
 
   /* =======================================================================
      1. Translation
@@ -409,21 +409,31 @@
      2. Resizable side panels
      ===================================================================== */
 
-  const LS_SIDEBAR = "inkdesk-studio-sidebar";
+  const LS_SIDEBAR = "quire-studio-sidebar";
+  const LS_INSPECTOR = "quire-studio-inspector";
 
-  function addResizer() {
-    const aside = document.querySelector("aside");
-    if (!aside || aside.dataset.inkdeskResizable) return;
-    aside.dataset.inkdeskResizable = "1";
+  /**
+   * Make one <aside> draggable.
+   *
+   * `side` is the edge the grip sits on. The left sidebar grows as the pointer
+   * moves right; the inspector on the right grows as it moves LEFT, so its
+   * delta is inverted — getting that backwards makes the panel run away from
+   * the cursor, which is why the two cases are spelled out rather than shared.
+   */
+  function makeResizable(aside, { side, key, reset, min }) {
+    if (!aside || aside.dataset.quireResizable) return;
+    aside.dataset.quireResizable = "1";
 
-    const saved = localStorage.getItem(LS_SIDEBAR);
+    const saved = localStorage.getItem(key);
     if (saved) aside.style.width = saved;
+    // Tailwind's shrink-0 leaves the width to content, so it must be pinned
+    // before a drag can mean anything.
     aside.style.flex = "0 0 auto";
 
     const grip = document.createElement("div");
-    grip.className = "inkdesk-grip";
+    grip.className = "quire-grip" + (side === "start" ? " at-start" : "");
     grip.setAttribute("role", "separator");
-    grip.setAttribute("aria-label", "Resize sidebar");
+    grip.setAttribute("aria-label", side === "start" ? "Resize panel" : "Resize sidebar");
     aside.style.position = aside.style.position || "relative";
     aside.appendChild(grip);
 
@@ -432,17 +442,18 @@
       const startX = e.clientX;
       const startW = aside.getBoundingClientRect().width;
       grip.setPointerCapture(e.pointerId);
-      document.body.classList.add("inkdesk-resizing");
+      document.body.classList.add("quire-resizing");
 
       const move = (ev) => {
-        // Clamp against the window so a wide sidebar can never bury the content.
-        const w = Math.max(180, Math.min(window.innerWidth - 360, startW + ev.clientX - startX));
+        const delta = side === "start" ? startX - ev.clientX : ev.clientX - startX;
+        // Clamp against the window so a panel can never bury the content.
+        const w = Math.max(min, Math.min(window.innerWidth - 360, startW + delta));
         aside.style.width = w + "px";
       };
       const up = () => {
         grip.removeEventListener("pointermove", move);
-        document.body.classList.remove("inkdesk-resizing");
-        localStorage.setItem(LS_SIDEBAR, aside.style.width);
+        document.body.classList.remove("quire-resizing");
+        localStorage.setItem(key, aside.style.width);
       };
       grip.addEventListener("pointermove", move);
       grip.addEventListener("pointerup", up, { once: true });
@@ -450,9 +461,26 @@
     });
 
     grip.addEventListener("dblclick", () => {
-      aside.style.width = "260px";
-      localStorage.setItem(LS_SIDEBAR, "260px");
+      aside.style.width = reset;
+      localStorage.setItem(key, reset);
     });
+  }
+
+  function addResizer() {
+    // Studio renders two asides: the nav on the left and the chapters /
+    // characters / core-files inspector on the right. Only the first was ever
+    // wired, so the inspector was stuck at whatever width its content gave it.
+    const asides = [...document.querySelectorAll("aside")];
+    if (!asides.length) return;
+    const mid = window.innerWidth / 2;
+    for (const a of asides) {
+      const r = a.getBoundingClientRect();
+      if (!r.width) continue;                       // hidden at this breakpoint
+      const onRight = r.left > mid;
+      makeResizable(a, onRight
+        ? { side: "start", key: LS_INSPECTOR, reset: "320px", min: 220 }
+        : { side: "end",   key: LS_SIDEBAR,   reset: "260px", min: 180 });
+    }
   }
 
   /* =======================================================================
@@ -464,7 +492,7 @@
 
   function buildPanel() {
     panel = document.createElement("div");
-    panel.className = "inkdesk-progress";
+    panel.className = "quire-progress";
     panel.hidden = true;
     panel.innerHTML =
       '<div class="ip-head"><b class="ip-title">Working</b>'
@@ -549,9 +577,51 @@
      boot
      ===================================================================== */
 
+  /* =======================================================================
+     4. Branding
+     ===================================================================== */
+
+  const MARK = '<svg viewBox="0 0 100 100" width="22" height="22" aria-hidden="true">'
+    + '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">'
+    + '<path d="M23 27 L50 71 L77 27"/><path d="M32 31 L50 61 L68 31"/><path d="M41 35 L50 51 L59 35"/>'
+    + '</g></svg>';
+
+  /**
+   * Put Quire's identity on the sidebar.
+   *
+   * Studio is @actalk/inkos under AGPL-3.0, so its notice stays — the footer
+   * line below is not decoration, it is the attribution the licence requires.
+   * Never remove it, and never present the workbench as wholly ours.
+   */
+  function brandSidebar() {
+    const aside = document.querySelector("aside");
+    if (!aside || aside.dataset.quireBranded) return;
+
+    // The wordmark is whichever leaf node says "InkOS" — matching on text
+    // rather than a class, because the bundle is minified and its hashes move.
+    const leaf = [...aside.querySelectorAll("*")]
+      .find((e) => !e.children.length && e.textContent.trim() === "InkOS");
+    if (!leaf) return;                      // sidebar not rendered yet
+    aside.dataset.quireBranded = "1";
+    leaf.textContent = "Quire";
+
+    const sub = leaf.parentElement && [...leaf.parentElement.querySelectorAll("*")]
+      .find((e) => !e.children.length && /^STUDIO$/i.test(e.textContent.trim()));
+    if (sub) sub.textContent = "STUDIO";
+
+    const icon = leaf.closest("a,div")?.querySelector("svg");
+    if (icon) icon.outerHTML = MARK;
+
+    const note = document.createElement("div");
+    note.className = "quire-attrib";
+    note.textContent = "Workbench: InkOS Studio (AGPL-3.0)";
+    aside.appendChild(note);
+  }
+
   function start() {
     translateTree(document.body);
     addResizer();
+    brandSidebar();
     buildPanel();
     connectEvents();
 
@@ -565,6 +635,7 @@
         }
       }
       addResizer();
+      brandSidebar();
     });
     mo.observe(document.body, { childList: true, subtree: true, characterData: true });
   }

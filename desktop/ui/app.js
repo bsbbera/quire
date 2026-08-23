@@ -1,18 +1,18 @@
-// InkDesk shell frontend. Starts the services once via Rust, then hands the
+// Quire shell frontend. Starts the services once via Rust, then hands the
 // window over to Studio. Model/provider settings live in the drawer.
 const invoke = window.__TAURI__?.core?.invoke;
 
 const $ = (s) => document.querySelector(s);
 const state = { shim: "http://127.0.0.1:8787", studio: "", models: [], cli: null, model: null };
 
-const savedTheme = localStorage.getItem("inkdesk-theme");
+const savedTheme = localStorage.getItem("quire-theme");
 if (savedTheme) document.documentElement.dataset.theme = savedTheme;
 $("#theme").onclick = () => {
   const cur = document.documentElement.dataset.theme
     || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   const next = cur === "dark" ? "light" : "dark";
   document.documentElement.dataset.theme = next;
-  localStorage.setItem("inkdesk-theme", next);
+  localStorage.setItem("quire-theme", next);
 };
 
 let toastTimer;

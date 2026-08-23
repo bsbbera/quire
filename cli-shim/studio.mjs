@@ -12,7 +12,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const PORT = process.env.STUDIO_PORT || "4567";
-const ROOT = process.env.INKDESK_WORKSPACE || join(homedir(), "InkDesk");
+// The product was renamed from InkDesk to Quire, but the workspace holds real
+// books and worlds - so an existing ~/InkDesk keeps being used rather than
+// silently starting empty under the new name.
+const ROOT = process.env.QUIRE_WORKSPACE
+  || [join(homedir(), "Quire"), join(homedir(), "InkDesk")].find(existsSync)
+  || join(homedir(), "Quire");
 
 /** Locate the globally-installed @actalk/inkos package. */
 function inkosRoot() {
@@ -52,7 +57,7 @@ if (!launch) {
 installStudioPatch(launch.studioEntry);
 
 /**
- * Copy the InkDesk patch into Studio's own dist and reference it from its
+ * Copy the Quire patch into Studio's own dist and reference it from its
  * index.html. Studio ships minified with ~415 Chinese strings outside its i18n
  * table, a hardcoded sidebar width and no progress display; this is the only
  * seam to fix those without its source. Re-run on every launch so an
@@ -70,20 +75,20 @@ function installStudioPatch(entry) {
     // SPA and comes back as index.html.
     const src = join(dirname(fileURLToPath(import.meta.url)), "studio-patch");
     for (const f of ["patch.css", "patch.js", "mag.css", "mag.js"]) {
-      copyFileSync(join(src, f), join(distDir, "assets", "inkdesk-" + f));
+      copyFileSync(join(src, f), join(distDir, "assets", "quire-" + f));
     }
 
     let html = readFileSync(indexHtml, "utf8");
-    if (html.includes("inkdesk-mag.js")) return; // already wired
+    if (html.includes("quire-mag.js")) return; // already wired
     // An older build wired only the first patch — strip those tags so the full
     // set is injected once rather than appended alongside them.
-    html = html.replace(/^.*inkdesk-patch\.(css|js).*\r?\n/gm, "");
+    html = html.replace(/^.*quire-patch\.(css|js).*\r?\n/gm, "");
 
     html = html.replace("</head>", [
-      '    <link rel="stylesheet" href="/assets/inkdesk-patch.css">',
-      '    <link rel="stylesheet" href="/assets/inkdesk-mag.css">',
-      '    <script src="/assets/inkdesk-patch.js" defer></script>',
-      '    <script src="/assets/inkdesk-mag.js" defer></script>',
+      '    <link rel="stylesheet" href="/assets/quire-patch.css">',
+      '    <link rel="stylesheet" href="/assets/quire-mag.css">',
+      '    <script src="/assets/quire-patch.js" defer></script>',
+      '    <script src="/assets/quire-mag.js" defer></script>',
       "  </head>",
     ].join("\n"));
     writeFileSync(indexHtml, html);

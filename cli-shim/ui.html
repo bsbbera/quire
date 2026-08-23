@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>InkDesk</title>
+<title>Quire</title>
 <style>
 /* ---------------------------------------------------------------------------
    Everything below is driven by tokens. Restyle the whole app by editing :root
@@ -112,7 +112,7 @@ button.btn:disabled{opacity:.5;cursor:default}
 <body>
 <div class="shell">
   <header>
-    <div class="brand"><b>InkDesk</b><span id="sub">connecting…</span></div>
+    <div class="brand"><b>Quire</b><span id="sub">connecting…</span></div>
     <button class="icon-btn" id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
     <button class="btn" id="refresh">Refresh</button>
     <button class="btn primary" id="studio">Open Studio</button>
@@ -154,14 +154,14 @@ button.btn:disabled{opacity:.5;cursor:default}
 const $ = (s) => document.querySelector(s);
 const state = { status: null, models: [], cli: null, model: null };
 
-const theme = localStorage.getItem("inkdesk-theme");
+const theme = localStorage.getItem("quire-theme");
 if (theme) document.documentElement.dataset.theme = theme;
 $("#theme").onclick = () => {
   const cur = document.documentElement.dataset.theme
     || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   const next = cur === "dark" ? "light" : "dark";
   document.documentElement.dataset.theme = next;
-  localStorage.setItem("inkdesk-theme", next);
+  localStorage.setItem("quire-theme", next);
 };
 
 let toastTimer;

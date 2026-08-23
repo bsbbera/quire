@@ -35,21 +35,38 @@ for (let y = 0; y < S; y++) {
   }
 }
 
-// ink drop: circle with a tapered point on top
-const cx = S / 2, cy = S * 0.60, rad = S * 0.21, tip = S * 0.22;
+// Quire mark: three nested folded sheets seen end-on from the spine — the
+// gathering the product is named after. Drawn as stroked chevrons so the shape
+// stays legible at 32px, where an outline or a fill both turn to mush.
+function distToSeg(px_, py, ax, ay, bx, by) {
+  const vx = bx - ax, vy = by - ay;
+  const wx = px_ - ax, wy = py - ay;
+  const t = Math.max(0, Math.min(1, (wx * vx + wy * vy) / (vx * vx + vy * vy)));
+  return Math.hypot(px_ - (ax + t * vx), py - (ay + t * vy));
+}
+
+const cx = S / 2;
+const STROKE = S * 0.037;
+// Outer sheet widest and deepest, each inner one tucked inside. The tops are
+// staggered as well as the widths: level tops plus a fat stroke close the gaps
+// and the three sheets read as one solid arrow instead of a gathering.
+const SHEETS = [
+  { w: S * 0.270, top: S * 0.300, bot: S * 0.700 },
+  { w: S * 0.180, top: S * 0.338, bot: S * 0.612 },
+  { w: S * 0.092, top: S * 0.376, bot: S * 0.524 },
+];
+
 for (let y = 0; y < S; y++) {
   for (let x = 0; x < S; x++) {
-    const d = Math.hypot(x - cx, y - cy);
-    let a = d <= rad ? 255 : d <= rad + 1.5 ? 255 * ((rad + 1.5 - d) / 1.5) : 0;
-    if (a === 0 && y < cy) {
-      // triangular taper from the circle's top up to the tip
-      const t = (cy - y) / (cy - tip);
-      if (t >= 0 && t <= 1) {
-        const halfW = rad * (1 - t);
-        const dx = Math.abs(x - cx);
-        if (dx <= halfW) a = 255;
-        else if (dx <= halfW + 1.5) a = 255 * ((halfW + 1.5 - dx) / 1.5);
-      }
+    let a = 0;
+    for (const sh of SHEETS) {
+      const d = Math.min(
+        distToSeg(x, y, cx - sh.w, sh.top, cx, sh.bot),
+        distToSeg(x, y, cx, sh.bot, cx + sh.w, sh.top),
+      );
+      const half = STROKE / 2;
+      const cov = d <= half ? 255 : d <= half + 1.2 ? 255 * ((half + 1.2 - d) / 1.2) : 0;
+      if (cov > a) a = cov;
     }
     if (a > 0) put(x, y, INK, a);
   }

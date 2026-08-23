@@ -166,7 +166,7 @@ check("mcp discovery finds configured servers", () => {
 
 // The workflow names three checkpoints and the installer downloads three. Add
 // a model to the graph without adding its URL and renders fail on a machine
-// that installed through InkDesk but not on the one that developed it.
+// that installed through Quire but not on the one that developed it.
 {
   const { MODELS } = await import("./comfy.mjs");
   const src = await import("node:fs").then((fs) => fs.readFileSync("./comfy-install.mjs", "utf8"));

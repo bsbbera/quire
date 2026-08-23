@@ -33,7 +33,7 @@ async function nodeCheck() {
   return major >= 18
     ? ok("node", "Node.js", `v${process.versions.node}`)
     : bad("node", "Node.js", `v${process.versions.node} is too old`,
-        "Install Node.js 18 or newer from nodejs.org, then restart InkDesk.");
+        "Install Node.js 18 or newer from nodejs.org, then restart Quire.");
 }
 
 async function inkosCheck() {

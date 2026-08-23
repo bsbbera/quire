@@ -2,7 +2,7 @@
 //
 // Affinity is licensed and the agent CLIs are the user's own accounts, so those
 // can only ever be detected. ComfyUI is a public portable build plus three
-// public checkpoints, so InkDesk fetches them itself rather than handing the
+// public checkpoints, so Quire fetches them itself rather than handing the
 // user a shopping list. ~2GB of runtime and ~9GB of weights, so this is never
 // automatic — it runs when the setup panel's button is pressed.
 //

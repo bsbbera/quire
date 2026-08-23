@@ -125,7 +125,7 @@ export function servers() {
   };
   // A server the source app switched off stays off here, but the override file
   // can turn it back on — otherwise a Devin-disabled server would be
-  // unreachable from InkDesk with no way to say otherwise.
+  // unreachable from Quire with no way to say otherwise.
   const ov = readJson(OVERRIDES) || {};
   const disabled = new Set(ov.disabled || []);
   const enabled = new Set(ov.enabled || []);
@@ -206,7 +206,7 @@ async function session(name) {
     s.ready = rpc(s, "initialize", {
       protocolVersion: "2024-11-05",
       capabilities: {},
-      clientInfo: { name: "inkdesk", version: "0.1.0" },
+      clientInfo: { name: "quire", version: "0.1.0" },
     }, 120000).then(() => {
       s.proc.stdin.write(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n");
     });

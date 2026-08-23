@@ -1,11 +1,11 @@
-/* InkDesk — the Magazine section, added to InkOS Studio.
+/* Quire — the Magazine section, added to InkOS Studio.
  *
  * Studio ships as a minified bundle with no source, so a new section cannot be
  * added the way its own sections are. Instead this clones Studio's own nav
  * markup (so the entry is indistinguishable from the built-in ones) and mounts
  * its workspace inside <main>, hiding Studio's view while it is open.
  *
- * All data comes from the InkDesk shim on :8787, not from Studio's API —
+ * All data comes from the Quire shim on :8787, not from Studio's API —
  * a magazine is not a book and Studio's engine knows nothing about it.
  */
 (() => {
@@ -53,13 +53,13 @@
     plugs:  ICON('<path d="M9 2v6M15 2v6"/><path d="M6 8h12v3a6 6 0 0 1-12 0z"/><path d="M12 17v5"/>'),
   };
 
-  /** Views that belong to InkDesk as a whole, not to the Magazine section. */
+  /** Views that belong to Quire as a whole, not to the Magazine section. */
   const APPWIDE = new Set(["plugs"]);
 
   /** Clone Studio's own nav group so the section looks native, not bolted on. */
   function addNav() {
     const list = document.querySelector("aside > div.flex-1");
-    if (!list || list.querySelector("[data-inkdesk-mag]")) return;
+    if (!list || list.querySelector("[data-quire-mag]")) return;
     const model = list.firstElementChild;                     // "Start Creating"
     if (!model) return;
     const btnModel = model.querySelector("button");
@@ -68,7 +68,7 @@
     /** One cloned nav group: a title and its buttons. */
     const makeGroup = (title, items) => {
       const group = model.cloneNode(false);
-      group.setAttribute("data-inkdesk-mag", "1");
+      group.setAttribute("data-quire-mag", "1");
       const head = model.firstElementChild.cloneNode(true);
       head.querySelector("span").textContent = title;
       const grid = h("div", { class: "grid grid-cols-2 gap-1" });
@@ -84,10 +84,10 @@
     };
 
     // Integrations are app-wide — MCP servers, ComfyUI and Affinity serve every
-    // kind of work InkDesk does, not only magazines — so they get their own
+    // kind of work Quire does, not only magazines — so they get their own
     // group rather than sitting inside Magazine's.
     const mag = makeGroup("Magazine", [["issues", "Issues"], ["create", "New Issue"]]);
-    const sys = makeGroup("InkDesk", [["plugs", "Integrations"]]);
+    const sys = makeGroup("Quire", [["plugs", "Integrations"]]);
 
     // Second position: after "Start Creating", before "My Works".
     list.insertBefore(mag, model.nextSibling);
@@ -95,7 +95,7 @@
 
     // Any other sidebar click is Studio navigating — get out of its way.
     document.querySelector("aside").addEventListener("click", (e) => {
-      if (root && !e.target.closest("[data-inkdesk-mag]")) unmount();
+      if (root && !e.target.closest("[data-quire-mag]")) unmount();
     }, true);
   }
 
@@ -105,7 +105,7 @@
     if (!main || root) return;
     hidden = [...main.children];
     for (const c of hidden) c.style.display = "none";
-    root = h("div", { class: "mag-root", "data-inkdesk-mag-root": "1" });
+    root = h("div", { class: "mag-root", "data-quire-mag-root": "1" });
     main.append(root);
   }
 
@@ -149,7 +149,7 @@
     // App-wide views are not "inside" Magazine, so they do not borrow its crumb.
     if (APPWIDE.has(S.view)) {
       return h("div", { class: "mag-head" },
-        h("div", { class: "mag-crumb" }, h("span", {}, "InkDesk"),
+        h("div", { class: "mag-crumb" }, h("span", {}, "Quire"),
           h("span", { class: "mag-sep" }, "/"), h("span", {}, "Integrations")),
         h("div", { class: "mag-spacer" }));
     }
@@ -597,10 +597,10 @@
     return h("div", { class: "mag-int" },
       h("h2", {}, "Setup"),
       dr && h("p", { class: "mag-note" }, dr.ok
-        ? "Everything InkDesk needs is present. Anything below marked optional only "
+        ? "Everything Quire needs is present. Anything below marked optional only "
           + "limits one stage — the rest of the pipeline still runs without it."
         : `${dr.blocking} thing${dr.blocking > 1 ? "s" : ""} must be installed before `
-          + "InkDesk can write anything."),
+          + "Quire can write anything."),
       (dr?.checks || []).map((c) => h("div", { class: "mag-srv" },
         h("span", { class: "mag-dot " + (c.ok ? "on" : c.severity === "required" ? "bad" : "off") }),
         h("div", {},
@@ -678,7 +678,7 @@
       h("h2", {}, "MCP servers"),
       h("p", { class: "mag-note" },
         "Read from the configs already on this machine — Claude Desktop extensions, Claude Code "
-        + "and Codex. Nothing is duplicated here; disabling one only affects InkDesk."),
+        + "and Codex. Nothing is duplicated here; disabling one only affects Quire."),
       Object.entries(INT.servers).map(([name, cfg]) => {
         const tools = INT.tools[name];
         return h("div", { class: "mag-srv" },

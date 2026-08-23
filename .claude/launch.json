@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "inkdesk-ui",
+      "name": "quire-ui",
       "runtimeExecutable": "node",
       "runtimeArgs": ["C:/Users/SUBHADIP/AppData/Local/Temp/claude/C--Users-SUBHADIP-IDEAVERSE/0a8311d0-5a18-46e0-8809-c0c673c571dc/scratchpad/serve.mjs"],
       "port": 5199

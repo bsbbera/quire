@@ -1,4 +1,4 @@
-// InkDesk desktop shell.
+// Quire desktop shell.
 //
 // Owns two child processes for the lifetime of the window:
 //   * the model shim   (node <resource>/cli-shim/server.mjs)  — port 8787
@@ -203,7 +203,7 @@ fn main() {
         .manage(Children::default())
         .invoke_handler(tauri::generate_handler![boot])
         .build(tauri::generate_context!())
-        .expect("failed to build InkDesk")
+        .expect("failed to build Quire")
         .run(|app, event| {
             if let RunEvent::ExitRequested { .. } | RunEvent::Exit = event {
                 reap(&app.state::<Children>());

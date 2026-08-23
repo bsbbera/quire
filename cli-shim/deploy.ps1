@@ -1,4 +1,4 @@
-# Push cli-shim into the installed InkDesk app and restart it.
+# Push cli-shim into the installed Quire app and restart it.
 #
 # The desktop app does not run this folder — it runs its own copy under the
 # packaged app's LocalCache, so an edit here changes nothing until it is copied
@@ -8,9 +8,12 @@
 # ponytail: copy + restart, no build step. This repo IS the source; the app dir
 # is a deploy target and must never be edited directly.
 $src = "C:\Users\SUBHADIP\IDEAVERSE\cli-shim"
-$dst = "C:\Users\SUBHADIP\AppData\Local\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Local\InkDesk\cli-shim"
+# The install folder is named after productName. That becomes "Quire" only on
+# the next build, so both names are accepted while the old build is installed.
+$base = "C:\Users\SUBHADIP\AppData\Local\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Local"
+$dst = @("$base\Quire\cli-shim", "$base\InkDesk\cli-shim") | Where-Object { Test-Path $_ } | Select-Object -First 1
 
-if (-not (Test-Path $dst)) { Write-Error "InkDesk is not installed at $dst"; exit 1 }
+if (-not (Test-Path $dst)) { Write-Error "Quire is not installed at $dst"; exit 1 }
 
 # Stop whatever is serving 8787 so the files are not in use and the new code
 # actually takes effect — a running Node holds its modules in memory.

@@ -51,7 +51,8 @@ body{overflow:hidden}
   background:var(--bg);z-index:30}
 .cover-card{width:min(420px,100%);display:grid;gap:var(--gap);text-align:center;
   justify-items:center}
-.wordmark{font-size:var(--fs-lg);letter-spacing:-.02em}
+.mark{width:56px;height:56px;color:var(--accent,#c96442)}
+.wordmark{font-size:var(--fs-lg);letter-spacing:.14em;text-transform:uppercase;font-weight:600}
 .cover-card p{margin:0;color:var(--muted);font-size:var(--fs-sm)}
 
 /* Floating model chip — the way into settings. */

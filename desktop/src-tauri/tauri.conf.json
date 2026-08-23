@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "InkDesk",
+  "productName": "Quire",
   "version": "0.1.0",
-  "identifier": "com.subhadip.inkdesk",
+  "identifier": "com.subhadip.quire",
   "build": {
     "frontendDist": "../ui"
   },
@@ -10,7 +10,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "InkDesk",
+        "title": "Quire",
         "width": 1120,
         "height": 820,
         "minWidth": 360,
@@ -44,6 +44,6 @@
       }
     },
     "shortDescription": "InkOS with local agent-CLI model providers",
-    "longDescription": "InkDesk runs InkOS Studio against the agent CLIs installed on your machine (Claude Code, Codex, Devin, Antigravity), exposing every model they offer through one local OpenAI-compatible endpoint."
+    "longDescription": "Quire runs InkOS Studio against the agent CLIs installed on your machine (Claude Code, Codex, Devin, Antigravity), exposing every model they offer through one local OpenAI-compatible endpoint."
   }
 }

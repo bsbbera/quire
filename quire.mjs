@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// inkdesk — one command for the whole stack: model shim + InkOS Studio.
+// quire — one command for the whole stack: model shim + InkOS Studio.
 // Spawns both, waits for their ports, opens a browser, and guarantees both die
 // together. Phase 3 (desktop shell) reuses this file's supervise() as-is.
 import { spawn } from "node:child_process";
@@ -83,7 +83,7 @@ function shutdown(code = 0) {
   shuttingDown = true;
   for (const { name, child } of children) {
     if (child.exitCode !== null || child.killed) continue;
-    log("inkdesk", `stopping ${name} (pid ${child.pid})`);
+    log("quire", `stopping ${name} (pid ${child.pid})`);
     try {
       // taskkill /T is the only reliable way to reap a Windows process tree;
       // SIGTERM on the parent leaves node/cli grandchildren holding the port.
@@ -122,7 +122,7 @@ const CHROME_CANDIDATES = process.platform === "win32"
 function openAppWindow(url, { width = 1280, height = 860 } = {}) {
   const bin = CHROME_CANDIDATES.find((p) => p && existsSync(p));
   if (!bin) {
-    log("inkdesk", "no Chromium found — opening in default browser");
+    log("quire", "no Chromium found — opening in default browser");
     openBrowser(url);
     return;
   }
@@ -136,20 +136,20 @@ function openAppWindow(url, { width = 1280, height = 860 } = {}) {
   // A detached spawn reports failure asynchronously, so returning "true" right
   // after the call would claim a window that never opened. Wait for the verdict.
   child.on("error", (e) => {
-    log("inkdesk", `window failed (${e.message}) — falling back to browser`);
+    log("quire", `window failed (${e.message}) — falling back to browser`);
     openBrowser(url);
   });
   child.once("spawn", () => {
-    log("inkdesk", `desktop window opened (pid ${child.pid})`);
+    log("quire", `desktop window opened (pid ${child.pid})`);
     child.unref();
   });
 }
 
 (async () => {
-  log("inkdesk", "starting model shim + InkOS Studio");
+  log("quire", "starting model shim + InkOS Studio");
 
   if (await portOpen(SHIM_PORT)) {
-    log("inkdesk", `port ${SHIM_PORT} already in use — reusing whatever is there`);
+    log("quire", `port ${SHIM_PORT} already in use — reusing whatever is there`);
   } else {
     supervise("shim", process.execPath, [join(HERE, "cli-shim", "server.mjs")],
       { env: { SHIM_PORT: String(SHIM_PORT), STUDIO_PORT: String(STUDIO_PORT) } });
@@ -167,7 +167,7 @@ function openAppWindow(url, { width = 1280, height = 860 } = {}) {
   }
 
   if (await portOpen(STUDIO_PORT)) {
-    log("inkdesk", `port ${STUDIO_PORT} already in use — reusing whatever is there`);
+    log("quire", `port ${STUDIO_PORT} already in use — reusing whatever is there`);
   } else {
     const win = process.platform === "win32";
     supervise("studio", win ? "inkos.cmd" : "inkos",
@@ -177,11 +177,11 @@ function openAppWindow(url, { width = 1280, height = 860 } = {}) {
 
   const studioUrl = `http://localhost:${STUDIO_PORT}`;
   const panelUrl = `http://127.0.0.1:${SHIM_PORT}/`;
-  log("inkdesk", `control panel — ${panelUrl}`);
-  log("inkdesk", `studio        — ${studioUrl}`);
-  log("inkdesk", "Ctrl+C stops both servers");
+  log("quire", `control panel — ${panelUrl}`);
+  log("quire", `studio        — ${studioUrl}`);
+  log("quire", "Ctrl+C stops both servers");
   if (OPEN) openAppWindow(panelUrl, { width: 1120, height: 820 });
 })().catch((e) => {
-  log("inkdesk", `fatal: ${e.message}`);
+  log("quire", `fatal: ${e.message}`);
   shutdown(1);
 });

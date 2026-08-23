@@ -1,7 +1,7 @@
 // The 50-style register vocabulary, as data.
 //
 // Lifted from ideaverse-skills/skills/mag-design/references/design-styles.md so
-// the shim can reach it on a machine that has InkDesk but not the skills repo.
+// the shim can reach it on a machine that has Quire but not the skills repo.
 // The tiering is the load-bearing part: a Tier 3 prop list has nothing to say
 // about the fortieth page of a magazine, so only Tier 1 may run a section.
 //

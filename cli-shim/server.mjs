@@ -482,7 +482,7 @@ createServer((req, res) => {
 
   if (path === "/affinity/status") return handle(affinity.status());
   if (path === "/comfy/status") return handle(comfy.status());
-  // Installing ComfyUI is the one setup step InkDesk can do for the user; the
+  // Installing ComfyUI is the one setup step Quire can do for the user; the
   // plan is a separate call so the panel can show the size before committing
   // ~17GB of download.
   if (path === "/comfy/install-plan") return handle(comfyInstall.plan({ magRoot: mag.MAG_ROOT }));

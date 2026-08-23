@@ -18,10 +18,12 @@ const HOME = homedir();
 const SHIM = process.env.SHIM_SELF || `http://127.0.0.1:${process.env.SHIM_PORT || 8787}`;
 
 // Prefer the magazine folder the user already works in; fall back to the
-// InkDesk workspace so a fresh machine still has somewhere to write.
+// Quire workspace so a fresh machine still has somewhere to write.
 export const MAG_ROOT = process.env.MAG_ROOT
-  || [join(HOME, "IDEAVERSE", "Magazine"), join(process.env.INKDESK_WORKSPACE || join(HOME, "InkDesk"), "Magazine")]
-    .find(existsSync) || join(HOME, "InkDesk", "Magazine");
+  || [join(HOME, "IDEAVERSE", "Magazine"),
+      join(process.env.QUIRE_WORKSPACE || join(HOME, "Quire"), "Magazine"),
+      join(HOME, "InkDesk", "Magazine")]        // pre-rename workspace
+    .find(existsSync) || join(HOME, "Quire", "Magazine");
 
 const issuesDir = () => join(MAG_ROOT, "issues");
 const dirOf = (id) => join(issuesDir(), id);
