@@ -174,25 +174,43 @@ async function showVersion() {
 }
 let pendingUpdate = null;
 
+/** Say when the last check happened, so a check that finds nothing still reads
+ *  as a check that ran. */
+function stamp() {
+  const line = $("#verLine");
+  if (!line) return;
+  const t = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  line.textContent = `Quire ${appVersion || ""} · checked ${t}`.replace("  ", " ");
+}
+
 async function checkUpdate({ silent } = {}) {
   const row = $("#updateRow"), msg = $("#updateMsg"), btn = $("#updateBtn");
   if (!row) return null;
   if (!invoke) { msg.textContent = "Updates unavailable outside the app"; return null; }
   row.classList.add("busy");
+  msg.textContent = "Checking for updates…";
   try {
     const meta = await invoke("plugin:updater|check", {});
     row.classList.remove("busy");
     localStorage.setItem(LAST_CHECK, String(Date.now()));
-    if (!meta || !meta.available) {
+    stamp();
+    // `check` returns the update, or null when there is none. It has no
+    // `available` flag - that belongs to the JS binding's Update class, which
+    // this app does not use. Testing for it discarded every update that was
+    // actually found and reported "up to date" instead, so pressing Check
+    // rewrote the same sentence and looked like a dead button.
+    if (!meta) {
       msg.textContent = appVersion ? `Quire ${appVersion} is up to date` : "Quire is up to date";
       btn.hidden = true;
       return null;
     }
     pendingUpdate = meta;              // meta.rid is the handle install needs
-    localStorage.setItem(LAST_CHECK, String(Date.now()));
     msg.textContent = `Version ${meta.version} available`;
     btn.hidden = false;
-    if (localStorage.getItem(AUTO_KEY) === "1" && !silent) installUpdate();
+    // Automatic means the launch check installs it. It used to be gated on
+    // `!silent`, which is only the manual check - so the one path that made
+    // the setting worth having was the path it skipped.
+    if (localStorage.getItem(AUTO_KEY) === "1") installUpdate();
     return meta;
   } catch (e) {
     row.classList.remove("busy");
@@ -209,9 +227,13 @@ async function installUpdate() {
   try {
     // Progress arrives on a Channel when the core API exposes one; without it
     // the download still runs, it just cannot report a percentage.
+    // The Rust command takes the channel by value, not as an Option, so there
+    // is no version of this call without one. Failing here is better than
+    // sending undefined and getting an opaque deserialization error.
     const Channel = window.__TAURI__?.core?.Channel;
+    if (!Channel) throw new Error("no Channel in the Tauri core API");
     let onEvent;
-    if (Channel) {
+    {
       let got = 0, total = 0;
       onEvent = new Channel();
       onEvent.onmessage = (ev) => {
@@ -224,8 +246,6 @@ async function installUpdate() {
         }
         if (ev.event === "Finished") msg.textContent = "Installing…";
       };
-    } else {
-      msg.textContent = "Downloading…";
     }
     await invoke("plugin:updater|download_and_install", { rid: pendingUpdate.rid, onEvent });
     await invoke("plugin:process|restart");
