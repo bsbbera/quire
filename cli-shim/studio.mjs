@@ -106,8 +106,15 @@ function installStudioPatch(entry) {
     const early = '<script>(function(){var f=function(){'
       + 'var w=document.createTreeWalker(document.body||document.documentElement,4),n,h=[];'
       + 'while((n=w.nextNode()))if(n.textContent.indexOf("InkOS")>-1)h.push(n);'
-      + 'for(var i=0;i<h.length;i++)h[i].textContent='
-      + 'h[i].textContent.replace(/InkOS Studio/g,"Quire Studio").replace(/InkOS/g,"Quire");};'
+      + 'for(var i=0;i<h.length;i++){var p=h[i].parentElement;'
+      // The attribution is the one place the name must survive. This script
+      // runs before the patch and again on every mutation, so without the
+      // exemption it rewrites the AGPL notice into "Workbench: Quire Studio"
+      // moments after the patch writes the correct one - crediting the wrong
+      // project, which is worse than not styling the notice at all.
+      + 'if(p&&p.closest&&p.closest(".quire-attrib"))continue;'
+      + 'h[i].textContent='
+      + 'h[i].textContent.replace(/InkOS Studio/g,"Quire Studio").replace(/InkOS/g,"Quire");}};'
       + 'new MutationObserver(f).observe(document.documentElement,{childList:true,subtree:true,characterData:true});'
       + 'document.addEventListener("DOMContentLoaded",f);})();<\/script>';
 
