@@ -1,0 +1,30 @@
+{
+  "name": "IDEAVERSE",
+  "version": "0.1.0",
+  "language": "en",
+  "llm": {
+    "provider": "openai",
+    "service": "custom:Env LLM",
+    "configSource": "studio",
+    "baseUrl": "http://127.0.0.1:8787/v1",
+    "model": "devin/claude-5-fable-high",
+    "apiFormat": "chat",
+    "stream": true,
+    "services": [
+      {
+        "service": "custom",
+        "name": "Env LLM",
+        "baseUrl": "http://127.0.0.1:8787/v1"
+      }
+    ],
+    "defaultModel": "devin/claude-5-fable-high"
+  },
+  "notify": [],
+  "daemon": {
+    "schedule": {
+      "radarCron": "0 */6 * * *",
+      "writeCron": "*/15 * * * *"
+    },
+    "maxConcurrentBooks": 3
+  }
+}

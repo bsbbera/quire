@@ -1,0 +1,28 @@
+# Heavy working data, not source. Backed up separately, never versioned here.
+Books/
+Magazine/
+UI-Vault/
+radar/
+desktop/node_modules/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+desktop/build.log
+_backups/
+node_modules/
+*.afpub
+*.afpub~lock~
+*.png
+*.jpg
+.inkos/
+
+# Secrets and browser/agent profile state — never versioned.
+.env
+.env.*
+*.key
+.window-profile/
+.agents/
+.impeccable/
+.claude/settings.local.json
+
+# Its own git repo with a GitHub remote — versioned there, not here.
+ideaverse-skills/

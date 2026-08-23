@@ -1,0 +1,49 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "InkDesk",
+  "version": "0.1.0",
+  "identifier": "com.subhadip.inkdesk",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "InkDesk",
+        "width": 1120,
+        "height": 820,
+        "minWidth": 360,
+        "minHeight": 480,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data: http://127.0.0.1:8787; style-src 'self' 'unsafe-inline'; frame-src http://127.0.0.1:4567; connect-src 'self' http://127.0.0.1:8787 http://127.0.0.1:4567"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": {
+      "../../cli-shim": "cli-shim"
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    },
+    "shortDescription": "InkOS with local agent-CLI model providers",
+    "longDescription": "InkDesk runs InkOS Studio against the agent CLIs installed on your machine (Claude Code, Codex, Devin, Antigravity), exposing every model they offer through one local OpenAI-compatible endpoint."
+  }
+}

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>InkDesk</title>
+<style>
+/* ---------------------------------------------------------------------------
+   Everything below is driven by tokens. Restyle the whole app by editing :root
+   — no rule hardcodes a colour, a radius, a font size, or a column count.
+   Layout is auto-fit/clamp throughout, so it reflows from a 320px strip to a
+   wide window without breakpoints to maintain.
+--------------------------------------------------------------------------- */
+:root {
+  --bg:#faf9f7; --panel:#fff; --panel-2:#f4f2ee; --ink:#1c1a17; --muted:#6f6a62;
+  --line:#e3ded6; --accent:#c96442; --accent-ink:#fff; --ok:#2e7d5b; --warn:#b4541f;
+  --radius:14px; --radius-sm:9px; --gap:clamp(.6rem,1.6vw,1.1rem);
+  --pad:clamp(.85rem,2.4vw,1.5rem);
+  --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Inter,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"Cascadia Code",Consolas,monospace;
+  --fs:clamp(.9rem,.4vw + .82rem,1rem);
+  --fs-sm:clamp(.74rem,.25vw + .69rem,.83rem);
+  --fs-lg:clamp(1.15rem,1.1vw + .9rem,1.6rem);
+  --card-min:min(230px,100%);       /* the only "column" knob: grid auto-fits */
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px -12px rgba(0,0,0,.18);
+  --speed:.18s;
+}
+:root[data-theme="dark"], :root:not([data-theme="light"]) {
+  @media (prefers-color-scheme: dark) {
+    --bg:#171614; --panel:#1f1e1b; --panel-2:#262421; --ink:#efece6; --muted:#9c968c;
+    --line:#332f2a; --accent:#d98466; --accent-ink:#171614; --ok:#5fb992; --warn:#e0925f;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#171614; --panel:#1f1e1b; --panel-2:#262421; --ink:#efece6; --muted:#9c968c;
+  --line:#332f2a; --accent:#d98466; --accent-ink:#171614; --ok:#5fb992; --warn:#e0925f;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.7);
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:var(--fs)/1.55 var(--font);
+  -webkit-font-smoothing:antialiased}
+button,select,input{font:inherit;color:inherit}
+h1,h2,h3{margin:0;font-weight:620;letter-spacing:-.01em}
+
+/* Shell: header / content / footer. Content scrolls, chrome stays put. */
+.shell{min-height:100vh;display:grid;grid-template-rows:auto 1fr auto}
+header{display:flex;flex-wrap:wrap;gap:var(--gap);align-items:center;
+  padding:var(--pad);border-bottom:1px solid var(--line);background:var(--panel)}
+.brand{display:flex;align-items:baseline;gap:.5rem;margin-right:auto}
+.brand b{font-size:var(--fs-lg)}
+.brand span{color:var(--muted);font-size:var(--fs-sm)}
+main{padding:var(--pad);display:grid;gap:calc(var(--gap) * 1.5);align-content:start}
+footer{padding:var(--pad);border-top:1px solid var(--line);background:var(--panel);
+  color:var(--muted);font-size:var(--fs-sm);display:flex;flex-wrap:wrap;gap:var(--gap)}
+
+.row{display:flex;flex-wrap:wrap;gap:var(--gap);align-items:center}
+.grow{flex:1 1 auto;min-width:0}
+.section-head{display:flex;flex-wrap:wrap;gap:var(--gap);align-items:baseline}
+.section-head p{margin:0;color:var(--muted);font-size:var(--fs-sm)}
+
+/* Provider cards: auto-fit means the column count follows the window. */
+.providers{display:grid;gap:var(--gap);
+  grid-template-columns:repeat(auto-fit,minmax(var(--card-min),1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:var(--pad);display:grid;gap:.55rem;cursor:pointer;text-align:left;
+  transition:border-color var(--speed),box-shadow var(--speed),transform var(--speed)}
+.card:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card[aria-pressed="true"]{border-color:var(--accent);box-shadow:var(--shadow)}
+.card-top{display:flex;align-items:center;gap:.6rem;min-width:0}
+.logo{width:1.6rem;height:1.6rem;flex:none;border-radius:6px;object-fit:contain;
+  background:var(--panel-2);padding:.15rem}
+.card-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta{color:var(--muted);font-size:var(--fs-sm);font-family:var(--mono);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{font-size:var(--fs-sm);padding:.1rem .5rem;border-radius:999px;
+  background:var(--panel-2);color:var(--muted);white-space:nowrap}
+.pill.on{background:color-mix(in oklab,var(--ok) 18%,transparent);color:var(--ok)}
+
+/* Model picker */
+.picker{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:var(--pad);display:grid;gap:var(--gap)}
+.field{display:grid;gap:.35rem;flex:1 1 min(320px,100%)}
+.field label{font-size:var(--fs-sm);color:var(--muted)}
+select,input[type=search]{width:100%;padding:.6rem .7rem;border:1px solid var(--line);
+  border-radius:var(--radius-sm);background:var(--panel-2)}
+select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.active{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;
+  padding:.6rem .75rem;border-radius:var(--radius-sm);background:var(--panel-2);
+  font-family:var(--mono);font-size:var(--fs-sm);word-break:break-all}
+
+button.btn{padding:.6rem 1rem;border-radius:var(--radius-sm);border:1px solid var(--line);
+  background:var(--panel-2);cursor:pointer;transition:background var(--speed)}
+button.btn:hover{background:var(--line)}
+button.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+button.btn.primary:hover{filter:brightness(1.06)}
+button.btn:disabled{opacity:.5;cursor:default}
+.icon-btn{border:1px solid var(--line);background:var(--panel-2);border-radius:var(--radius-sm);
+  padding:.4rem .6rem;cursor:pointer}
+
+.toast{position:fixed;inset-block-end:var(--pad);inset-inline:var(--pad);margin-inline:auto;
+  width:max-content;max-width:calc(100% - 2*var(--pad));
+  background:var(--ink);color:var(--bg);padding:.6rem 1rem;border-radius:999px;
+  font-size:var(--fs-sm);opacity:0;transform:translateY(.5rem);pointer-events:none;
+  transition:opacity var(--speed),transform var(--speed)}
+.toast.show{opacity:1;transform:none}
+.empty{color:var(--muted);font-size:var(--fs-sm)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="brand"><b>InkDesk</b><span id="sub">connecting…</span></div>
+    <button class="icon-btn" id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+    <button class="btn" id="refresh">Refresh</button>
+    <button class="btn primary" id="studio">Open Studio</button>
+  </header>
+
+  <main>
+    <section>
+      <div class="section-head">
+        <h2>Provider</h2>
+        <p>Detected automatically. Selection is written to <code>~/.inkos/.env</code> and survives restarts.</p>
+      </div>
+      <div class="providers" id="providers"></div>
+    </section>
+
+    <section class="picker">
+      <div class="section-head"><h2>Model</h2><p id="count"></p></div>
+      <div class="row">
+        <div class="field">
+          <label for="search">Filter</label>
+          <input type="search" id="search" placeholder="e.g. opus, gemini, codex" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="model">Model</label>
+          <select id="model"></select>
+        </div>
+      </div>
+      <div class="active"><span class="pill" id="activePill">active</span><span id="activeModel">—</span></div>
+    </section>
+  </main>
+
+  <footer>
+    <span class="grow" id="foot">—</span>
+    <span id="langFoot"></span>
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const state = { status: null, models: [], cli: null, model: null };
+
+const theme = localStorage.getItem("inkdesk-theme");
+if (theme) document.documentElement.dataset.theme = theme;
+$("#theme").onclick = () => {
+  const cur = document.documentElement.dataset.theme
+    || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  const next = cur === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem("inkdesk-theme", next);
+};
+
+let toastTimer;
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+function renderProviders() {
+  const box = $("#providers");
+  box.innerHTML = "";
+  if (!state.status?.agents?.length) {
+    box.innerHTML = '<p class="empty">No agent CLIs detected on PATH.</p>';
+    return;
+  }
+  for (const a of state.status.agents) {
+    const card = document.createElement("button");
+    card.className = "card";
+    card.type = "button";
+    card.setAttribute("aria-pressed", String(a.id === state.cli));
+    card.innerHTML = `
+      <div class="card-top">
+        <img class="logo" src="/assets/${a.id}" alt="" onerror="this.style.visibility='hidden'">
+        <span class="card-name">${a.id}</span>
+        <span class="pill on" style="margin-left:auto">${a.models}</span>
+      </div>
+      <div class="meta" title="${a.version}">${a.version}</div>`;
+    card.onclick = () => { state.cli = a.id; state.model = null; renderProviders(); renderModels(); };
+    box.appendChild(card);
+  }
+}
+
+function renderModels() {
+  const sel = $("#model");
+  const q = $("#search").value.trim().toLowerCase();
+  const mine = state.models.filter((m) => m.owned_by === state.cli);
+  const shown = q ? mine.filter((m) => m.id.toLowerCase().includes(q)) : mine;
+  sel.innerHTML = "";
+  for (const m of shown) {
+    const o = document.createElement("option");
+    o.value = m.id;
+    o.textContent = m.id.split("/").slice(1).join("/");
+    sel.appendChild(o);
+  }
+  if (state.model && shown.some((m) => m.id === state.model)) sel.value = state.model;
+  $("#count").textContent = `${shown.length} of ${mine.length} for ${state.cli ?? "—"} · ${state.models.length} total`;
+  sel.disabled = shown.length === 0;
+}
+
+async function save(model) {
+  const r = await fetch("/config", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ model }),
+  });
+  const j = await r.json();
+  if (!j.ok) return toast("save failed: " + (j.error || "unknown"));
+  state.model = model;
+  $("#activeModel").textContent = model;
+  toast("saved — " + model);
+}
+
+$("#search").oninput = renderModels;
+$("#model").onchange = (e) => save(e.target.value);
+$("#studio").onclick = () => window.open(state.status?.studioUrl || "http://localhost:4567", "_blank");
+$("#refresh").onclick = () => load(true);
+
+async function load(force) {
+  try {
+    const [status, models, cfg] = await Promise.all([
+      fetch("/status" + (force ? "?fresh=1" : "")).then((r) => r.json()),
+      fetch("/v1/models").then((r) => r.json()),
+      fetch("/config").then((r) => r.json()),
+    ]);
+    state.status = status;
+    state.models = models.data;
+    state.model = cfg.model || null;
+    state.cli = (cfg.model && cfg.model.split("/")[0]) || status.agents[0]?.id || null;
+    $("#sub").textContent = `${status.agents.length} CLIs · ${status.total} models`;
+    $("#activeModel").textContent = state.model || "not set";
+    $("#foot").textContent = `shim :${status.port} · config ${cfg.path}`;
+    $("#langFoot").textContent = "lang " + status.lang;
+    renderProviders();
+    renderModels();
+  } catch (e) {
+    $("#sub").textContent = "shim unreachable";
+    toast("cannot reach shim: " + e.message);
+  }
+}
+load();
+</script>
+</body>
+</html>

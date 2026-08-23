@@ -1,0 +1,13 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Core permissions for the InkDesk shell.",
+  "windows": ["main", "studio"],
+  "permissions": [
+    "core:default",
+    "core:webview:allow-create-webview-window",
+    "core:window:allow-close",
+    "opener:default",
+    "shell:allow-open"
+  ]
+}

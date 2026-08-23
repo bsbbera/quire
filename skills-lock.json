@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "social-media-carousel": {
+      "source": "inferen-sh/skills",
+      "sourceType": "github",
+      "skillPath": "guides/social/social-media-carousel/SKILL.md",
+      "computedHash": "3487ae9f94461b19126786fc9ff053be0422b68b36954397a1926c821d013ea0"
+    }
+  }
+}

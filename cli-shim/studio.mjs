@@ -1,0 +1,125 @@
+// Starts the InkOS Studio server WITHOUT the browser.
+//
+// `inkos studio` unconditionally spawns `cmd /c start "" <url>`, which throws
+// the workbench into the user's default browser — the whole app then lives in
+// Chrome and the desktop window is left holding only the settings. There is no
+// flag to suppress it, so this reuses the CLI's own resolver + bootstrap and
+// spawns just the server half.
+import { execFileSync, spawn } from "node:child_process";
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+const PORT = process.env.STUDIO_PORT || "4567";
+const ROOT = process.env.INKDESK_WORKSPACE || join(homedir(), "InkDesk");
+
+/** Locate the globally-installed @actalk/inkos package. */
+function inkosRoot() {
+  const guesses = [
+    process.env.APPDATA && join(process.env.APPDATA, "npm/node_modules/@actalk/inkos"),
+    join(homedir(), "AppData/Roaming/npm/node_modules/@actalk/inkos"),
+    "/usr/local/lib/node_modules/@actalk/inkos",
+  ].filter(Boolean);
+  for (const g of guesses) if (existsSync(join(g, "package.json"))) return g;
+  // Last resort: ask npm. Slow (~1s) but only runs when the guesses miss.
+  try {
+    const prefix = execFileSync("npm", ["root", "-g"], { encoding: "utf8", shell: true }).trim();
+    const p = join(prefix, "@actalk/inkos");
+    if (existsSync(join(p, "package.json"))) return p;
+  } catch {}
+  return null;
+}
+
+const pkg = inkosRoot();
+if (!pkg) {
+  console.error("inkos not found — install it with `npm i -g @actalk/inkos`");
+  process.exit(1);
+}
+
+const load = (rel) => import(pathToFileURL(join(pkg, rel)).href);
+const { ensureProjectDirectoryInitialized } = await load("dist/project-bootstrap.js");
+const { resolveStudioLaunch } = await load("dist/commands/studio.js");
+
+await ensureProjectDirectoryInitialized(ROOT, { language: "en" });
+
+const launch = await resolveStudioLaunch(ROOT);
+if (!launch) {
+  console.error("InkOS Studio build not found next to the inkos CLI");
+  process.exit(1);
+}
+
+installStudioPatch(launch.studioEntry);
+
+/**
+ * Copy the InkDesk patch into Studio's own dist and reference it from its
+ * index.html. Studio ships minified with ~415 Chinese strings outside its i18n
+ * table, a hardcoded sidebar width and no progress display; this is the only
+ * seam to fix those without its source. Re-run on every launch so an
+ * `inkos update` that replaces the bundle gets re-patched instead of quietly
+ * reverting.
+ */
+function installStudioPatch(entry) {
+  try {
+    // entry is <studio>/dist/api/index.js — the served root is <studio>/dist.
+    const distDir = join(dirname(entry), "..");
+    const indexHtml = join(distDir, "index.html");
+    if (!existsSync(indexHtml)) return console.warn("studio patch: index.html not found");
+
+    // Only /assets/* is served statically — anything else falls through to the
+    // SPA and comes back as index.html.
+    const src = join(dirname(fileURLToPath(import.meta.url)), "studio-patch");
+    for (const f of ["patch.css", "patch.js", "mag.css", "mag.js"]) {
+      copyFileSync(join(src, f), join(distDir, "assets", "inkdesk-" + f));
+    }
+
+    let html = readFileSync(indexHtml, "utf8");
+    if (html.includes("inkdesk-mag.js")) return; // already wired
+    // An older build wired only the first patch — strip those tags so the full
+    // set is injected once rather than appended alongside them.
+    html = html.replace(/^.*inkdesk-patch\.(css|js).*\r?\n/gm, "");
+
+    html = html.replace("</head>", [
+      '    <link rel="stylesheet" href="/assets/inkdesk-patch.css">',
+      '    <link rel="stylesheet" href="/assets/inkdesk-mag.css">',
+      '    <script src="/assets/inkdesk-patch.js" defer></script>',
+      '    <script src="/assets/inkdesk-mag.js" defer></script>',
+      "  </head>",
+    ].join("\n"));
+    writeFileSync(indexHtml, html);
+    console.log("studio patch installed (panels, English, progress, magazine)");
+  } catch (e) {
+    // A failed patch must never stop Studio from starting.
+    console.warn("studio patch skipped: " + e.message);
+  }
+}
+
+const child = spawn(launch.command, launch.args, {
+  cwd: ROOT,
+  stdio: "inherit",
+  shell: /\.(cmd|bat)$/i.test(launch.command),
+  env: { ...process.env, INKOS_STUDIO_PORT: PORT },
+});
+// Studio deliberately ignores INKOS_LLM_* from the environment (inkos-core:
+// effective-llm-config warns about exactly this), so the model the settings
+// drawer saves would never reach it. Its own import-env route converts that
+// env into the `services` entry Studio does read — poke it once it is up, or
+// the workbench sits behind "Set up models" with no provider at all.
+(async () => {
+  const url = `http://127.0.0.1:${PORT}`;
+  for (let i = 0; i < 60; i++) {
+    try {
+      const r = await fetch(`${url}/api/v1/services/config/import-env`, { method: "POST" });
+      if (r.ok) return console.log("studio model config synced from ~/.inkos/.env");
+      if (r.status === 400) return console.warn("studio config not synced: no importable env");
+    } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  console.warn("studio config sync timed out");
+})();
+
+child.on("exit", (code) => process.exit(code ?? 0));
+child.on("error", (e) => {
+  console.error("failed to start studio: " + e.message);
+  process.exit(1);
+});

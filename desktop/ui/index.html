@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>InkDesk</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<!-- Studio is the app. It fills the window; everything else floats over it. -->
+<iframe id="frame" title="InkOS Studio" hidden></iframe>
+
+<!-- Boot cover: the only thing visible until Studio answers. -->
+<div class="cover" id="cover">
+  <div class="cover-card">
+    <b class="wordmark">InkDesk</b>
+    <p id="sub">starting…</p>
+    <ul class="steps">
+      <li id="stepShim"><span class="dot"></span>model shim</li>
+      <li id="stepStudio"><span class="dot"></span>InkOS Studio</li>
+    </ul>
+    <div id="notes" class="empty"></div>
+  </div>
+</div>
+
+<!-- Settings entry point: shows what model is live, opens the drawer. -->
+<button class="fab" id="openSettings" hidden>
+  <span class="fab-dot"></span><span id="fabModel">model</span>
+</button>
+
+<div class="scrim" id="scrim" hidden></div>
+
+<aside class="drawer" id="drawer" hidden aria-label="Settings">
+  <header>
+    <b>Settings</b>
+    <button class="icon-btn" id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+    <button class="icon-btn" id="refresh" title="Re-scan CLIs" aria-label="Re-scan CLIs">⟳</button>
+    <button class="icon-btn" id="closeSettings" aria-label="Close">✕</button>
+  </header>
+
+  <div class="drawer-body">
+    <section>
+      <div class="section-head">
+        <h2>Provider</h2>
+        <p>Detected automatically. Your choice is saved and reused on the next launch.</p>
+      </div>
+      <div class="providers" id="providers"></div>
+    </section>
+
+    <section class="picker">
+      <div class="section-head"><h2>Model</h2><p id="count"></p></div>
+      <div class="field">
+        <label for="search">Filter</label>
+        <input type="search" id="search" placeholder="e.g. opus, gemini, codex" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="model">Model</label>
+        <select id="model"></select>
+      </div>
+      <div class="active"><span class="pill" id="activePill">active</span><span id="activeModel">—</span></div>
+    </section>
+  </div>
+
+  <footer><span class="grow" id="foot">—</span><span id="langFoot"></span></footer>
+</aside>
+
+<div class="toast" id="toast"></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+/* InkDesk patch styles for InkOS Studio.
+   Studio is Tailwind-based; these use its CSS variables (--border, --background,
+   --foreground, --primary) so the patch follows Studio's own light/dark theme
+   instead of hardcoding colours next to it. */
+
+/* --- resizable sidebar grip --- */
+.inkdesk-grip {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: -3px;
+  width: 7px;
+  cursor: col-resize;
+  z-index: 40;
+  background: transparent;
+}
+.inkdesk-grip::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 3px;
+  width: 2px;
+  background: transparent;
+  transition: background .15s;
+}
+.inkdesk-grip:hover::after {
+  background: hsl(var(--primary, 12 60% 52%));
+}
+body.inkdesk-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+/* --- progress panel --- */
+.inkdesk-progress {
+  position: fixed;
+  inset-block-end: 1rem;
+  inset-inline-end: 1rem;
+  z-index: 9999;
+  width: min(300px, calc(100vw - 2rem));
+  display: grid;
+  gap: .5rem;
+  padding: .75rem .85rem;
+  border-radius: 12px;
+  border: 1px solid hsl(var(--border, 30 12% 88%));
+  background: hsl(var(--background, 40 20% 98%));
+  color: hsl(var(--foreground, 30 10% 12%));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 12px 32px -14px rgba(0, 0, 0, .35);
+  font: 12px/1.45 ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+}
+.inkdesk-progress[hidden] { display: none !important; }
+
+.inkdesk-progress .ip-head { display: flex; align-items: center; gap: .5rem; }
+.inkdesk-progress .ip-title { font-size: 12px; font-weight: 650; letter-spacing: .01em; }
+.inkdesk-progress .ip-x {
+  margin-inline-start: auto;
+  border: 0;
+  background: none;
+  color: inherit;
+  opacity: .5;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 .2rem;
+}
+.inkdesk-progress .ip-x:hover { opacity: 1; }
+
+.inkdesk-progress .ip-stages { display: grid; gap: .25rem; }
+.inkdesk-progress .ip-stage {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  opacity: .5;
+  text-transform: capitalize;
+}
+.inkdesk-progress .ip-stage.run,
+.inkdesk-progress .ip-stage.done,
+.inkdesk-progress .ip-stage.fail { opacity: 1; }
+.inkdesk-progress .ip-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: currentColor; opacity: .3; flex: none;
+}
+.inkdesk-progress .ip-stage.run  .ip-dot { opacity: 1; animation: inkdesk-pulse 1.1s infinite; }
+.inkdesk-progress .ip-stage.done .ip-dot { opacity: 1; background: #2e9c6e; }
+.inkdesk-progress .ip-stage.fail .ip-dot { opacity: 1; background: #c8531f; }
+@keyframes inkdesk-pulse { 50% { opacity: .25; } }
+
+.inkdesk-progress .ip-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: hsl(var(--muted, 30 10% 92%));
+  overflow: hidden;
+}
+.inkdesk-progress .ip-bar i {
+  display: block;
+  height: 100%;
+  width: 35%;
+  border-radius: inherit;
+  background: hsl(var(--primary, 12 60% 52%));
+  opacity: 0;
+}
+/* Chapter length is not known ahead of time, so the bar is deliberately
+   indeterminate — the char counter underneath carries the real number. */
+.inkdesk-progress.running .ip-bar i {
+  opacity: 1;
+  animation: inkdesk-slide 1.3s infinite ease-in-out;
+}
+@keyframes inkdesk-slide {
+  0%   { margin-inline-start: -35%; }
+  100% { margin-inline-start: 100%; }
+}
+
+.inkdesk-progress .ip-meta { opacity: .65; font-variant-numeric: tabular-nums; }
+.inkdesk-progress.bad { border-color: #c8531f; }
+.inkdesk-progress.bad .ip-meta { opacity: 1; color: #c8531f; }
+
+@media (prefers-reduced-motion: reduce) {
+  .inkdesk-progress * { animation: none !important; }
+}

@@ -1,0 +1,144 @@
+/* ---------------------------------------------------------------------------
+   Everything below is driven by tokens. Restyle the whole app by editing :root
+   — no rule hardcodes a colour, a radius, a font size, or a column count.
+   Layout is auto-fit/clamp throughout, so it reflows from a 320px strip to a
+   wide window without breakpoints to maintain.
+--------------------------------------------------------------------------- */
+:root {
+  --bg:#faf9f7; --panel:#fff; --panel-2:#f4f2ee; --ink:#1c1a17; --muted:#6f6a62;
+  --line:#e3ded6; --accent:#c96442; --accent-ink:#fff; --ok:#2e7d5b; --warn:#b4541f;
+  --radius:14px; --radius-sm:9px; --gap:clamp(.6rem,1.6vw,1.1rem);
+  --pad:clamp(.85rem,2.4vw,1.5rem);
+  --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Inter,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"Cascadia Code",Consolas,monospace;
+  --fs:clamp(.9rem,.4vw + .82rem,1rem);
+  --fs-sm:clamp(.74rem,.25vw + .69rem,.83rem);
+  --fs-lg:clamp(1.15rem,1.1vw + .9rem,1.6rem);
+  --card-min:min(230px,100%);       /* the only "column" knob: grid auto-fits */
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px -12px rgba(0,0,0,.18);
+  --speed:.18s;
+}
+:root[data-theme="dark"], :root:not([data-theme="light"]) {
+  @media (prefers-color-scheme: dark) {
+    --bg:#171614; --panel:#1f1e1b; --panel-2:#262421; --ink:#efece6; --muted:#9c968c;
+    --line:#332f2a; --accent:#d98466; --accent-ink:#171614; --ok:#5fb992; --warn:#e0925f;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#171614; --panel:#1f1e1b; --panel-2:#262421; --ink:#efece6; --muted:#9c968c;
+  --line:#332f2a; --accent:#d98466; --accent-ink:#171614; --ok:#5fb992; --warn:#e0925f;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.7);
+}
+*,*::before,*::after{box-sizing:border-box}
+/* Author `display` on .cover/.drawer/.fab outranks the UA [hidden] rule, so
+   toggling the attribute did nothing without this. */
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:var(--fs)/1.55 var(--font);
+  -webkit-font-smoothing:antialiased}
+button,select,input{font:inherit;color:inherit}
+h1,h2,h3{margin:0;font-weight:620;letter-spacing:-.01em}
+
+/* ---------------------------------------------------------------------------
+   Layout: Studio fills the window. The boot cover, the model FAB and the
+   settings drawer float above it — one window, one interface.
+--------------------------------------------------------------------------- */
+html,body{height:100%}
+body{overflow:hidden}
+#frame{position:fixed;inset:0;width:100%;height:100%;border:0;background:var(--bg)}
+
+.cover{position:fixed;inset:0;display:grid;place-items:center;padding:var(--pad);
+  background:var(--bg);z-index:30}
+.cover-card{width:min(420px,100%);display:grid;gap:var(--gap);text-align:center;
+  justify-items:center}
+.wordmark{font-size:var(--fs-lg);letter-spacing:-.02em}
+.cover-card p{margin:0;color:var(--muted);font-size:var(--fs-sm)}
+
+/* Floating model chip — the way into settings. */
+.fab{position:fixed;inset-block-end:var(--pad);inset-inline-end:var(--pad);z-index:20;
+  display:flex;align-items:center;gap:.5rem;max-width:calc(100% - 2*var(--pad));
+  padding:.5rem .9rem;border-radius:999px;border:1px solid var(--line);
+  background:var(--panel);box-shadow:var(--shadow);cursor:pointer;
+  font-size:var(--fs-sm);font-family:var(--mono);
+  transition:transform var(--speed),box-shadow var(--speed)}
+.fab:hover{transform:translateY(-1px)}
+.fab span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fab-dot{width:.5rem;height:.5rem;border-radius:50%;background:var(--ok);flex:none}
+
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40}
+
+/* Drawer: a side panel on a wide window, a full sheet on a narrow one. */
+.drawer{position:fixed;inset-block:0;inset-inline-end:0;z-index:50;
+  width:min(460px,100%);background:var(--panel);border-inline-start:1px solid var(--line);
+  box-shadow:var(--shadow);display:grid;grid-template-rows:auto 1fr auto}
+.drawer header{display:flex;gap:.4rem;align-items:center;padding:var(--pad);
+  border-bottom:1px solid var(--line)}
+.drawer header b{margin-inline-end:auto;font-size:var(--fs-lg)}
+.drawer-body{overflow:auto;padding:var(--pad);display:grid;gap:calc(var(--gap)*1.5);
+  align-content:start}
+.drawer footer{padding:var(--pad);border-top:1px solid var(--line);color:var(--muted);
+  font-size:var(--fs-sm);display:flex;flex-wrap:wrap;gap:var(--gap)}
+.grow{flex:1 1 auto;min-width:0}
+.section-head{display:flex;flex-wrap:wrap;gap:var(--gap);align-items:baseline}
+.section-head p{margin:0;color:var(--muted);font-size:var(--fs-sm)}
+
+/* Provider cards: auto-fit means the column count follows the window. */
+.providers{display:grid;gap:var(--gap);
+  grid-template-columns:repeat(auto-fit,minmax(var(--card-min),1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:var(--pad);display:grid;gap:.55rem;cursor:pointer;text-align:left;
+  transition:border-color var(--speed),box-shadow var(--speed),transform var(--speed)}
+.card:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card[aria-pressed="true"]{border-color:var(--accent);box-shadow:var(--shadow)}
+.card-top{display:flex;align-items:center;gap:.6rem;min-width:0}
+.logo{width:1.6rem;height:1.6rem;flex:none;border-radius:6px;object-fit:contain;
+  background:var(--panel-2);padding:.15rem}
+.card-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta{color:var(--muted);font-size:var(--fs-sm);font-family:var(--mono);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{font-size:var(--fs-sm);padding:.1rem .5rem;border-radius:999px;
+  background:var(--panel-2);color:var(--muted);white-space:nowrap}
+.pill.on{background:color-mix(in oklab,var(--ok) 18%,transparent);color:var(--ok)}
+
+/* Model picker */
+.picker{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:var(--pad);display:grid;gap:var(--gap)}
+.field{display:grid;gap:.35rem;flex:1 1 min(320px,100%)}
+.field label{font-size:var(--fs-sm);color:var(--muted)}
+select,input[type=search]{width:100%;padding:.6rem .7rem;border:1px solid var(--line);
+  border-radius:var(--radius-sm);background:var(--panel-2)}
+select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.active{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;
+  padding:.6rem .75rem;border-radius:var(--radius-sm);background:var(--panel-2);
+  font-family:var(--mono);font-size:var(--fs-sm);word-break:break-all}
+
+button.btn{padding:.6rem 1rem;border-radius:var(--radius-sm);border:1px solid var(--line);
+  background:var(--panel-2);cursor:pointer;transition:background var(--speed)}
+button.btn:hover{background:var(--line)}
+button.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+button.btn.primary:hover{filter:brightness(1.06)}
+button.btn:disabled{opacity:.5;cursor:default}
+.icon-btn{border:1px solid var(--line);background:var(--panel-2);border-radius:var(--radius-sm);
+  padding:.4rem .6rem;cursor:pointer}
+
+.toast{position:fixed;inset-block-end:var(--pad);inset-inline:var(--pad);margin-inline:auto;
+  width:max-content;max-width:calc(100% - 2*var(--pad));
+  background:var(--ink);color:var(--bg);padding:.6rem 1rem;border-radius:999px;
+  font-size:var(--fs-sm);opacity:0;transform:translateY(.5rem);pointer-events:none;
+  transition:opacity var(--speed),transform var(--speed)}
+.toast.show{opacity:1;transform:none}
+.empty{color:var(--muted);font-size:var(--fs-sm)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* --- desktop shell additions (boot screen) --- */
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:.5rem}
+.steps li{display:flex;align-items:center;gap:.6rem;color:var(--muted);font-size:var(--fs-sm)}
+.steps li.done{color:var(--ink)}
+.steps li.fail{color:var(--warn)}
+.dot{width:.6rem;height:.6rem;border-radius:50%;background:var(--line);flex:none}
+.steps li.done .dot{background:var(--ok)}
+.steps li.fail .dot{background:var(--warn)}
+#notes{white-space:pre-wrap}
+.toast.bad{background:var(--warn);color:#fff}
+.pill.on{background:color-mix(in oklab,var(--ok) 18%,transparent);color:var(--ok)}

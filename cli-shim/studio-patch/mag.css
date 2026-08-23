@@ -1,0 +1,241 @@
+/* InkDesk Magazine section — styled off Studio's own CSS variables so it reads
+   as part of the app in both themes rather than as an add-on. */
+
+.mag-root {
+  --pad: clamp(1rem, 3vw, 2.5rem);
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding: 0 var(--pad) 4rem;
+  color: hsl(var(--foreground, 30 10% 12%));
+  font: 15px/1.6 ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+}
+
+.mag-head {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: 1.1rem 0 .9rem;
+  background: hsl(var(--background, 40 20% 98%));
+  border-bottom: 1px solid hsl(var(--border, 30 12% 88%));
+}
+.mag-spacer { flex: 1; }
+.mag-crumb { display: flex; align-items: center; gap: .5rem; font-size: 15px; }
+.mag-sep { opacity: .4; }
+
+.mag-btn {
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: .45rem .85rem;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  background: hsl(var(--primary, 12 60% 52%));
+  color: hsl(var(--primary-foreground, 40 30% 98%));
+}
+.mag-btn.ghost {
+  background: transparent;
+  color: inherit;
+  border-color: hsl(var(--border, 30 12% 88%));
+}
+.mag-btn.ghost:hover { background: hsl(var(--secondary, 30 14% 94%)); }
+.mag-btn:disabled { opacity: .5; cursor: default; }
+.mag-link {
+  background: none; border: 0; padding: 0; font: inherit; cursor: pointer;
+  color: inherit; text-decoration: underline; text-underline-offset: 3px;
+}
+
+.mag-run { display: inline-flex; align-items: center; gap: .45rem; font-size: 13px; opacity: .8; }
+.mag-run i {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: hsl(var(--primary, 12 60% 52%));
+  animation: mag-pulse 1.1s infinite;
+}
+@keyframes mag-pulse { 50% { opacity: .25; } }
+
+.mag-err {
+  margin: 1rem 0; padding: .7rem .9rem; border-radius: 9px;
+  border: 1px solid #c8531f; color: #c8531f; font-size: 14px;
+}
+.mag-note { font-size: 13px; opacity: .65; }
+.mag-warn { margin-top: 1rem; padding: .7rem .9rem; border-radius: 9px; background: hsl(var(--secondary, 30 14% 94%)); font-size: 13px; }
+
+/* ---------------------------------------------------------------- empty */
+.mag-empty { max-width: 46ch; margin: 5rem auto; text-align: center; display: grid; gap: 1rem; justify-items: center; }
+.mag-empty h2 { font-size: 26px; font-weight: 600; }
+.mag-empty p { opacity: .7; }
+
+/* ----------------------------------------------------------------- list */
+.mag-grid {
+  display: grid; gap: 1rem; padding-top: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.mag-card {
+  display: grid; gap: .5rem; text-align: left; cursor: pointer;
+  padding: 1rem; border-radius: 12px; font: inherit; color: inherit;
+  border: 1px solid hsl(var(--border, 30 12% 88%));
+  background: hsl(var(--card, 40 20% 99%));
+}
+.mag-card:hover { border-color: hsl(var(--primary, 12 60% 52%)); }
+.mag-card-t { font-size: 17px; font-weight: 600; line-height: 1.3; }
+.mag-card-s, .mag-card-f { font-size: 13px; opacity: .65; }
+.mag-bars { display: grid; gap: .3rem; }
+.mag-bar { display: grid; grid-template-columns: 3.5rem 1fr auto; align-items: center; gap: .5rem; font-size: 11px; opacity: .8; }
+.mag-bar i {
+  display: block; height: 4px; border-radius: 999px; min-width: 2px;
+  background: hsl(var(--primary, 12 60% 52%));
+  box-shadow: 0 0 0 1px hsl(var(--border, 30 12% 88%)) inset;
+}
+
+/* ----------------------------------------------------------------- form */
+.mag-form { max-width: 32rem; padding-top: 2rem; display: grid; gap: 1rem; }
+.mag-form h2 { font-size: 22px; font-weight: 600; }
+.mag-form label { display: grid; gap: .35rem; font-size: 13px; opacity: .8; }
+.mag-in {
+  font: inherit; padding: .5rem .7rem; border-radius: 9px;
+  border: 1px solid hsl(var(--border, 30 12% 88%));
+  background: hsl(var(--background, 40 20% 98%)); color: inherit;
+}
+.mag-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+
+/* ---------------------------------------------------------------- issue */
+.mag-issue { padding-top: 1.5rem; display: grid; gap: 1.5rem; }
+.mag-meta { display: grid; gap: .8rem; }
+.mag-meta h1 { font-size: 30px; font-weight: 600; line-height: 1.2; }
+.mag-thesis { max-width: 62ch; opacity: .8; font-style: italic; }
+.mag-log {
+  font: 11px/1.5 ui-monospace, "Cascadia Code", monospace;
+  opacity: .6; max-height: 8.5rem; overflow-y: auto;
+}
+
+.mag-research { display: grid; gap: .4rem; }
+.mag-bucket {
+  border: 1px solid hsl(var(--border, 30 12% 88%));
+  border-radius: 9px; padding: .5rem .8rem;
+}
+.mag-bucket summary { cursor: pointer; font-size: 14px; font-weight: 600; }
+.mag-bucket summary b { font-weight: 400; opacity: .5; margin-inline-start: .4rem; }
+.mag-bucket ul { margin: .6rem 0 .2rem 1.1rem; display: grid; gap: .35rem; font-size: 13.5px; }
+.mag-bucket i { opacity: .6; font-style: normal; }
+.mag-bucket.warn { border-color: #c8531f; }
+
+/* ------------------------------------------------------------- flatplan */
+.mag-flat { display: flex; flex-wrap: wrap; gap: 1.1rem; }
+.mag-spread {
+  display: flex; gap: 2px; padding: 3px; border-radius: 5px;
+  background: hsl(var(--muted, 30 10% 92%));
+}
+.mag-page {
+  position: relative; overflow: hidden;
+  width: 96px; height: 136px;              /* A4 proportion, at thumbnail size */
+  display: flex; flex-direction: column; gap: 2px;
+  padding: .4rem; cursor: pointer; text-align: left;
+  font: inherit; color: inherit;
+  background: hsl(var(--card, 40 20% 99%));
+  border: 1px solid hsl(var(--border, 30 12% 88%));
+  border-radius: 3px;
+}
+.mag-page:hover { border-color: hsl(var(--primary, 12 60% 52%)); z-index: 1; }
+.mag-page img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .5; }
+.mag-page > span { position: relative; }
+.mag-n  { font-size: 10px; opacity: .5; font-variant-numeric: tabular-nums; }
+.mag-ty { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; opacity: .55; }
+.mag-ti { font-size: 11px; line-height: 1.25; font-weight: 550; overflow: hidden; }
+.mag-sec { margin-top: auto; font-size: 9px; opacity: .45; overflow: hidden; white-space: nowrap; }
+
+/* Density is the pacing signal the method is built on — show it at a glance. */
+.mag-page.d-D { border-left: 3px solid #6a8caf; }
+.mag-page.d-M { border-left: 3px solid #9c8f6a; }
+.mag-page.d-C { border-left: 3px solid #a35c3c; }
+.mag-page.written .mag-ti { opacity: 1; }
+.mag-page:not(.written) .mag-ti { opacity: .55; }
+
+/* ----------------------------------------------------------------- page */
+.mag-pageview { padding-top: 1.5rem; display: grid; gap: 1.2rem; }
+.mag-proof { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); gap: 2rem; align-items: start; }
+@media (max-width: 900px) { .mag-proof { grid-template-columns: 1fr; } }
+.mag-copy { max-width: 68ch; }
+.mag-kicker { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; opacity: .55; }
+.mag-copy h1 { font-size: 30px; font-weight: 600; line-height: 1.15; margin: .3rem 0 .6rem; }
+.mag-deck { font-size: 18px; line-height: 1.5; opacity: .85; margin-bottom: 1rem; }
+.mag-copy p { margin: 0 0 .85rem; }
+.mag-copy blockquote {
+  margin: 1.2rem 0; padding-inline-start: 1rem; font-size: 20px; line-height: 1.4;
+  border-inline-start: 3px solid hsl(var(--primary, 12 60% 52%)); font-style: italic;
+}
+.mag-furn { display: grid; gap: .5rem; margin-top: 1.2rem; font-size: 13px; }
+.mag-furn b {
+  display: inline-block; margin-inline-end: .5rem; font-size: 10px;
+  text-transform: uppercase; letter-spacing: .08em; opacity: .55;
+}
+.mag-art { display: grid; gap: .6rem; position: sticky; top: 5rem; }
+.mag-art img { width: 100%; border-radius: 9px; border: 1px solid hsl(var(--border, 30 12% 88%)); }
+.mag-noart {
+  display: grid; place-items: center; aspect-ratio: 3 / 2; border-radius: 9px;
+  border: 1px dashed hsl(var(--border, 30 12% 88%)); font-size: 13px; opacity: .5;
+}
+.mag-brief { font-size: 12px; line-height: 1.5; opacity: .7; }
+
+/* --------------------------------------------------------- integrations */
+.mag-int { padding-top: 1.5rem; display: grid; gap: .5rem; max-width: 54rem; }
+.mag-int h2 { font-size: 20px; font-weight: 600; margin-top: 1.2rem; }
+.mag-srv {
+  display: flex; align-items: center; gap: .7rem; flex-wrap: wrap;
+  padding: .7rem .9rem; border-radius: 9px;
+  border: 1px solid hsl(var(--border, 30 12% 88%));
+}
+.mag-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: #999; }
+.mag-dot.on { background: #2e9c6e; }
+.mag-dot.off { background: #b9b0a4; }
+.mag-dot.bad { background: #c8531f; }
+.mag-tools { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .2rem; }
+.mag-tools code {
+  font: 11px/1.4 ui-monospace, "Cascadia Code", monospace;
+  padding: .1rem .4rem; border-radius: 5px;
+  background: hsl(var(--secondary, 30 14% 94%));
+}
+
+@media (prefers-reduced-motion: reduce) { .mag-root * { animation: none !important; } }
+
+.mag-notes { width: 100%; min-height: 5rem; resize: vertical; line-height: 1.5; }
+.mag-bucket .mag-row { margin-top: .6rem; }
+
+.mag-fix { margin-top: .35rem; font-size: 13px; line-height: 1.45; max-width: 62ch; }
+.mag-fix b {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
+  padding: .1rem .35rem; border-radius: 4px;
+  background: hsl(var(--secondary, 30 14% 94%));
+}
+
+.mag-prog {
+  height: 5px; border-radius: 999px; margin: .5rem 0 .3rem;
+  background: hsl(var(--border, 30 12% 88%)); overflow: hidden;
+}
+.mag-prog i { display: block; height: 100%; background: hsl(var(--primary, 12 60% 52%)); transition: width .4s; }
+
+.mag-gate {
+  display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
+  padding: .85rem 1rem; border-radius: 10px;
+  border: 1px solid hsl(var(--border, 30 12% 88%));
+  background: hsl(var(--card, 40 20% 99%));
+}
+.mag-gate.ok { border-color: #2e9c6e; }
+
+.mag-design { display: grid; gap: .7rem; }
+.mag-design h3 { font-size: 17px; font-weight: 600; }
+.mag-worlds { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.mag-world {
+  display: grid; gap: .3rem; padding: .8rem; border-radius: 10px;
+  border: 1px solid hsl(var(--border, 30 12% 88%));
+  background: hsl(var(--card, 40 20% 99%));
+  font-size: 13px;
+}
+.mag-swatches { display: flex; gap: 3px; margin-bottom: .2rem; }
+.mag-swatches i {
+  width: 26px; height: 14px; border-radius: 3px; display: block;
+  box-shadow: 0 0 0 1px hsl(var(--border, 30 12% 88%)) inset;
+}
+.mag-idiom { font-style: italic; opacity: .8; line-height: 1.45; }
