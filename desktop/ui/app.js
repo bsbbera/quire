@@ -297,7 +297,14 @@ window.addEventListener("unhandledrejection", (e) => fatal(String(e.reason)));
   frame.hidden = false;
   // Studio has no Tauri API of its own, so the version rides in on the hash
   // and the patch renders it under the sidebar wordmark.
-  frame.src = state.studio + (appVersion ? "#qv=" + encodeURIComponent(appVersion) : "");
+  // The version rides in twice on purpose. The hash is what the patch reads to
+  // print the version in the sidebar; the query is a cache buster for
+  // index.html itself, which Studio serves with no cache headers - a hash
+  // alone never reaches the network, so an updated app kept booting the
+  // previous release's page and looked unchanged.
+  frame.src = state.studio + (appVersion
+    ? `/?b=${encodeURIComponent(appVersion)}#qv=${encodeURIComponent(appVersion)}`
+    : "");
   const lift = () => { $("#cover").hidden = true; };
   frame.addEventListener("load", lift, { once: true });
   // The port already answered, so never let a missing load event strand the
