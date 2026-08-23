@@ -128,8 +128,11 @@ function mark(el, ok) {
 }
 
 /* ------------------------------------------------------------------ updates
- * withGlobalTauri is on, so the updater and process plugins hang off
- * window.__TAURI__ and no bundler step is needed.
+ * The updater and process plugins are driven through invoke, NOT through
+ * window.__TAURI__.updater. withGlobalTauri exposes the core API only; plugin
+ * bindings ship as npm packages and would need a bundler. Reaching for the
+ * global left `api?.check` undefined, which hid the whole row - the update
+ * option was not missing from the drawer, it was deleting itself on boot.
  *
  * Checking is automatic; INSTALLING is not, unless the user opts in. Quire owns
  * two child processes and a relaunch mid-write is how a half-written chapter
@@ -140,29 +143,25 @@ const AUTO_KEY = "quire-auto-update";
 let pendingUpdate = null;
 
 async function checkUpdate({ silent } = {}) {
-  const api = window.__TAURI__?.updater;
   const row = $("#updateRow"), msg = $("#updateMsg"), btn = $("#updateBtn");
-  if (!api?.check) { if (row) row.hidden = true; return null; }
+  if (!row) return null;
+  if (!invoke) { msg.textContent = "Updates unavailable outside the app"; return null; }
   row.classList.add("busy");
   try {
-    const up = await api.check();
+    const meta = await invoke("plugin:updater|check", {});
     row.classList.remove("busy");
-    if (!up) {
+    if (!meta || !meta.available) {
       msg.textContent = "Quire is up to date";
       btn.hidden = true;
       return null;
     }
-    pendingUpdate = up;
-    msg.textContent = `Version ${up.version} available`;
+    pendingUpdate = meta;              // meta.rid is the handle install needs
+    msg.textContent = `Version ${meta.version} available`;
     btn.hidden = false;
-    // Auto mode still waits for a quiet moment rather than yanking the window
-    // out from under a running build.
     if (localStorage.getItem(AUTO_KEY) === "1" && !silent) installUpdate();
-    return up;
+    return meta;
   } catch (e) {
     row.classList.remove("busy");
-    // A private release feed 404s for an unauthenticated client, which is not
-    // an error worth shouting about on every launch.
     msg.textContent = silent ? "Update check unavailable" : "Update check failed: " + e;
     btn.hidden = true;
     return null;
@@ -174,18 +173,28 @@ async function installUpdate() {
   const msg = $("#updateMsg"), btn = $("#updateBtn");
   btn.disabled = true;
   try {
-    let got = 0, total = 0;
-    await pendingUpdate.downloadAndInstall((ev) => {
-      if (ev.event === "Started") total = ev.data.contentLength || 0;
-      if (ev.event === "Progress") {
-        got += ev.data.chunkLength || 0;
-        msg.textContent = total
-          ? `Downloading ${Math.round((got / total) * 100)}%`
-          : "Downloading…";
-      }
-      if (ev.event === "Finished") msg.textContent = "Installing…";
-    });
-    await window.__TAURI__?.process?.relaunch();
+    // Progress arrives on a Channel when the core API exposes one; without it
+    // the download still runs, it just cannot report a percentage.
+    const Channel = window.__TAURI__?.core?.Channel;
+    let onEvent;
+    if (Channel) {
+      let got = 0, total = 0;
+      onEvent = new Channel();
+      onEvent.onmessage = (ev) => {
+        if (ev.event === "Started") total = ev.data?.contentLength || 0;
+        if (ev.event === "Progress") {
+          got += ev.data?.chunkLength || 0;
+          msg.textContent = total
+            ? `Downloading ${Math.round((got / total) * 100)}%`
+            : "Downloading…";
+        }
+        if (ev.event === "Finished") msg.textContent = "Installing…";
+      };
+    } else {
+      msg.textContent = "Downloading…";
+    }
+    await invoke("plugin:updater|download_and_install", { rid: pendingUpdate.rid, onEvent });
+    await invoke("plugin:process|restart");
   } catch (e) {
     msg.textContent = "Update failed: " + e;
     btn.disabled = false;
