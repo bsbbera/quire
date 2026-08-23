@@ -7,7 +7,7 @@
   inset: 0;
   overflow-y: auto;
   padding: 0 var(--pad) 4rem;
-  color: hsl(var(--foreground, 30 10% 12%));
+  color: var(--foreground);
   font: 15px/1.6 ui-sans-serif, system-ui, "Segoe UI", sans-serif;
 }
 
@@ -19,8 +19,8 @@
   align-items: center;
   gap: .6rem;
   padding: 1.1rem 0 .9rem;
-  background: hsl(var(--background, 40 20% 98%));
-  border-bottom: 1px solid hsl(var(--border, 30 12% 88%));
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
 }
 .mag-spacer { flex: 1; }
 .mag-crumb { display: flex; align-items: center; gap: .5rem; font-size: 15px; }
@@ -33,15 +33,15 @@
   font: inherit;
   font-size: 14px;
   cursor: pointer;
-  background: hsl(var(--primary, 12 60% 52%));
-  color: hsl(var(--primary-foreground, 40 30% 98%));
+  background: var(--primary);
+  color: var(--primary-foreground);
 }
 .mag-btn.ghost {
   background: transparent;
   color: inherit;
-  border-color: hsl(var(--border, 30 12% 88%));
+  border-color: var(--border);
 }
-.mag-btn.ghost:hover { background: hsl(var(--secondary, 30 14% 94%)); }
+.mag-btn.ghost:hover { background: var(--secondary); }
 .mag-btn:disabled { opacity: .5; cursor: default; }
 .mag-link {
   background: none; border: 0; padding: 0; font: inherit; cursor: pointer;
@@ -51,7 +51,7 @@
 .mag-run { display: inline-flex; align-items: center; gap: .45rem; font-size: 13px; opacity: .8; }
 .mag-run i {
   width: 7px; height: 7px; border-radius: 50%;
-  background: hsl(var(--primary, 12 60% 52%));
+  background: var(--primary);
   animation: mag-pulse 1.1s infinite;
 }
 @keyframes mag-pulse { 50% { opacity: .25; } }
@@ -61,7 +61,7 @@
   border: 1px solid #c8531f; color: #c8531f; font-size: 14px;
 }
 .mag-note { font-size: 13px; opacity: .65; }
-.mag-warn { margin-top: 1rem; padding: .7rem .9rem; border-radius: 9px; background: hsl(var(--secondary, 30 14% 94%)); font-size: 13px; }
+.mag-warn { margin-top: 1rem; padding: .7rem .9rem; border-radius: 9px; background: var(--secondary); font-size: 13px; }
 
 /* ---------------------------------------------------------------- empty */
 .mag-empty { max-width: 46ch; margin: 5rem auto; text-align: center; display: grid; gap: 1rem; justify-items: center; }
@@ -76,18 +76,18 @@
 .mag-card {
   display: grid; gap: .5rem; text-align: left; cursor: pointer;
   padding: 1rem; border-radius: 12px; font: inherit; color: inherit;
-  border: 1px solid hsl(var(--border, 30 12% 88%));
-  background: hsl(var(--card, 40 20% 99%));
+  border: 1px solid var(--border);
+  background: var(--card);
 }
-.mag-card:hover { border-color: hsl(var(--primary, 12 60% 52%)); }
+.mag-card:hover { border-color: var(--primary); }
 .mag-card-t { font-size: 17px; font-weight: 600; line-height: 1.3; }
 .mag-card-s, .mag-card-f { font-size: 13px; opacity: .65; }
 .mag-bars { display: grid; gap: .3rem; }
 .mag-bar { display: grid; grid-template-columns: 3.5rem 1fr auto; align-items: center; gap: .5rem; font-size: 11px; opacity: .8; }
 .mag-bar i {
   display: block; height: 4px; border-radius: 999px; min-width: 2px;
-  background: hsl(var(--primary, 12 60% 52%));
-  box-shadow: 0 0 0 1px hsl(var(--border, 30 12% 88%)) inset;
+  background: var(--primary);
+  box-shadow: 0 0 0 1px var(--border) inset;
 }
 
 /* ----------------------------------------------------------------- form */
@@ -96,8 +96,8 @@
 .mag-form label { display: grid; gap: .35rem; font-size: 13px; opacity: .8; }
 .mag-in {
   font: inherit; padding: .5rem .7rem; border-radius: 9px;
-  border: 1px solid hsl(var(--border, 30 12% 88%));
-  background: hsl(var(--background, 40 20% 98%)); color: inherit;
+  border: 1px solid var(--border);
+  background: var(--background); color: inherit;
 }
 .mag-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
 
@@ -113,7 +113,7 @@
 
 .mag-research { display: grid; gap: .4rem; }
 .mag-bucket {
-  border: 1px solid hsl(var(--border, 30 12% 88%));
+  border: 1px solid var(--border);
   border-radius: 9px; padding: .5rem .8rem;
 }
 .mag-bucket summary { cursor: pointer; font-size: 14px; font-weight: 600; }
@@ -126,7 +126,7 @@
 .mag-flat { display: flex; flex-wrap: wrap; gap: 1.1rem; }
 .mag-spread {
   display: flex; gap: 2px; padding: 3px; border-radius: 5px;
-  background: hsl(var(--muted, 30 10% 92%));
+  background: var(--muted);
 }
 .mag-page {
   position: relative; overflow: hidden;
@@ -134,11 +134,11 @@
   display: flex; flex-direction: column; gap: 2px;
   padding: .4rem; cursor: pointer; text-align: left;
   font: inherit; color: inherit;
-  background: hsl(var(--card, 40 20% 99%));
-  border: 1px solid hsl(var(--border, 30 12% 88%));
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 3px;
 }
-.mag-page:hover { border-color: hsl(var(--primary, 12 60% 52%)); z-index: 1; }
+.mag-page:hover { border-color: var(--primary); z-index: 1; }
 .mag-page img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .5; }
 .mag-page > span { position: relative; }
 .mag-n  { font-size: 10px; opacity: .5; font-variant-numeric: tabular-nums; }
@@ -168,7 +168,7 @@
 .mag-copy p { margin: 0 0 .85rem; }
 .mag-copy blockquote {
   margin: 1.2rem 0; padding-inline-start: 1rem; font-size: 20px; line-height: 1.4;
-  border-inline-start: 1px solid hsl(var(--primary, 12 60% 52%)); font-style: italic;
+  border-inline-start: 1px solid var(--primary); font-style: italic;
 }
 .mag-furn { display: grid; gap: .5rem; margin-top: 1.2rem; font-size: 13px; }
 .mag-furn b {
@@ -176,10 +176,10 @@
   text-transform: uppercase; letter-spacing: .08em; opacity: .55;
 }
 .mag-art { display: grid; gap: .6rem; position: sticky; top: 5rem; }
-.mag-art img { width: 100%; border-radius: 9px; border: 1px solid hsl(var(--border, 30 12% 88%)); }
+.mag-art img { width: 100%; border-radius: 9px; border: 1px solid var(--border); }
 .mag-noart {
   display: grid; place-items: center; aspect-ratio: 3 / 2; border-radius: 9px;
-  border: 1px dashed hsl(var(--border, 30 12% 88%)); font-size: 13px; opacity: .5;
+  border: 1px dashed var(--border); font-size: 13px; opacity: .5;
 }
 .mag-brief { font-size: 12px; line-height: 1.5; opacity: .7; }
 
@@ -189,7 +189,7 @@
 .mag-srv {
   display: flex; align-items: center; gap: .7rem; flex-wrap: wrap;
   padding: .7rem .9rem; border-radius: 9px;
-  border: 1px solid hsl(var(--border, 30 12% 88%));
+  border: 1px solid var(--border);
 }
 .mag-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: #999; }
 .mag-dot.on { background: #2e9c6e; }
@@ -199,7 +199,7 @@
 .mag-tools code {
   font: 11px/1.4 ui-monospace, "Cascadia Code", monospace;
   padding: .1rem .4rem; border-radius: 5px;
-  background: hsl(var(--secondary, 30 14% 94%));
+  background: var(--secondary);
 }
 
 @media (prefers-reduced-motion: reduce) { .mag-root * { animation: none !important; } }
@@ -211,26 +211,26 @@
 .mag-fix b {
   font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
   padding: .1rem .35rem; border-radius: 4px;
-  background: hsl(var(--secondary, 30 14% 94%));
+  background: var(--secondary);
 }
 
 .mag-prog {
   height: 5px; border-radius: 999px; margin: .5rem 0 .3rem;
-  background: hsl(var(--border, 30 12% 88%)); overflow: hidden;
+  background: var(--border); overflow: hidden;
 }
 /* scaleX rather than width: the fill repaints on the compositor instead of
    relaying out the bar on every progress tick. */
 .mag-prog i {
   display: block; height: 100%; width: 100%; transform-origin: left center;
-  transform: scaleX(0); background: hsl(var(--primary, 12 60% 52%));
+  transform: scaleX(0); background: var(--primary);
   transition: transform .4s cubic-bezier(.16, 1, .3, 1);
 }
 
 .mag-gate {
   display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
   padding: .85rem 1rem; border-radius: 10px;
-  border: 1px solid hsl(var(--border, 30 12% 88%));
-  background: hsl(var(--card, 40 20% 99%));
+  border: 1px solid var(--border);
+  background: var(--card);
 }
 .mag-gate.ok { border-color: #2e9c6e; }
 
@@ -239,13 +239,25 @@
 .mag-worlds { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
 .mag-world {
   display: grid; gap: .3rem; padding: .8rem; border-radius: 10px;
-  border: 1px solid hsl(var(--border, 30 12% 88%));
-  background: hsl(var(--card, 40 20% 99%));
+  border: 1px solid var(--border);
+  background: var(--card);
   font-size: 13px;
 }
 .mag-swatches { display: flex; gap: 3px; margin-bottom: .2rem; }
 .mag-swatches i {
   width: 26px; height: 14px; border-radius: 3px; display: block;
-  box-shadow: 0 0 0 1px hsl(var(--border, 30 12% 88%)) inset;
+  box-shadow: 0 0 0 1px var(--border) inset;
 }
 .mag-idiom { font-style: italic; opacity: .8; line-height: 1.45; }
+
+/* --- nav parity ------------------------------------------------------------
+   Studio highlights the open view in the sidebar. The Magazine buttons are
+   clones of its nav buttons, so without this they stay in the resting state
+   after a click and the view reads as "nothing happened". */
+/* The selected state is applied inline by markNav in mag.js - Studio's
+   utilities are !important inside a layer and beat any injected sheet. */
+
+/* The Quire views replace Studio's <main> children, so they inherit the page
+   background rather than painting their own - matching how Studio's own views
+   sit on the shell. */
+.mag-root { min-height: 100%; }

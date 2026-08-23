@@ -107,13 +107,43 @@
 
   function unmount() {
     if (!root) return;
+    markNav(null);
     root.remove(); root = null;
     for (const c of hidden) c.style.removeProperty("display");
     hidden = [];
   }
 
+  /** Studio marks the open view in the sidebar; ours must too, or clicking
+      Magazine looks like nothing happened even when the view did mount. */
+  function markNav(view) {
+    for (const b of document.querySelectorAll("[data-quire-mag]")) {
+      const mine = view && b.textContent.trim() === (view === "create" ? "New Issue" : "Magazine");
+      // Inline, not a stylesheet rule. Studio's Tailwind utilities are marked
+      // !important inside a cascade layer, and for important declarations an
+      // unlayered sheet has the LOWEST priority - so no injected CSS, however
+      // specific, can repaint these buttons. Inline important still wins.
+      if (mine) {
+        b.setAttribute("aria-current", "page");
+        // The clone carries Studio's `transition-all`, and a running transition
+        // sits ABOVE author !important in the cascade - so both the inline
+        // styles below and any injected stylesheet were being discarded while
+        // the button looked completely unresponsive to a click. Pinning the
+        // transition off is what actually lets the selected state paint.
+        b.style.setProperty("transition", "none", "important");
+        b.style.setProperty("background-color", "var(--secondary)", "important");
+        b.style.setProperty("color", "var(--foreground)", "important");
+      } else {
+        b.removeAttribute("aria-current");
+        b.style.removeProperty("transition");
+        b.style.removeProperty("background-color");
+        b.style.removeProperty("color");
+      }
+    }
+  }
+
   async function open(view) {
     S.view = view;
+    markNav(view);
     mount();
     render();
     if (view === "issues") { await refresh(); render(); }

@@ -75,7 +75,7 @@ function installStudioPatch(entry) {
     // Only /assets/* is served statically — anything else falls through to the
     // SPA and comes back as index.html.
     const src = join(dirname(fileURLToPath(import.meta.url)), "studio-patch");
-    const files = ["patch.css", "patch.js", "mag.css", "mag.js"];
+    const files = ["patch.css", "patch.js", "mag.css", "mag.js", "geist.woff2"];
     const hash = createHash("sha1");
     for (const f of files) {
       const body = readFileSync(join(src, f));

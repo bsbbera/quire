@@ -1,7 +1,74 @@
-/* Quire patch styles for InkOS Studio.
-   Studio is Tailwind-based; these use its CSS variables (--border, --background,
-   --foreground, --primary) so the patch follows Studio's own light/dark theme
-   instead of hardcoding colours next to it. */
+/* Quire theme for the Studio workbench.
+   Studio is ~90% of the pixels in this app, so the product's design system is
+   defined HERE and mirrored in desktop/ui/app.css - not the other way round.
+   Both files carry the same oklch literals so the shell chrome and the
+   workbench are one surface rather than two apps in a trenchcoat.
+
+   Studio's own tokens are oklch, not HSL triplets. Everything below therefore
+   uses `var(--token)` directly; wrapping them in hsl() produces
+   `hsl(oklch(...))`, which is invalid, gets dropped, and leaves the element
+   with no colour at all. That is exactly what the Magazine views were doing. */
+
+/* --- design tokens: override Studio's palette with Quire's ------------------
+   Injected after Studio's own stylesheet, so equal specificity wins. `.dark`
+   is a class and outranks `:root`, hence the paired blocks. */
+:root, :host {
+  --font-sans: "Geist Variable", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --radius: .625rem;
+
+  --background: oklch(97.5% .002 255);
+  --background-radial: none;
+  --foreground: oklch(20% .008 255);
+  --card: oklch(100% 0 0);
+  --card-foreground: oklch(20% .008 255);
+  --popover: oklch(100% 0 0);
+  --popover-foreground: oklch(20% .008 255);
+  --primary: oklch(62% .12 82);
+  --primary-foreground: oklch(20% .02 82);
+  --secondary: oklch(94% .004 255);
+  --secondary-foreground: oklch(28% .008 255);
+  --muted: oklch(94% .004 255);
+  --muted-foreground: oklch(48% .008 255);
+  --accent: oklch(94% .02 82);
+  --accent-foreground: oklch(32% .06 82);
+  --border: oklch(89% .005 255);
+  --input: oklch(92% .005 255);
+  --ring: oklch(62% .12 82);
+}
+.dark, :root.dark, .dark :host {
+  --background: oklch(15% .008 255);
+  --background-radial: radial-gradient(circle at 50% 0%, oklch(18.5% .011 255) 0%, oklch(15% .008 255) 100%);
+  --foreground: oklch(96% .004 255);
+  --card: oklch(19% .010 255);
+  --card-foreground: oklch(96% .004 255);
+  --popover: oklch(19% .010 255);
+  --popover-foreground: oklch(96% .004 255);
+  --primary: oklch(80% .13 82);
+  --primary-foreground: oklch(18% .02 82);
+  --secondary: oklch(23% .012 255);
+  --secondary-foreground: oklch(93% .004 255);
+  --muted: oklch(23% .012 255);
+  --muted-foreground: oklch(72% .008 255);
+  --accent: oklch(29% .035 82);
+  --accent-foreground: oklch(93% .05 82);
+  --border: oklch(30% .012 255);
+  --input: oklch(26% .012 255);
+  --ring: oklch(80% .13 82);
+}
+
+/* Geist, copied next to this file by installStudioPatch. Studio declares
+   DM Sans and Instrument Serif but ships neither font file, so until now every
+   surface silently fell back to system-ui anyway. */
+@font-face {
+  font-family: "Geist Variable";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/assets/quire-geist.woff2") format("woff2");
+}
+body { font-family: var(--font-sans); }
+
 
 /* --- resizable sidebar grip --- */
 .quire-grip {
@@ -23,7 +90,7 @@
   transition: background .15s;
 }
 .quire-grip:hover::after {
-  background: hsl(var(--primary, 12 60% 52%));
+  background: var(--primary);
 }
 /* The inspector's grip sits on its LEFT edge, so the offsets mirror. */
 .quire-grip.at-start {
@@ -50,9 +117,9 @@ body.quire-resizing {
   gap: .5rem;
   padding: .75rem .85rem;
   border-radius: 12px;
-  border: 1px solid hsl(var(--border, 30 12% 88%));
-  background: hsl(var(--background, 40 20% 98%));
-  color: hsl(var(--foreground, 30 10% 12%));
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
   box-shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 12px 32px -14px rgba(0, 0, 0, .35);
   font: 12px/1.45 ui-sans-serif, system-ui, "Segoe UI", sans-serif;
 }
@@ -95,7 +162,7 @@ body.quire-resizing {
 .quire-progress .ip-bar {
   height: 4px;
   border-radius: 999px;
-  background: hsl(var(--muted, 30 10% 92%));
+  background: var(--muted);
   overflow: hidden;
 }
 .quire-progress .ip-bar i {
@@ -103,7 +170,7 @@ body.quire-resizing {
   height: 100%;
   width: 35%;
   border-radius: inherit;
-  background: hsl(var(--primary, 12 60% 52%));
+  background: var(--primary);
   opacity: 0;
 }
 /* Chapter length is not known ahead of time, so the bar is deliberately
@@ -132,5 +199,5 @@ body.quire-resizing {
   font: 10px/1.4 ui-sans-serif, system-ui, "Segoe UI", sans-serif;
   letter-spacing: .04em;
   opacity: .38;
-  color: hsl(var(--foreground, 30 10% 12%));
+  color: var(--foreground);
 }

@@ -4,12 +4,22 @@
    Layout is auto-fit/clamp throughout, so it reflows from a 320px strip to a
    wide window without breakpoints to maintain.
 --------------------------------------------------------------------------- */
+/* Tokens mirrored verbatim from cli-shim/studio-patch/patch.css. Studio is the
+   larger surface and owns the design system; the shell matches it literal for
+   literal so the chrome and the workbench are the same product. Change one,
+   change both. */
+@font-face {
+  font-family:"Geist Variable"; font-style:normal; font-weight:100 900;
+  font-display:swap; src:url("geist.woff2") format("woff2");
+}
 :root {
-  --bg:#f5f5f3; --panel:#fff; --panel-2:#ebebe9; --ink:#16181a; --muted:#5f666c;
-  --line:#dedfdd; --accent:#c9971f; --accent-ink:#16181a; --ok:#2f7d5b; --warn:#b4541f;
-  --radius:12px; --radius-sm:8px; --gap:clamp(.6rem,1.6vw,1.1rem);
+  --bg:oklch(97.5% .002 255); --panel:oklch(100% 0 0); --panel-2:oklch(94% .004 255);
+  --ink:oklch(20% .008 255); --muted:oklch(48% .008 255); --line:oklch(89% .005 255);
+  --accent:oklch(62% .12 82); --accent-ink:oklch(20% .02 82);
+  --ok:oklch(55% .11 155); --warn:oklch(58% .16 45);
+  --radius:10px; --radius-sm:7px; --gap:clamp(.6rem,1.6vw,1.1rem);
   --pad:clamp(.85rem,2.4vw,1.5rem);
-  --font:"Segoe UI Variable Text","Segoe UI",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --font:"Geist Variable","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
   --display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,ui-serif,serif;
   --mono:ui-monospace,SFMono-Regular,"Cascadia Code",Consolas,monospace;
   --fs:clamp(.9rem,.4vw + .82rem,1rem);
@@ -21,14 +31,18 @@
 }
 :root[data-theme="dark"], :root:not([data-theme="light"]) {
   @media (prefers-color-scheme: dark) {
-    --bg:#121416; --panel:#191c1f; --panel-2:#212529; --ink:#e9ebec; --muted:#949aa0;
-    --line:#292e33; --accent:#e0b13c; --accent-ink:#16181a; --ok:#59b48d; --warn:#dd9257;
-    --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.8);
+  --bg:oklch(15% .008 255); --panel:oklch(19% .010 255); --panel-2:oklch(23% .012 255);
+  --ink:oklch(96% .004 255); --muted:oklch(72% .008 255); --line:oklch(30% .012 255);
+  --accent:oklch(80% .13 82); --accent-ink:oklch(18% .02 82);
+  --ok:oklch(72% .11 155); --warn:oklch(74% .13 45);
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.8);
   }
 }
 :root[data-theme="dark"] {
-  --bg:#121416; --panel:#191c1f; --panel-2:#212529; --ink:#e9ebec; --muted:#949aa0;
-  --line:#292e33; --accent:#e0b13c; --accent-ink:#16181a; --ok:#59b48d; --warn:#dd9257;
+  --bg:oklch(15% .008 255); --panel:oklch(19% .010 255); --panel-2:oklch(23% .012 255);
+  --ink:oklch(96% .004 255); --muted:oklch(72% .008 255); --line:oklch(30% .012 255);
+  --accent:oklch(80% .13 82); --accent-ink:oklch(18% .02 82);
+  --ok:oklch(72% .11 155); --warn:oklch(74% .13 45);
   --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.8);
 }
 *,*::before,*::after{box-sizing:border-box}
