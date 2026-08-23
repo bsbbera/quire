@@ -7,6 +7,7 @@
 // spawns just the server half.
 import { execFileSync, spawn } from "node:child_process";
 import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -74,12 +75,22 @@ function installStudioPatch(entry) {
     // Only /assets/* is served statically — anything else falls through to the
     // SPA and comes back as index.html.
     const src = join(dirname(fileURLToPath(import.meta.url)), "studio-patch");
-    for (const f of ["patch.css", "patch.js", "mag.css", "mag.js"]) {
+    const files = ["patch.css", "patch.js", "mag.css", "mag.js"];
+    const hash = createHash("sha1");
+    for (const f of files) {
+      const body = readFileSync(join(src, f));
+      hash.update(body);
       copyFileSync(join(src, f), join(distDir, "assets", "quire-" + f));
     }
+    // Cache buster. The asset paths are fixed, so the webview happily reuses a
+    // cached copy from a previous version and the app looks unchanged after an
+    // update - two releases in a row appeared to change nothing for exactly
+    // this reason. The stamp is the content hash, so it moves only on a real
+    // change and an unchanged patch still gets served from cache.
+    const v = hash.digest("hex").slice(0, 8);
 
     let html = readFileSync(indexHtml, "utf8");
-    if (html.includes("quire-mag.js")) return; // already wired
+    if (html.includes(`quire-mag.js?v=${v}`)) return; // already wired, same content
     // Strip EVERY previously injected tag before adding the current set, under
     // either name. The product was renamed from InkDesk to Quire, so a Studio
     // bundle patched before the rename still carries inkdesk-* tags; leaving
@@ -87,10 +98,10 @@ function installStudioPatch(entry) {
     html = html.replace(/^.*\/assets\/(inkdesk|quire)-(patch|mag)\.(css|js).*\r?\n/gm, "");
 
     html = html.replace("</head>", [
-      '    <link rel="stylesheet" href="/assets/quire-patch.css">',
-      '    <link rel="stylesheet" href="/assets/quire-mag.css">',
-      '    <script src="/assets/quire-patch.js" defer></script>',
-      '    <script src="/assets/quire-mag.js" defer></script>',
+      `    <link rel="stylesheet" href="/assets/quire-patch.css?v=${v}">`,
+      `    <link rel="stylesheet" href="/assets/quire-mag.css?v=${v}">`,
+      `    <script src="/assets/quire-patch.js?v=${v}" defer></script>`,
+      `    <script src="/assets/quire-mag.js?v=${v}" defer></script>`,
       "  </head>",
     ].join("\n"));
     writeFileSync(indexHtml, html);

@@ -631,6 +631,22 @@
     const ver = new URLSearchParams(location.hash.slice(1)).get("qv");
     if (ver && sub) sub.textContent = "STUDIO · " + ver;
 
+    ensureAttrib(aside);
+  }
+
+  /**
+   * The AGPL-3.0 notice, re-added whenever it is missing.
+   *
+   * Deliberately outside brandSidebar's run-once guard. That guard lives on
+   * the aside element, which survives a re-render even when children appended
+   * to it do not - so a notice added under the guard can be dropped and never
+   * come back. A licence notice that disappears on a repaint is not a notice.
+   */
+  function ensureAttrib(aside) {
+    if (!aside || aside.querySelector(".quire-attrib")) return;
+    const note = document.createElement("div");
+    note.className = "quire-attrib";
+    note.textContent = "Workbench: InkOS Studio (AGPL-3.0)";
     aside.appendChild(note);
   }
 
@@ -683,6 +699,7 @@
       }
       addResizer();
       brandSidebar();
+      ensureAttrib(document.querySelector("aside"));
       renameInkos(document.body);
     });
     mo.observe(document.body, { childList: true, subtree: true, characterData: true });
