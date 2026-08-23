@@ -5,7 +5,7 @@ One GitHub repo holds all skills; each installable individually via the `skills`
 ## Repo layout
 
 ```
-ideaverse-skills/                 # local clone lives at C:\Users\SUBHADIP\IDEAVERSE\ideaverse-skills\
+ideaverse-skills/                 # local clone lives at %USERPROFILE%\IDEAVERSE\ideaverse-skills\
 ├── README.md                     # what each skill does + install commands
 ├── LICENSE
 └── skills/
@@ -37,11 +37,11 @@ Note: `npx skills add` installs into the **project's** `.claude/skills/`. Global
 
 ## Global install on this machine (matches existing setup)
 
-Most entries in `C:\Users\SUBHADIP\.claude\skills\` are already symlinks into a store. For our skills, symlink straight to the repo clone so edits are live:
+Most entries in `%USERPROFILE%\.claude\skills\` are already symlinks into a store. For our skills, symlink straight to the repo clone so edits are live:
 
 ```
-New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.claude\skills\ebook-weaver" -Target "C:\Users\SUBHADIP\IDEAVERSE\ideaverse-skills\skills\ebook-weaver"
-New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.claude\skills\blog-spark"  -Target "C:\Users\SUBHADIP\IDEAVERSE\ideaverse-skills\skills\blog-spark"
+New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.claude\skills\ebook-weaver" -Target "%USERPROFILE%\IDEAVERSE\ideaverse-skills\skills\ebook-weaver"
+New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.claude\skills\blog-spark"  -Target "%USERPROFILE%\IDEAVERSE\ideaverse-skills\skills\blog-spark"
 ```
 
 Then add trigger lines to `~/.claude/CLAUDE.md` (graphify pattern):
