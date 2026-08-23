@@ -51,6 +51,7 @@
     issues: ICON('<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h8"/><path d="M8 11h5"/>'),
     create: ICON('<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>'),
     plugs:  ICON('<path d="M9 2v6M15 2v6"/><path d="M6 8h12v3a6 6 0 0 1-12 0z"/><path d="M12 17v5"/>'),
+    update: ICON('<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/>'),
   };
 
   /** Views that belong to Quire as a whole, not to the Magazine section. */
@@ -76,7 +77,13 @@
         const b = btnModel.cloneNode(true);
         b.querySelector("span.shrink-0").innerHTML = ICONS[key];
         b.querySelector("span.truncate").textContent = label;
-        b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); open(key); });
+        b.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        // Updates belong to the shell, which owns the Tauri API; Studio runs in
+        // an iframe and cannot check for one itself.
+        if (key === "update") return parent.postMessage({ quire: "open-updates" }, "*");
+        open(key);
+      });
         grid.append(b);
       }
       group.append(head, grid);
@@ -87,7 +94,11 @@
     // kind of work Quire does, not only magazines — so they get their own
     // group rather than sitting inside Magazine's.
     const mag = makeGroup("Magazine", [["issues", "Issues"], ["create", "New Issue"]]);
-    const sys = makeGroup("Quire", [["plugs", "Integrations"]]);
+    // Updates lived only behind the model chip in the bottom-right corner,
+    // which reads as a model picker and nothing else - there was no way to
+    // guess updates were in there. The sidebar is where you look for the
+    // product's own functions, so it gets an entry.
+    const sys = makeGroup("Quire", [["plugs", "Integrations"], ["update", "Updates"]]);
 
     // Second position: after "Start Creating", before "My Works".
     list.insertBefore(mag, model.nextSibling);

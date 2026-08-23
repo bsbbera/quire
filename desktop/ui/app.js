@@ -230,6 +230,14 @@ function wireUpdates() {
   // A launch-only check is not syncing: the app can sit open for days. Manual
   // button for "why have I not got it yet", plus a slow poll while it runs.
   $("#checkBtn")?.addEventListener("click", () => checkUpdate({ silent: false }));
+  // Studio's sidebar "Updates" entry: it has no Tauri API of its own, so it
+  // asks the shell to open the drawer and run the check.
+  addEventListener("message", (e) => {
+    if (e.data?.quire !== "open-updates") return;
+    openDrawer(true);
+    $("#updateRow")?.scrollIntoView({ block: "nearest" });
+    checkUpdate({ silent: false });
+  });
   setInterval(() => checkUpdate({ silent: true }), 6 * 60 * 60 * 1000);
 }
 

@@ -631,8 +631,39 @@
     aside.appendChild(note);
   }
 
+  /**
+   * Rename the workbench in the UI chrome. Studio prints "InkOS Studio" in the
+   * breadcrumb, the tab title and a few headings; inside Quire that is the
+   * product's own name to the person using it.
+   *
+   * The attribution line is exempt by class, and must stay exempt. Studio is
+   * @actalk/inkos under AGPL-3.0 and the notice is a licence obligation, not a
+   * label - relabelling the chrome is fine, erasing the credit is not.
+   */
+  function renameInkos(root) {
+    const scope = root && root.nodeType === Node.ELEMENT_NODE ? root : document.body;
+    if (!scope) return;
+    if (/InkOS/.test(document.title)) {
+      document.title = document.title.replace(/InkOS Studio/g, "Quire Studio").replace(/InkOS/g, "Quire");
+    }
+    const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) => (n.parentElement?.closest(".quire-attrib") || SKIP.has(n.parentElement?.tagName))
+        ? NodeFilter.FILTER_REJECT
+        : (n.textContent.includes("InkOS") ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
+    });
+    const hits = [];
+    let n;
+    while ((n = walker.nextNode())) hits.push(n);
+    for (const node of hits) {
+      node.textContent = node.textContent
+        .replace(/InkOS Studio/g, "Quire Studio")
+        .replace(/InkOS/g, "Quire");
+    }
+  }
+
   function start() {
     translateTree(document.body);
+    renameInkos(document.body);
     addResizer();
     brandSidebar();
     buildPanel();
@@ -641,7 +672,7 @@
     // Studio is a SPA: everything above has to survive re-renders.
     const mo = new MutationObserver((records) => {
       for (const r of records) {
-        for (const node of r.addedNodes) translateTree(node);
+        for (const node of r.addedNodes) { translateTree(node); renameInkos(node); }
         if (r.type === "characterData" && r.target.nodeType === Node.TEXT_NODE) {
           const t = translate(r.target.textContent);
           if (t !== r.target.textContent) r.target.textContent = t;
@@ -649,6 +680,7 @@
       }
       addResizer();
       brandSidebar();
+      renameInkos(document.body);
     });
     mo.observe(document.body, { childList: true, subtree: true, characterData: true });
   }
