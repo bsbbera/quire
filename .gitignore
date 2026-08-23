@@ -26,3 +26,7 @@ node_modules/
 
 # Its own git repo with a GitHub remote — versioned there, not here.
 ideaverse-skills/
+
+# Signing keys live in ~/.quire, never in the repo.
+*.key
+*.key.pub

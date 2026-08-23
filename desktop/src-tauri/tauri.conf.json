@@ -20,7 +20,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' data: http://127.0.0.1:8787; style-src 'self' 'unsafe-inline'; frame-src http://127.0.0.1:4567; connect-src 'self' http://127.0.0.1:8787 http://127.0.0.1:4567"
+      "csp": "default-src 'self'; img-src 'self' data: http://127.0.0.1:8787; style-src 'self' 'unsafe-inline'; frame-src http://127.0.0.1:4567; connect-src 'self' https://github.com https://objects.githubusercontent.com http://127.0.0.1:8787 http://127.0.0.1:4567"
     }
   },
   "bundle": {
@@ -44,6 +44,18 @@
       }
     },
     "shortDescription": "InkOS with local agent-CLI model providers",
-    "longDescription": "Quire runs InkOS Studio against the agent CLIs installed on your machine (Claude Code, Codex, Devin, Antigravity), exposing every model they offer through one local OpenAI-compatible endpoint."
+    "longDescription": "Quire runs InkOS Studio against the agent CLIs installed on your machine (Claude Code, Codex, Devin, Antigravity), exposing every model they offer through one local OpenAI-compatible endpoint.",
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDMxMDcxRjI5M0M5NjUzMkUKUldRdVU1WThLUjhITVRHM25peGUyRk9OMTkySFZSNXhtVi9kSzhsQzZBNXJzQTh1cTNHWUE1dVgK",
+      "windows": {
+        "installMode": "passive"
+      },
+      "endpoints": [
+        "https://github.com/bsbbera/quire/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

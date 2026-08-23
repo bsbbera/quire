@@ -143,3 +143,12 @@ button.btn:disabled{opacity:.5;cursor:default}
 #notes{white-space:pre-wrap}
 .toast.bad{background:var(--warn);color:#fff}
 .pill.on{background:color-mix(in oklab,var(--ok) 18%,transparent);color:var(--ok)}
+
+/* --- updates --- */
+.update-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
+  padding:var(--pad);border-top:1px solid var(--line);font-size:var(--fs-sm)}
+.update-row .btn{padding:.35rem .8rem;border-radius:999px;border:1px solid var(--line);
+  background:var(--panel);color:inherit;cursor:pointer;font-size:var(--fs-sm)}
+.update-row .btn:hover{border-color:var(--accent,#c96442)}
+.auto-up{display:flex;align-items:center;gap:.35rem;color:var(--muted);white-space:nowrap}
+.update-row.busy #updateMsg{opacity:.6}

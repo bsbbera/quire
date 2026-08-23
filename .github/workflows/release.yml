@@ -1,0 +1,56 @@
+# Build, sign and publish a Quire release.
+#
+# Triggered by a version tag. tauri-action builds the NSIS installer, signs the
+# update artifact with the minisign key, creates the GitHub release and writes
+# the latest.json the in-app updater reads.
+#
+# Two secrets must exist on the repo before this can run:
+#   TAURI_SIGNING_PRIVATE_KEY           contents of ~/.quire/quire.key
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  empty string if the key has no password
+# The public half is already baked into tauri.conf.json; an installer signed
+# with any other key is rejected by the updater rather than silently accepted.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # Rust builds from scratch take ~10 minutes; the cache brings a repeat
+      # release down to about two.
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+
+      - name: Install frontend deps
+        working-directory: desktop
+        run: npm ci
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: desktop
+          tagName: ${{ github.ref_name }}
+          releaseName: Quire ${{ github.ref_name }}
+          releaseBody: "Automatic update feed for Quire. Installers are attached below."
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: true

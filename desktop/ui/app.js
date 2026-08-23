@@ -127,6 +127,83 @@ function mark(el, ok) {
   el.classList.toggle("fail", !ok);
 }
 
+/* ------------------------------------------------------------------ updates
+ * withGlobalTauri is on, so the updater and process plugins hang off
+ * window.__TAURI__ and no bundler step is needed.
+ *
+ * Checking is automatic; INSTALLING is not, unless the user opts in. Quire owns
+ * two child processes and a relaunch mid-write is how a half-written chapter
+ * happens, so an update is applied when the user says so, or at the next launch
+ * when "Automatic" is ticked.
+ */
+const AUTO_KEY = "quire-auto-update";
+let pendingUpdate = null;
+
+async function checkUpdate({ silent } = {}) {
+  const api = window.__TAURI__?.updater;
+  const row = $("#updateRow"), msg = $("#updateMsg"), btn = $("#updateBtn");
+  if (!api?.check) { if (row) row.hidden = true; return null; }
+  row.classList.add("busy");
+  try {
+    const up = await api.check();
+    row.classList.remove("busy");
+    if (!up) {
+      msg.textContent = "Quire is up to date";
+      btn.hidden = true;
+      return null;
+    }
+    pendingUpdate = up;
+    msg.textContent = `Version ${up.version} available`;
+    btn.hidden = false;
+    // Auto mode still waits for a quiet moment rather than yanking the window
+    // out from under a running build.
+    if (localStorage.getItem(AUTO_KEY) === "1" && !silent) installUpdate();
+    return up;
+  } catch (e) {
+    row.classList.remove("busy");
+    // A private release feed 404s for an unauthenticated client, which is not
+    // an error worth shouting about on every launch.
+    msg.textContent = silent ? "Update check unavailable" : "Update check failed: " + e;
+    btn.hidden = true;
+    return null;
+  }
+}
+
+async function installUpdate() {
+  if (!pendingUpdate) return;
+  const msg = $("#updateMsg"), btn = $("#updateBtn");
+  btn.disabled = true;
+  try {
+    let got = 0, total = 0;
+    await pendingUpdate.downloadAndInstall((ev) => {
+      if (ev.event === "Started") total = ev.data.contentLength || 0;
+      if (ev.event === "Progress") {
+        got += ev.data.chunkLength || 0;
+        msg.textContent = total
+          ? `Downloading ${Math.round((got / total) * 100)}%`
+          : "Downloading…";
+      }
+      if (ev.event === "Finished") msg.textContent = "Installing…";
+    });
+    await window.__TAURI__?.process?.relaunch();
+  } catch (e) {
+    msg.textContent = "Update failed: " + e;
+    btn.disabled = false;
+  }
+}
+
+function wireUpdates() {
+  const auto = $("#autoUpdate");
+  if (auto) {
+    auto.checked = localStorage.getItem(AUTO_KEY) === "1";
+    auto.addEventListener("change", () => {
+      localStorage.setItem(AUTO_KEY, auto.checked ? "1" : "0");
+      if (auto.checked && pendingUpdate) installUpdate();
+    });
+  }
+  $("#updateBtn")?.addEventListener("click", installUpdate);
+}
+
 // Any failure here used to leave the window sitting on "starting…" forever, so
 // surface it on the boot cover instead of only in the devtools console.
 function fatal(msg) {
@@ -163,6 +240,10 @@ window.addEventListener("unhandledrejection", (e) => fatal(String(e.reason)));
   // The port already answered, so never let a missing load event strand the
   // window on the boot cover.
   setTimeout(lift, 8000);
+
+  wireUpdates();
+  // Silent on launch: a failed check must never block getting to work.
+  checkUpdate({ silent: true });
 
   if (boot.shim_ready) {
     $("#openSettings").hidden = false;

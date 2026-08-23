@@ -200,6 +200,11 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
+        // Updates are checked and applied from the UI, not here: the shim and
+        // Studio are child processes, and restarting under them mid-write is
+        // how a half-written book happens.
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(Children::default())
         .invoke_handler(tauri::generate_handler![boot])
         .build(tauri::generate_context!())
