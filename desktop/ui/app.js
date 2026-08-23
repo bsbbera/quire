@@ -122,9 +122,27 @@ async function loadShim(force) {
   renderModels();
 }
 
-function mark(el, ok) {
-  el.classList.toggle("done", ok);
-  el.classList.toggle("fail", !ok);
+
+/** One boot step: waiting, running, done or failed, plus an optional note. */
+function step(el, state, note) {
+  if (!el) return;
+  el.classList.remove("run", "done", "fail");
+  if (state) el.classList.add(state);
+  const n = el.querySelector(".step-note");
+  if (n) n.textContent = note || "";
+}
+
+/**
+ * Boot progress. Honest by construction: the percentage is the share of steps
+ * actually finished, never a timer pretending to be progress. A bar that
+ * crawls to 90% and waits is a lie the user can see through.
+ */
+function progress(done, total) {
+  const p = Math.round((done / total) * 100);
+  const fill = $("#barFill");
+  if (fill) fill.style.transform = `scaleX(${(done / total).toFixed(3)})`;
+  const pct = $("#pct");
+  if (pct) pct.textContent = p + "%";
 }
 
 /* ------------------------------------------------------------------ updates
@@ -230,6 +248,12 @@ function wireUpdates() {
   // A launch-only check is not syncing: the app can sit open for days. Manual
   // button for "why have I not got it yet", plus a slow poll while it runs.
   $("#checkBtn")?.addEventListener("click", () => checkUpdate({ silent: false }));
+  // Integrations render inside Studio, so the drawer asks the iframe to show
+  // them rather than duplicating the view in the shell.
+  $("#openPlugs")?.addEventListener("click", () => {
+    $("#frame")?.contentWindow?.postMessage({ quire: "open-view", view: "plugs" }, "*");
+    openDrawer(false);
+  });
   // Studio's sidebar "Updates" entry: it has no Tauri API of its own, so it
   // asks the shell to open the drawer and run the check.
   addEventListener("message", (e) => {
@@ -266,31 +290,47 @@ window.addEventListener("unhandledrejection", (e) => fatal(String(e.reason)));
   if (boot.notes.length) $("#notes").textContent = boot.notes.join("\n");
 
   const t0 = Date.now();
+  const STEPS = 3;
   const tick = setInterval(() => {
-    const s = Math.round((Date.now() - t0) / 1000);
-    $("#elapsed").textContent = s > 2 ? `${s}s` : "";
+    const sec = Math.round((Date.now() - t0) / 1000);
+    $("#elapsed").textContent = sec > 2 ? `  ·  ${sec}s` : "";
+    // A cold first launch is dominated by the workbench building its index.
+    // Saying so beats leaving the user to wonder whether it has hung.
+    if (sec > 20) $("#firstRun").hidden = false;
   }, 500);
 
-  // Studio is the slow half: it spawns node and builds its own server, which
-  // is tens of seconds cold. 180s before giving up, matching the old blocking
-  // timeouts rather than shortening them behind the user's back.
-  let ready = boot;
+  step($("#stepShim"), "run", "starting");
+  step($("#stepStudio"), "", "waiting");
+  step($("#stepModels"), "", "waiting");
+  progress(0, STEPS);
+
+  // The workbench is the slow half: it spawns node and builds its own server,
+  // tens of seconds cold. 180s before giving up, matching the timeouts the
+  // blocking version used rather than quietly shortening them.
+  let ready = boot, done = 0;
   for (let i = 0; i < 360 && !(ready.shim_ready && ready.studio_ready); i++) {
-    mark($("#stepShim"), ready.shim_ready);
-    mark($("#stepStudio"), ready.studio_ready);
-    $("#sub").textContent = ready.shim_ready ? "starting InkOS Studio…" : "starting the model shim…";
+    if (ready.shim_ready && !done) {
+      done = 1;
+      step($("#stepShim"), "done", "ready");
+      step($("#stepStudio"), "run", "building");
+      progress(1, STEPS);
+    }
     await new Promise((r) => setTimeout(r, 500));
     ready = await invoke("status");
   }
   clearInterval(tick);
-  mark($("#stepShim"), ready.shim_ready);
-  mark($("#stepStudio"), ready.studio_ready);
+  step($("#stepShim"), ready.shim_ready ? "done" : "fail", ready.shim_ready ? "ready" : "not running");
+  step($("#stepStudio"), ready.studio_ready ? "done" : "fail", ready.studio_ready ? "ready" : "did not start");
+  progress(ready.studio_ready ? 2 : 1, STEPS);
 
   if (!ready.studio_ready) {
-    $("#sub").textContent = "InkOS Studio did not start";
+    $("#sub").textContent = "The workbench did not start";
     $("#bar").hidden = true;
+    $("#firstRun").hidden = true;
     return;
   }
+  $("#sub").textContent = "Ready";
+  step($("#stepModels"), "run", "scanning");
 
   // Studio takes the window; the cover only lifts once it has actually painted.
   const frame = $("#frame");
@@ -319,7 +359,10 @@ window.addEventListener("unhandledrejection", (e) => fatal(String(e.reason)));
     $("#openSettings").hidden = false;
     try {
       await loadShim(false);
+      step($("#stepModels"), "done", `${state.models.length} models`);
+      progress(3, STEPS);
     } catch (e) {
+      step($("#stepModels"), "fail", "unreachable");
       toast("shim unreachable: " + e.message);
     }
   }

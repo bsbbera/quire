@@ -97,7 +97,22 @@ function installStudioPatch(entry) {
     // them loads two copies of the patch and the Magazine nav appears twice.
     html = html.replace(/^.*\/assets\/(inkdesk|quire)-(patch|mag)\.(css|js).*\r?\n/gm, "");
 
+    // Rename in the HTML itself, and rename again the instant the SPA paints.
+    // The patch scripts are deferred, so for the first moment of every launch
+    // Studio's own "InkOS Studio" title and first paint were visible - the
+    // rename could only ever run after the flash the user actually complained
+    // about. This inline script has no such gap.
+    html = html.replace(/<title>[^<]*<\/title>/, "<title>Quire Studio</title>");
+    const early = '<script>(function(){var f=function(){'
+      + 'var w=document.createTreeWalker(document.body||document.documentElement,4),n,h=[];'
+      + 'while((n=w.nextNode()))if(n.textContent.indexOf("InkOS")>-1)h.push(n);'
+      + 'for(var i=0;i<h.length;i++)h[i].textContent='
+      + 'h[i].textContent.replace(/InkOS Studio/g,"Quire Studio").replace(/InkOS/g,"Quire");};'
+      + 'new MutationObserver(f).observe(document.documentElement,{childList:true,subtree:true,characterData:true});'
+      + 'document.addEventListener("DOMContentLoaded",f);})();<\/script>';
+
     html = html.replace("</head>", [
+      "    " + early,
       `    <link rel="stylesheet" href="/assets/quire-patch.css?v=${v}">`,
       `    <link rel="stylesheet" href="/assets/quire-mag.css?v=${v}">`,
       `    <script src="/assets/quire-patch.js?v=${v}" defer></script>`,

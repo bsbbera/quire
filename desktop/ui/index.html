@@ -14,19 +14,22 @@
 <div class="cover" id="cover">
   <div class="cover-card">
     <svg class="mark" viewBox="0 0 100 100" aria-hidden="true">
-      <g fill="none" stroke="currentColor" stroke-width="6.8" stroke-linecap="round">
-        <circle cx="50" cy="50" r="20"/>
-        <path d="M57.5 57.5 L73.5 73.5"/>
+      <g fill="none" stroke="currentColor" stroke-width="5.2" stroke-linecap="round">
+        <path d="M26.5 41.5 A23.5 23.5 0 0 0 73.5 41.5"/>
+        <path d="M34.5 41.5 A15.5 15.5 0 0 0 65.5 41.5"/>
+        <path d="M42.5 41.5 A7.5 7.5 0 0 0 57.5 41.5"/>
       </g>
     </svg>
     <b class="wordmark">Quire</b>
     <p id="sub">starting…</p>
     <ul class="steps">
-      <li id="stepShim"><span class="dot"></span>model shim</li>
-      <li id="stepStudio"><span class="dot"></span>InkOS Studio</li>
+      <li id="stepShim"><span class="dot"></span><span class="step-label">Model shim</span><span class="step-note"></span></li>
+      <li id="stepStudio"><span class="dot"></span><span class="step-label">Workbench</span><span class="step-note"></span></li>
+      <li id="stepModels"><span class="dot"></span><span class="step-label">Providers</span><span class="step-note"></span></li>
     </ul>
-    <div class="bar" id="bar"><i></i></div>
-    <p class="tiny" id="elapsed"></p>
+    <div class="bar" id="bar"><i id="barFill"></i></div>
+    <p class="tiny"><span id="pct">0%</span><span id="elapsed"></span></p>
+    <p class="tiny" id="firstRun" hidden>First launch takes longer: the workbench is building its index.</p>
     <div id="notes" class="empty"></div>
   </div>
 </div>
@@ -41,9 +44,9 @@
 <aside class="drawer" id="drawer" hidden aria-label="Settings">
   <header>
     <b>Settings</b>
-    <button class="icon-btn" id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
-    <button class="icon-btn" id="refresh" title="Re-scan CLIs" aria-label="Re-scan CLIs">⟳</button>
-    <button class="icon-btn" id="closeSettings" aria-label="Close">✕</button>
+    <button class="icon-btn" id="theme" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor" stroke="none"/></svg></button>
+    <button class="icon-btn" id="refresh" title="Re-scan CLIs" aria-label="Re-scan CLIs"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg></button>
+    <button class="icon-btn" id="closeSettings" title="Close" aria-label="Close"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </header>
 
   <div class="drawer-body">
@@ -67,6 +70,13 @@
       </div>
       <div class="active"><span class="pill" id="activePill">active</span><span id="activeModel">—</span></div>
     </section>
+    <section>
+      <div class="section-head">
+        <h2>Integrations</h2>
+        <p>MCP servers, ComfyUI and Affinity. Shared by every kind of work, not only magazines.</p>
+      </div>
+      <button class="btn wide" id="openPlugs">Open integrations</button>
+    </section>
   </div>
 
   <div class="update-row" id="updateRow">
@@ -75,8 +85,8 @@
       <div class="tiny" id="verLine">Quire</div>
     </div>
     <label class="auto-up"><input type="checkbox" id="autoUpdate"> Automatic</label>
-    <button class="mag-like btn" id="checkBtn">Check</button>
-    <button class="mag-like btn" id="updateBtn" hidden>Install</button>
+    <button class="btn" id="checkBtn">Check now</button>
+    <button class="btn primary" id="updateBtn" hidden>Install and restart</button>
   </div>
 
   <footer><span class="grow" id="foot">—</span><span id="langFoot"></span></footer>

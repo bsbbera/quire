@@ -581,9 +581,9 @@
      4. Branding
      ===================================================================== */
 
-  const MARK = '<svg viewBox="0 0 100 100" width="22" height="22" aria-hidden="true">'
-    + '<g fill="none" stroke="currentColor" stroke-width="6.8" stroke-linecap="round">'
-    + '<circle cx="50" cy="50" r="20"/><path d="M57.5 57.5 L73.5 73.5"/>'
+  const MARK = '<svg viewBox="0 0 100 100" width="24" height="24" aria-hidden="true">'
+    + '<g fill="none" stroke="currentColor" stroke-width="5.2" stroke-linecap="round">'
+    + '<path d="M26.5 41.5 A23.5 23.5 0 0 0 73.5 41.5"/><path d="M34.5 41.5 A15.5 15.5 0 0 0 65.5 41.5"/><path d="M42.5 41.5 A7.5 7.5 0 0 0 57.5 41.5"/>'
     + '</g></svg>';
 
   /**
@@ -680,10 +680,29 @@
     }
   }
 
+  /**
+   * Drop the "/ Quire Studio" tail from the breadcrumb. Every page inside the
+   * app is Quire Studio, so the crumb spent its width restating the window
+   * title. "Home" alone still tells you where you are.
+   */
+  function trimCrumb() {
+    for (const el of document.querySelectorAll("header *, nav *")) {
+      if (el.children.length || el.dataset.quireCrumb) continue;
+      if (el.textContent.trim() !== "Quire Studio") continue;
+      if (el.closest("aside")) continue;
+      const sibs = [...(el.parentElement?.children || [])];
+      if (!sibs.some((n) => n.textContent.trim() === "Home")) continue;
+      el.dataset.quireCrumb = "1";
+      el.hidden = true;
+      for (const n of sibs) if (n.textContent.trim() === "/") n.hidden = true;
+    }
+  }
+
   function start() {
     translateTree(document.body);
     brandSidebar();                 // before renameInkos: it owns the wordmark
     renameInkos(document.body);
+    trimCrumb();
     addResizer();
     buildPanel();
     connectEvents();
@@ -701,6 +720,7 @@
       brandSidebar();
       ensureAttrib(document.querySelector("aside"));
       renameInkos(document.body);
+      trimCrumb();
     });
     mo.observe(document.body, { childList: true, subtree: true, characterData: true });
   }

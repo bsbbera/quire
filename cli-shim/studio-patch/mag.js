@@ -66,43 +66,28 @@
     const btnModel = model.querySelector("button");
     if (!btnModel) return;
 
-    /** One cloned nav group: a title and its buttons. */
-    const makeGroup = (title, items) => {
-      const group = model.cloneNode(false);
-      group.setAttribute("data-quire-mag", "1");
-      const head = model.firstElementChild.cloneNode(true);
-      head.querySelector("span").textContent = title;
-      const grid = h("div", { class: "grid grid-cols-2 gap-1" });
-      for (const [key, label] of items) {
-        const b = btnModel.cloneNode(true);
-        b.querySelector("span.shrink-0").innerHTML = ICONS[key];
-        b.querySelector("span.truncate").textContent = label;
-        b.addEventListener("click", (e) => {
-        e.preventDefault(); e.stopPropagation();
-        // Updates belong to the shell, which owns the Tauri API; Studio runs in
-        // an iframe and cannot check for one itself.
-        if (key === "update") return parent.postMessage({ quire: "open-updates" }, "*");
-        open(key);
-      });
-        grid.append(b);
-      }
-      group.append(head, grid);
-      return group;
-    };
 
-    // Integrations are app-wide — MCP servers, ComfyUI and Affinity serve every
-    // kind of work Quire does, not only magazines — so they get their own
-    // group rather than sitting inside Magazine's.
-    const mag = makeGroup("Magazine", [["issues", "Issues"], ["create", "New Issue"]]);
-    // Updates lived only behind the model chip in the bottom-right corner,
-    // which reads as a model picker and nothing else - there was no way to
-    // guess updates were in there. The sidebar is where you look for the
-    // product's own functions, so it gets an entry.
-    const sys = makeGroup("Quire", [["plugs", "Integrations"], ["update", "Updates"]]);
+    // Magazine is a kind of thing you create, so it belongs in Start Creating
+    // beside Long Novel and Script rather than in a section of its own. A
+    // second group for two buttons was structure without meaning.
+    const grid = model.querySelector("div.grid") || model.lastElementChild;
+    for (const [key, label] of [["issues", "Magazine"], ["create", "New Issue"]]) {
+      if (!grid) break;
+      const b = btnModel.cloneNode(true);
+      b.setAttribute("data-quire-mag", "1");
+      b.querySelector("span.shrink-0").innerHTML = ICONS[key];
+      b.querySelector("span.truncate").textContent = label;
+      b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); open(key); });
+      grid.append(b);
+    }
 
-    // Second position: after "Start Creating", before "My Works".
-    list.insertBefore(mag, model.nextSibling);
-    list.insertBefore(sys, mag.nextSibling);
+    // Integrations and Updates are settings, not places to write, so they live
+    // in the settings drawer now. Studio has no Tauri API, so opening the view
+    // is a round trip: the drawer asks the shell, the shell asks back here.
+    addEventListener("message", (e) => {
+      if (e.data?.quire === "open-view" && e.data.view) open(e.data.view);
+    });
+
 
     // Any other sidebar click is Studio navigating — get out of its way.
     document.querySelector("aside").addEventListener("click", (e) => {
@@ -669,13 +654,13 @@
       job && h("div", { class: "mag-warn" },
         h("div", {}, job.error ? "Install failed: " + job.error
           : job.done ? "ComfyUI installed. Start it above."
-          : `Installing — ${job.step}`),
+          : `Installing: ${job.step}`),
         !job.done && job.total > 0 && h("div", { class: "mag-prog" },
-          h("i", { style: `width:${Math.round((job.got / job.total) * 100)}%` })),
+          h("i", { style: `transform:scaleX(${(job.got / job.total).toFixed(3)})` })),
         !job.done && job.total > 0 && h("div", { class: "mag-note" },
           `${gb(job.got)} of ${gb(job.total)}`),
         !job.done && h("div", { class: "mag-note" },
-          "Interrupting is safe — each file resumes where it stopped.")),
+          "Interrupting is safe. Each file resumes where it stopped.")),
 
       h("h2", {}, "Affinity"),
       h("div", { class: "mag-srv" },

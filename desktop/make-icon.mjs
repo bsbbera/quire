@@ -9,8 +9,8 @@ import { fileURLToPath } from "node:url";
 const S = 1024;
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-const BG = [28, 26, 23];        // near-black, matches the UI's --ink
-const INK = [201, 100, 66];     // --accent
+const BG = [18, 20, 22];        // cool graphite, matches the UI --bg
+const INK = [224, 177, 60];     // --accent
 
 const px = Buffer.alloc(S * S * 4);
 const put = (x, y, [r, g, b], a = 255) => {
@@ -45,21 +45,27 @@ function distToSeg(px_, py, ax, ay, bx, by) {
   return Math.hypot(px_ - (ax + t * vx), py - (ay + t * vy));
 }
 
-const STROKE = S * 0.068;
-const CX = S / 2, CY = S / 2, RAD = S * 0.20;
+const STROKE = S * 0.052;
+const CX = S / 2, CY = S * 0.415;
 
-// A Q whose tail is the fold of a page. A rectangle with a turned corner is
-// what every document icon already is; the letter is the part that belongs to
-// this product and nothing else, and a ring survives 32px where detail cannot.
-const TAIL = [CX + S * 0.075, CY + S * 0.075, CX + S * 0.235, CY + S * 0.235];
+// Three folded sheets nested inside one another, seen end-on from the fold.
+// That is literally what a quire is: the gathering of leaves that makes one
+// signature of a book. Arcs rather than chevrons - chevrons converge to a
+// point and the three strokes merge into one arrow at small sizes, which is
+// exactly how the first attempt failed.
+const RADII = [S * 0.235, S * 0.155, S * 0.075];
+
+/** Distance to the lower half of a circle, capped at its two ends. */
+function distToArc(x, y, r) {
+  if (y >= CY) return Math.abs(Math.hypot(x - CX, y - CY) - r);
+  return Math.min(Math.hypot(x - (CX - r), y - CY), Math.hypot(x - (CX + r), y - CY));
+}
 
 for (let y = 0; y < S; y++) {
   for (let x = 0; x < S; x++) {
+    let d = Infinity;
+    for (const r of RADII) d = Math.min(d, distToArc(x, y, r));
     const half = STROKE / 2;
-    const d = Math.min(
-      Math.abs(Math.hypot(x - CX, y - CY) - RAD),
-      distToSeg(x, y, TAIL[0], TAIL[1], TAIL[2], TAIL[3]),
-    );
     const a = d <= half ? 255 : d <= half + 1.2 ? 255 * ((half + 1.2 - d) / 1.2) : 0;
     if (a > 0) put(x, y, INK, a);
   }

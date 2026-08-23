@@ -146,10 +146,14 @@
 .mag-ti { font-size: 11px; line-height: 1.25; font-weight: 550; overflow: hidden; }
 .mag-sec { margin-top: auto; font-size: 9px; opacity: .45; overflow: hidden; white-space: nowrap; }
 
-/* Density is the pacing signal the method is built on — show it at a glance. */
-.mag-page.d-D { border-left: 3px solid #6a8caf; }
-.mag-page.d-M { border-left: 3px solid #9c8f6a; }
-.mag-page.d-C { border-left: 3px solid #a35c3c; }
+/* Density is the pacing signal the method is built on - show it at a glance.
+   Read along the bottom edge rather than as a coloured tab down the side: a
+   thick side border is the stock "AI card" tell, and pacing is a measure, so
+   a rule under the card is the truer shape for it. */
+.mag-page { --d: transparent; box-shadow: inset 0 -2px 0 var(--d); }
+.mag-page.d-D { --d: #6a8caf; }
+.mag-page.d-M { --d: #9c8f6a; }
+.mag-page.d-C { --d: #a35c3c; }
 .mag-page.written .mag-ti { opacity: 1; }
 .mag-page:not(.written) .mag-ti { opacity: .55; }
 
@@ -164,7 +168,7 @@
 .mag-copy p { margin: 0 0 .85rem; }
 .mag-copy blockquote {
   margin: 1.2rem 0; padding-inline-start: 1rem; font-size: 20px; line-height: 1.4;
-  border-inline-start: 3px solid hsl(var(--primary, 12 60% 52%)); font-style: italic;
+  border-inline-start: 1px solid hsl(var(--primary, 12 60% 52%)); font-style: italic;
 }
 .mag-furn { display: grid; gap: .5rem; margin-top: 1.2rem; font-size: 13px; }
 .mag-furn b {
@@ -214,7 +218,13 @@
   height: 5px; border-radius: 999px; margin: .5rem 0 .3rem;
   background: hsl(var(--border, 30 12% 88%)); overflow: hidden;
 }
-.mag-prog i { display: block; height: 100%; background: hsl(var(--primary, 12 60% 52%)); transition: width .4s; }
+/* scaleX rather than width: the fill repaints on the compositor instead of
+   relaying out the bar on every progress tick. */
+.mag-prog i {
+  display: block; height: 100%; width: 100%; transform-origin: left center;
+  transform: scaleX(0); background: hsl(var(--primary, 12 60% 52%));
+  transition: transform .4s cubic-bezier(.16, 1, .3, 1);
+}
 
 .mag-gate {
   display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
