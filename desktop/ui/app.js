@@ -116,7 +116,7 @@ async function loadShim(force) {
   state.model = cfg.model || null;
   state.cli = (cfg.model && cfg.model.split("/")[0]) || status.agents[0]?.id || null;
   showModel(state.model);
-  $("#foot").textContent = `shim :${status.port} · ${status.agents.length} CLIs · ${status.total} models`;
+  $("#foot").textContent = `${appVersion ? "Quire " + appVersion + " · " : ""}shim :${status.port} · ${status.agents.length} CLIs · ${status.total} models`;
   $("#langFoot").textContent = "lang " + status.lang;
   renderProviders(status.agents);
   renderModels();
@@ -248,7 +248,7 @@ window.addEventListener("unhandledrejection", (e) => fatal(String(e.reason)));
 
 (async () => {
   if (!invoke) return fatal("Tauri API unavailable — the app shell did not inject window.__TAURI__.");
-  showVersion();
+  await showVersion();
 
   // `boot` spawns and returns at once now, so the cover can report progress
   // instead of freezing until both ports answer.
@@ -287,7 +287,9 @@ window.addEventListener("unhandledrejection", (e) => fatal(String(e.reason)));
   // Studio takes the window; the cover only lifts once it has actually painted.
   const frame = $("#frame");
   frame.hidden = false;
-  frame.src = state.studio;
+  // Studio has no Tauri API of its own, so the version rides in on the hash
+  // and the patch renders it under the sidebar wordmark.
+  frame.src = state.studio + (appVersion ? "#qv=" + encodeURIComponent(appVersion) : "");
   const lift = () => { $("#cover").hidden = true; };
   frame.addEventListener("load", lift, { once: true });
   // The port already answered, so never let a missing load event strand the

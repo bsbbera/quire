@@ -609,12 +609,25 @@
       .find((e) => !e.children.length && /^STUDIO$/i.test(e.textContent.trim()));
     if (sub) sub.textContent = "STUDIO";
 
-    const icon = leaf.closest("a,div")?.querySelector("svg");
-    if (icon) icon.outerHTML = MARK;
+    // Walk up until an ancestor actually contains the logo. The wordmark's
+    // nearest div is a tight text wrapper that holds no artwork, so the old
+    // `leaf.closest("a,div")` looked one level too low, found nothing, and
+    // left InkOS's own drop sitting next to the Quire name. Match img as well
+    // as svg - the bundle is free to ship either.
+    let host = leaf.parentElement, art = null;
+    for (let i = 0; i < 5 && host && !art; i++) {
+      art = host.querySelector("svg, img");
+      if (!art) host = host.parentElement;
+    }
+    if (art) art.outerHTML = MARK;
+    else if (leaf.parentElement) leaf.parentElement.insertAdjacentHTML("afterbegin", MARK);
 
-    const note = document.createElement("div");
-    note.className = "quire-attrib";
-    note.textContent = "Workbench: InkOS Studio (AGPL-3.0)";
+    // Version, where a version belongs: under the wordmark, not buried in a
+    // drawer nobody opens. Studio runs in an iframe with no Tauri API, so the
+    // shell passes it on the hash.
+    const ver = new URLSearchParams(location.hash.slice(1)).get("qv");
+    if (ver && sub) sub.textContent = "STUDIO · " + ver;
+
     aside.appendChild(note);
   }
 
