@@ -17,8 +17,25 @@ use std::time::Duration;
 
 use tauri::{Manager, RunEvent, State};
 
-const SHIM_PORT: u16 = 8787;
-const STUDIO_PORT: u16 = 4567;
+// Ports are baked in at compile time so a dev build can be installed
+// alongside the release one. They must differ: both builds treat an open port
+// as "already running, reuse it", so on shared ports the second app to launch
+// silently drives the first app's shim and workbench.
+const fn port(from_env: Option<&str>, fallback: u16) -> u16 {
+    // u16::from_str is not const, so parse the ASCII digits directly.
+    let Some(s) = from_env else { return fallback };
+    let b = s.as_bytes();
+    let mut n: u16 = 0;
+    let mut i = 0;
+    while i < b.len() {
+        assert!(b[i] >= b'0' && b[i] <= b'9', "port must be digits");
+        n = n * 10 + (b[i] - b'0') as u16;
+        i += 1;
+    }
+    n
+}
+const SHIM_PORT: u16 = port(option_env!("QUIRE_SHIM_PORT"), 8787);
+const STUDIO_PORT: u16 = port(option_env!("QUIRE_STUDIO_PORT"), 4567);
 
 #[derive(Default)]
 struct Children(Mutex<Vec<Child>>);
