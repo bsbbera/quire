@@ -89,11 +89,12 @@ sh("npm", ["install", "--omit=dev", "--no-audit", "--no-fund", "--install-strate
 const coreOut = join(OUT, "node_modules", "@actalk", "inkos-core");
 mkdirSync(coreOut, { recursive: true });
 cpSync(coreDist, join(coreOut, "dist"), { recursive: true });
-// core's package.json ships "files": ["dist", "genres", "skills"] - the
-// builtin skills and genre profiles are data files, not compiled output.
+// core's package.json ships "files": ["dist","genres","skills","publications"]
+// - the builtin skills, genre profiles and publication definitions are data
+// files, not compiled output.
 // Copying only dist left the skills API returning 500 on every request:
 // ENOENT stat .../inkos-core/skills.
-for (const data of ["skills", "genres"]) {
+for (const data of ["skills", "genres", "publications"]) {
   cpSync(join(SRC, "packages", "core", data), join(coreOut, data), { recursive: true });
 }
 writeFileSync(join(coreOut, "package.json"), JSON.stringify({
