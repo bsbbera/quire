@@ -199,6 +199,52 @@ check("mcp discovery finds configured servers", () => {
   });
 }
 
+// Quire's tools reach the CLIs as an MCP server, so the server itself has to
+// answer a full round trip: handshake, catalogue, call. Driven directly over
+// stdio rather than through a model, so it costs nothing and cannot flake.
+{
+  const { spawn } = await import("node:child_process");
+  const here = new URL("./mcp-server.mjs", import.meta.url);
+  const rpc = await new Promise((resolve, reject) => {
+    const proc = spawn(process.execPath, [here.pathname.replace(/^\/([A-Za-z]:)/, "$1")], {
+      stdio: ["pipe", "pipe", "ignore"],
+    });
+    let out = "";
+    proc.stdout.on("data", (d) => { out += d; });
+    proc.on("error", reject);
+    proc.on("close", () => {
+      const byId = new Map();
+      for (const line of out.trim().split(/\r?\n/)) {
+        if (!line.trim()) continue;
+        try { const m = JSON.parse(line); byId.set(m.id, m); } catch {}
+      }
+      resolve(byId);
+    });
+    for (const msg of [
+      { jsonrpc: "2.0", id: 1, method: "initialize", params: {} },
+      { jsonrpc: "2.0", id: 2, method: "tools/list", params: {} },
+      { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "quire_image_backend_status", arguments: {} } },
+      { jsonrpc: "2.0", id: 4, method: "tools/call", params: { name: "no_such_tool", arguments: {} } },
+    ]) proc.stdin.write(JSON.stringify(msg) + "\n");
+    proc.stdin.end();
+  });
+
+  check("mcp server completes the handshake", () =>
+    assert.equal(rpc.get(1)?.result?.serverInfo?.name, "quire"));
+  check("mcp server lists its tools", () => {
+    const names = (rpc.get(2)?.result?.tools ?? []).map((t) => t.name);
+    for (const want of ["quire_generate_image", "quire_read_issue"]) {
+      assert.ok(names.includes(want), `missing tool ${want}`);
+    }
+  });
+  check("mcp tool call returns content", () => {
+    const text = rpc.get(3)?.result?.content?.[0]?.text;
+    assert.ok(text && JSON.parse(text), "no parseable tool result");
+  });
+  check("mcp rejects an unknown tool", () =>
+    assert.ok(rpc.get(4)?.error, "unknown tool should be an error"));
+}
+
 // The gate is the whole point of the review step: art and build must refuse
 // unapproved copy, and any rewrite must withdraw an approval already given.
 {

@@ -161,6 +161,14 @@ fn boot(app: tauri::AppHandle, children: State<Children>) -> Boot {
             // it, and a dev build beside the release one would otherwise send
             // every CLI request to the other app's shim.
             .env("SHIM_PORT", SHIM_PORT.to_string());
+        // InkOS already scans ~/.openclaw/skills, ~/.agents/skills and the
+        // workspace, but not ~/.claude/skills, which is where Claude Code
+        // keeps them — so skills the user already wrote were invisible here.
+        // A directory that does not exist is reported as a diagnostic, not an
+        // error, so naming it unconditionally is safe.
+        if let Ok(home) = app.path().home_dir() {
+            c.env("INKOS_SKILL_DIRS", home.join(".claude").join("skills"));
+        }
         match spawn_child(c) {
             Some(ch) => children.0.lock().unwrap().push(ch),
             None => notes.push("could not start InkOS Studio — is `inkos` installed?".into()),

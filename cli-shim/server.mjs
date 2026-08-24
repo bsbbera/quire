@@ -25,28 +25,44 @@ const preflight = await import("./preflight.mjs");
 const comfyInstall = await import("./comfy-install.mjs");
 
 // ------------------------------------------------------------- persisted model
-// The chosen model lives in ~/.inkos/.env because that is the file InkOS itself
-// reads — writing anywhere else would leave the UI and InkOS disagreeing after
-// a restart. We rewrite only INKOS_LLM_MODEL and leave every other line intact.
-const ENV_PATH = join(HOME, ".inkos", ".env");
-const ENV_KEY = "INKOS_LLM_MODEL";
+// The chosen model lives in Studio's own project config, because each CLI is
+// now a real provider there (claudeCli, devinCli, ...) and Studio's Model
+// Config is the one place a model gets picked.
+//
+// It used to live in ~/.inkos/.env, which Studio deliberately ignores — so a
+// save reached the CLI but not the workbench, and a second call had to poke
+// Studio's import-env route to copy the value across. One selection, one
+// home, no copy step.
+const serviceForCli = (cli) => `${cli}Cli`;
 
-function readEnvModel() {
+// Remembered so the completions path can fall back to the selected model
+// without an HTTP round trip mid-request. Refreshed on every read and write.
+let lastModel = null;
+
+async function readSelectedModel() {
   try {
-    const line = readFileSync(ENV_PATH, "utf8").split(/\r?\n/)
-      .find((l) => l.trim().startsWith(ENV_KEY + "="));
-    return line ? line.slice(line.indexOf("=") + 1).trim() : null;
-  } catch { return null; }
+    const r = await fetch(`${STUDIO_URL}/api/v1/services/config`);
+    if (!r.ok) return lastModel;
+    const cfg = await r.json();
+    lastModel = typeof cfg.defaultModel === "string" ? cfg.defaultModel : null;
+    return lastModel;
+  } catch { return lastModel; }
 }
 
-function writeEnvModel(model) {
-  let lines = [];
-  try { lines = readFileSync(ENV_PATH, "utf8").split(/\r?\n/); } catch {}
-  const i = lines.findIndex((l) => l.trim().startsWith(ENV_KEY + "="));
-  if (i >= 0) lines[i] = `${ENV_KEY}=${model}`;
-  else lines.push(`${ENV_KEY}=${model}`);
-  mkdirSync(dirname(ENV_PATH), { recursive: true });
-  writeFileSync(ENV_PATH, lines.filter((l, n) => l !== "" || n < lines.length - 1).join("\n") + "\n");
+async function writeSelectedModel(model) {
+  const service = serviceForCli(String(model).split("/")[0]);
+  const r = await fetch(`${STUDIO_URL}/api/v1/services/config`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      service,
+      defaultModel: model,
+      services: { [service]: { models: [model] } },
+      configSource: "studio",
+    }),
+  });
+  if (!r.ok) throw new Error(`studio rejected the model (${r.status})`);
+  lastModel = model;
 }
 
 // ponytail: don't inherit a host agent's session env — a parent Claude Code /
@@ -102,7 +118,13 @@ function acp(bin, args, handler) {
         const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
         if (!line) continue;
         let m; try { m = JSON.parse(line); } catch { continue; }
-        if (m.id === 1 && m.result) { send(2, "session/new", { cwd: process.cwd(), mcpServers: [] }); continue; }
+        if (m.id === 1 && m.result) {
+          // Only a real run gets the tools: the model-listing call passes no
+          // handler and would just pay the startup cost for nothing.
+          const servers = MCP_ON && handler ? [{ name: "quire", ...MCP_SPEC }] : [];
+          send(2, "session/new", { cwd: process.cwd(), mcpServers: servers });
+          continue;
+        }
         if (m.id === 2 && m.result) {
           if (!handler) return finish(acpModelIds(m.result));
           handler.onSession({ result: m.result, sessionId: m.result.sessionId, send, finish });
@@ -118,6 +140,17 @@ function acp(bin, args, handler) {
   });
 }
 
+// Quire's own tools, offered to the CLIs as an MCP server.
+//
+// A CLI is an agent runtime: it runs its own tool loop, and every one of them
+// speaks MCP. So the tools go across as a tool server rather than being
+// translated into each CLI's own protocol. QUIRE_MCP=0 turns it off.
+const MCP_SERVER = join(HERE, "mcp-server.mjs");
+const MCP_ON = process.env.QUIRE_MCP !== "0";
+// Named "quire" everywhere, so the tools appear under one predictable prefix
+// (claude exposes them as mcp__quire__*).
+const MCP_SPEC = { command: process.execPath, args: [MCP_SERVER], env: {} };
+
 const DEVIN_ACP_ARGS = ["--permission-mode", "dangerous", "--respect-workspace-trust", "false", "acp"];
 
 // ------------------------------------------------------------------- adapters
@@ -127,7 +160,11 @@ const AGENTS = [
     // `claude` has no list-models subcommand; the aliases already track latest.
     models: () => ["default", "opus", "sonnet", "haiku"],
     args: (m) => ["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
-      ...(m && m !== "default" ? ["--model", m] : []), "--permission-mode", "bypassPermissions"],
+      ...(m && m !== "default" ? ["--model", m] : []), "--permission-mode", "bypassPermissions",
+      // Deliberately not --strict-mcp-config: that would also switch off the
+      // servers the user configured for themselves.
+      ...(MCP_ON ? ["--mcp-config", JSON.stringify({ mcpServers: { quire: MCP_SPEC } }),
+        "--allowedTools", "mcp__quire__*"] : [])],
     stream: "claude-json",
   },
   {
@@ -140,7 +177,11 @@ const AGENTS = [
     },
     fallback: ["default", "gpt-5.6-terra", "gpt-5.3-codex", "gpt-5-codex", "gpt-5"],
     args: (m) => ["exec", "--json", "--skip-git-repo-check", "--sandbox", "danger-full-access",
-      ...(m && m !== "default" ? ["-m", m] : [])],
+      ...(m && m !== "default" ? ["-m", m] : []),
+      // codex exec has no --mcp-config; -c overrides the same keys its
+      // config.toml uses, so the server is added for this run only.
+      ...(MCP_ON ? ["-c", `mcp_servers.quire.command=${JSON.stringify(process.execPath)}`,
+        "-c", `mcp_servers.quire.args=[${JSON.stringify(MCP_SERVER)}]`] : [])],
     stream: "codex-json",
   },
   {
@@ -230,12 +271,23 @@ async function listModels() {
 }
 
 // -------------------------------------------------------------- stream parsing
+
+// A CLI executes its own tools; by the time we see a tool event the work is
+// already done. So tool use is reported into the text stream as a marker,
+// never re-emitted as OpenAI tool_calls — that would tell Studio to run a tool
+// the CLI has already run.
+const toolMark = (name) => name ? `\n› ${name}\n` : "";
+
 function extractDelta(stream, line) {
   if (stream === "plain") return line + "\n";
   let m; try { m = JSON.parse(line); } catch { return ""; }
   if (stream === "claude-json") {
     if (m.type === "stream_event" && m.event?.type === "content_block_delta"
       && m.event.delta?.type === "text_delta") return m.event.delta.text || "";
+    if (m.type === "stream_event" && m.event?.type === "content_block_start"
+      && m.event.content_block?.type === "tool_use") {
+      return toolMark(m.event.content_block.name);
+    }
     return "";
   }
   if (stream === "codex-json") {
@@ -243,6 +295,12 @@ function extractDelta(stream, line) {
     if (m.type === "item.completed" && m.item?.type === "agent_message") return m.item.text || "";
     if (m.msg?.type === "agent_message_delta") return m.msg.delta || "";
     if (m.msg?.type === "agent_message") return m.msg.message || "";
+    if (m.type === "item.started" && m.item?.type === "mcp_tool_call") {
+      return toolMark(m.item.tool || m.item.name);
+    }
+    if (m.msg?.type === "mcp_tool_call_begin") {
+      return toolMark(m.msg.invocation?.tool || m.msg.tool);
+    }
     return "";
   }
   return "";
@@ -305,6 +363,9 @@ async function complete({ agent, model, prompt, streaming, res, fullModel }) {
         const u = m.params?.update;
         if (m.method === "session/update" && u?.sessionUpdate === "agent_message_chunk"
           && u.content?.type === "text") send(u.content.text);
+        if (m.method === "session/update" && u?.sessionUpdate === "tool_call") {
+          send(toolMark(u.title || u.kind || u.toolCallId));
+        }
         if (m.id === 3) return sendPrompt(); // model set (or rejected) -> prompt anyway
         if (m.id === 4 && (m.result || m.error)) {
           if (m.error) send("[devin error] " + JSON.stringify(m.error).slice(0, 500));
@@ -387,23 +448,20 @@ createServer((req, res) => {
 
   // Persisted model selection.
   if (path === "/config") {
-    if (req.method === "GET") return json(res, 200, { model: readEnvModel(), path: ENV_PATH });
+    if (req.method === "GET") {
+      return readSelectedModel().then((model) => json(res, 200, { model, source: "studio" }));
+    }
     if (req.method === "POST") {
       let raw = "";
       req.on("data", (d) => { raw += d; });
-      return req.on("end", () => {
+      return req.on("end", async () => {
         try {
           const { model } = JSON.parse(raw || "{}");
           if (!model || !String(model).includes("/")) throw new Error("model must be <cli>/<name>");
           const cli = String(model).split("/")[0];
           if (!detect().some((a) => a.id === cli)) throw new Error("cli not detected: " + cli);
-          writeEnvModel(model);
-          // Studio keeps its own copy of the provider config and never reads
-          // INKOS_LLM_*, so a save here would reach the CLI but not the
-          // workbench. Its import-env route re-reads the file we just wrote.
-          fetch(`${STUDIO_URL}/api/v1/services/config/import-env`, { method: "POST" })
-            .catch(() => {});
-          json(res, 200, { ok: true, model, path: ENV_PATH });
+          await writeSelectedModel(model);
+          json(res, 200, { ok: true, model, source: "studio" });
         } catch (e) { json(res, 400, { ok: false, error: e.message }); }
       });
     }
@@ -416,7 +474,7 @@ createServer((req, res) => {
     if (req.url.includes("fresh=1")) { binCache = { at: 0, list: binCache.list }; modelCache.key = null; }
     return listModels().then((models) => json(res, 200, {
       ok: true, port: Number(PORT), lang: LANG, studioUrl: STUDIO_URL,
-      model: readEnvModel(),
+      model: lastModel,
       agents: detect().map((a) => ({
         id: a.id, bin: a.bin, version: a.version,
         models: models.filter((m) => m.owned_by === a.id).length,
@@ -580,7 +638,9 @@ createServer((req, res) => {
   req.on("end", async () => {
     let body; try { body = JSON.parse(raw); } catch { return json(res, 400, { error: { message: "bad json" } }); }
     // A caller that names no model (or a bare cli id) gets the saved selection.
-    const wanted = String(body.model || "").includes("/") ? body.model : (readEnvModel() || body.model || "");
+    const wanted = String(body.model || "").includes("/")
+      ? body.model
+      : ((await readSelectedModel()) || body.model || "");
     const [cliId, ...rest] = String(wanted).split("/");
     const agent = detect().find((a) => a.id === cliId);
     if (!agent) return json(res, 400, { error: { message: "cli not detected: " + cliId } });

@@ -136,24 +136,6 @@ const child = spawn(launch.command, launch.args, {
   shell: /\.(cmd|bat)$/i.test(launch.command),
   env: { ...process.env, INKOS_STUDIO_PORT: PORT },
 });
-// Studio deliberately ignores INKOS_LLM_* from the environment (inkos-core:
-// effective-llm-config warns about exactly this), so the model the settings
-// drawer saves would never reach it. Its own import-env route converts that
-// env into the `services` entry Studio does read — poke it once it is up, or
-// the workbench sits behind "Set up models" with no provider at all.
-(async () => {
-  const url = `http://127.0.0.1:${PORT}`;
-  for (let i = 0; i < 60; i++) {
-    try {
-      const r = await fetch(`${url}/api/v1/services/config/import-env`, { method: "POST" });
-      if (r.ok) return console.log("studio model config synced from ~/.inkos/.env");
-      if (r.status === 400) return console.warn("studio config not synced: no importable env");
-    } catch {}
-    await new Promise((r) => setTimeout(r, 1000));
-  }
-  console.warn("studio config sync timed out");
-})();
-
 child.on("exit", (code) => process.exit(code ?? 0));
 child.on("error", (e) => {
   console.error("failed to start studio: " + e.message);
