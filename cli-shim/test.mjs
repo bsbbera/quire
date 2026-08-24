@@ -59,6 +59,25 @@ check("ids are <cli>/<model>", () =>
   assert.ok(models.data.every((m) => m.id.includes("/") && m.owned_by)));
 check("count matches status", () => assert.equal(models.data.length, status.total));
 
+// Each CLI is its own provider in Studio, which only works if /<cli>/v1/models
+// returns that CLI alone. When it regressed, all four providers listed the
+// same 200-odd models and picking one gave you another CLI's model.
+const perCli = Object.fromEntries(await Promise.all(status.agents.map(async (a) => [
+  a.id, await fetch(`${BASE}/${a.id}/v1/models`).then((r) => r.json()),
+])));
+check("per-cli route returns only that cli", () => {
+  for (const [id, list] of Object.entries(perCli)) {
+    assert.ok(list.data.length > 0, `${id} listed nothing`);
+    const strays = [...new Set(list.data.map((m) => m.owned_by))].filter((o) => o !== id);
+    assert.deepEqual(strays, [], `${id} also listed ${strays.join(",")}`);
+  }
+});
+check("per-cli routes sum to the full catalogue", () =>
+  assert.equal(
+    Object.values(perCli).reduce((n, l) => n + l.data.length, 0),
+    models.data.length,
+  ));
+
 check("unknown cli is rejected", async () => {});
 const bad = await fetch(`${BASE}/v1/chat/completions`, {
   method: "POST", headers: { "content-type": "application/json" },

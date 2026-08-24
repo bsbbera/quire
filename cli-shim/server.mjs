@@ -425,8 +425,16 @@ createServer((req, res) => {
     })).catch((e) => json(res, 500, { ok: false, error: e.message }));
   }
 
+  // /v1/models is every CLI at once. /<cli>/v1/models is one of them, which is
+  // what lets each CLI be a separate provider in Studio instead of four
+  // providers all listing the same 200-odd models as each other's.
+  // Ids stay fully qualified (claude/opus) so chat/completions needs no change.
   if (path.endsWith("/models")) {
-    return listModels().then((data) => json(res, 200, { object: "list", data }));
+    const only = /^\/([a-z0-9-]+)\/v1\/models$/.exec(path)?.[1];
+    return listModels().then((data) => json(res, 200, {
+      object: "list",
+      data: only ? data.filter((m) => m.owned_by === only) : data,
+    }));
   }
   // ------------------------------------------------------------ integrations
   const bodyOf = () => new Promise((resolve, reject) => {

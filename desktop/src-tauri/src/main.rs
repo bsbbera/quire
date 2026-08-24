@@ -156,7 +156,11 @@ fn boot(app: tauri::AppHandle, children: State<Children>) -> Boot {
     } else if studio_launcher.exists() {
         let mut c = command_for("node", &[]);
         c.arg(&studio_launcher)
-            .env("STUDIO_PORT", STUDIO_PORT.to_string());
+            .env("STUDIO_PORT", STUDIO_PORT.to_string())
+            // Studio needs it too: the CLI providers build their base URL from
+            // it, and a dev build beside the release one would otherwise send
+            // every CLI request to the other app's shim.
+            .env("SHIM_PORT", SHIM_PORT.to_string());
         match spawn_child(c) {
             Some(ch) => children.0.lock().unwrap().push(ch),
             None => notes.push("could not start InkOS Studio — is `inkos` installed?".into()),
@@ -213,6 +217,16 @@ fn reap(children: &Children) {
 
 fn main() {
     tauri::Builder::default()
+        // Launching a second time used to open a second window, which then
+        // found the ports already open, took the "reusing it" path and drove
+        // the first window's shim and workbench — two windows, one backend,
+        // identical content and no clue why. Focus the live window instead.
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            if let Some(w) = app.get_webview_window("main") {
+                let _ = w.unminimize();
+                let _ = w.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
         // Updates are checked and applied from the UI, not here: the shim and
