@@ -142,19 +142,63 @@ check("mcp discovery finds configured servers", () => {
   });
 }
 
-// The workflow names three checkpoints and the installer downloads three. Add
-// a model to the graph without adding its URL and renders fail on a machine
-// that installed through Quire but not on the one that developed it.
+// A workflow that names a checkpoint with no download URL renders on the
+// machine that developed it and on no other. This used to be a grep over the
+// installer's source; it is a rule the registry enforces now, so a bad
+// workflow never loads in the first place.
 {
-  const { MODELS } = await import("./comfy.mjs");
-  // Resolved against this file, not the cwd: run from the repo root and the
-  // relative read threw ENOENT and killed the whole suite mid-run.
-  const here = new URL("./comfy-install.mjs", import.meta.url);
-  const src = await import("node:fs").then((fs) => fs.readFileSync(here, "utf8"));
+  const wf = await import("./workflows.mjs");
+  const { workflows, diagnostics } = wf.list();
+
+  check("the built-in workflow loads", () => {
+    assert.equal(diagnostics.length, 0, JSON.stringify(diagnostics));
+    assert.ok(workflows.some((w) => w.builtin), "no builtin workflow shipped");
+  });
+
   check("every workflow model has a download", () => {
-    for (const [slot, file] of Object.entries(MODELS)) {
-      assert.ok(src.includes("MODELS." + slot), `no download entry for MODELS.${slot} (${file})`);
+    for (const w of workflows) {
+      for (const m of w.models) {
+        assert.ok(m.url, `${w.id}: model ${m.file} has no download URL`);
+        assert.ok(m.sub && m.file, `${w.id}: model ${JSON.stringify(m)} is incomplete`);
+      }
     }
+  });
+
+  check("a workflow missing a model URL is refused", () => {
+    const problems = wf.validate({
+      id: "broken", label: "Broken", graph: {}, settings: { gpu: {} },
+      models: [{ slot: "unet", sub: "diffusion_models", file: "x.safetensors" }],
+    });
+    assert.ok(problems.some((p) => p.includes("no download URL")), problems.join("; "));
+  });
+
+  check("a whole-string placeholder keeps its type", () => {
+    // ComfyUI rejects "1536" where it wants 1536, so substitution that
+    // stringifies every value produces a graph the server refuses.
+    const filled = wf.fill(
+      { inputs: { width: "{{width}}", text: "a {{subject}} at dusk", link: ["1", 0] } },
+      { width: 1536, subject: "harbour" },
+    );
+    assert.equal(filled.inputs.width, 1536);
+    assert.equal(filled.inputs.text, "a harbour at dusk");
+    assert.deepEqual(filled.inputs.link, ["1", 0]);
+  });
+
+  check("an unknown placeholder renders empty rather than throwing", () => {
+    assert.equal(wf.fill("{{nope}}", {}), "");
+  });
+
+  check("the built-in workflow cannot be deleted", () => {
+    const builtin = workflows.find((w) => w.builtin);
+    assert.throws(() => wf.remove(builtin.id), /cannot be deleted/);
+  });
+
+  check("settings fall back through the device tiers", () => {
+    const w = { settings: { gpu: { width: 1536 }, cpu: { width: 1024 } } };
+    assert.equal(wf.settingsFor(w, "cpu").width, 1024);
+    assert.equal(wf.settingsFor(w, "gpu").width, 1536);
+    // No lowvram block: a 6GB card gets the GPU numbers, not nothing at all.
+    assert.equal(wf.settingsFor(w, "lowvram").width, 1536);
   });
 }
 

@@ -28,7 +28,7 @@ function openDrawer(open) {
   $("#drawer").hidden = !open;
   $("#scrim").hidden = !open;
 }
-$("#openSettings").onclick = () => openDrawer(true);
+$("#openSettings").onclick = () => { openDrawer(true); loadComfy?.(); };
 $("#closeSettings").onclick = () => openDrawer(false);
 $("#scrim").onclick = () => openDrawer(false);
 addEventListener("keydown", (e) => { if (e.key === "Escape") openDrawer(false); });
@@ -122,6 +122,167 @@ async function loadShim(force) {
   renderModels();
 }
 
+
+
+/* ------------------------------------------------------------------- images
+ * ComfyUI is the one dependency Quire installs itself, so its install, its
+ * hardware tier and its workflows are settings of the machine rather than of a
+ * book — which is why they live in the shell's drawer and not in the workbench.
+ */
+const gb = (n) => (n / 1e9).toFixed(1) + " GB";
+let comfyPoll = null;
+
+function setComfyProgress(install) {
+  const bar = $("#comfyBar");
+  const line = $("#comfyStep");
+  if (!install || install.done) {
+    bar.hidden = true;
+    line.hidden = !install || !install.error;
+    if (install?.error) line.textContent = "install failed: " + install.error;
+    return;
+  }
+  bar.hidden = false;
+  line.hidden = false;
+  // Honest again: bytes fetched over bytes expected for the stage in flight.
+  // Extraction reports no total, so it says so rather than freezing at a number.
+  const frac = install.total ? install.got / install.total : 0;
+  $("#comfyFill").style.transform = `scaleX(${frac.toFixed(3)})`;
+  line.textContent = install.total
+    ? `${install.step} · ${gb(install.got)} of ${gb(install.total)} · ${Math.round(frac * 100)}%`
+    : `${install.step}…`;
+}
+
+async function renderWorkflows(status) {
+  const sel = $("#workflow");
+  let payload;
+  try {
+    payload = await fetch(`${state.shim}/comfy/workflows`).then((r) => r.json());
+  } catch { return; }
+  sel.innerHTML = "";
+  for (const w of payload.workflows) {
+    const o = document.createElement("option");
+    o.value = w.id;
+    o.textContent = w.label + (w.builtin ? " (built in)" : "");
+    sel.appendChild(o);
+  }
+  if (payload.selected) sel.value = payload.selected;
+  const current = payload.workflows.find((w) => w.id === sel.value);
+  $("#workflowField").hidden = false;
+  $("#workflowAdd").hidden = false;
+  // The built-in is what every other failure falls back to, so it has no
+  // delete button at all rather than one that reports a refusal.
+  $("#workflowDelete").hidden = !current || current.builtin;
+  const bad = payload.diagnostics?.length
+    ? ` · ${payload.diagnostics.length} file(s) ignored: ${payload.diagnostics[0].problems[0]}`
+    : "";
+  $("#workflowNote").textContent = (current?.note || "") + bad;
+  state.workflows = payload.workflows;
+}
+
+async function loadComfy() {
+  let st;
+  try {
+    st = await fetch(`${state.shim}/comfy/status`).then((r) => r.json());
+  } catch (e) {
+    $("#comfyLine").textContent = "shim unreachable";
+    return null;
+  }
+  state.comfy = st;
+  const pill = $("#comfyPill");
+  const installing = st.install && !st.install.done;
+
+  pill.textContent = st.up ? "running" : st.installed ? "installed" : installing ? "installing" : "not installed";
+  pill.classList.toggle("on", !!st.up);
+
+  $("#comfyLine").textContent = st.installed
+    ? "Images render on this machine. No API key, works offline."
+    : "Not installed. About 11 GB of runtime and model weights.";
+
+  const bench = st.benchmark
+    ? `${st.device} · benchmarked ${(st.benchmark.ms / 1000).toFixed(1)}s for a 512px test`
+    : `${st.device} · not benchmarked yet`;
+  $("#comfyDetail").textContent = st.installed ? `${bench} · ${st.dir}` : "—";
+
+  $("#comfyInstall").hidden = st.installed || installing;
+  $("#comfyInstall").textContent = st.install?.error ? "Retry install" : "Install ComfyUI";
+  // firstRun is false once the install exists or the user declined once.
+  $("#comfySkip").hidden = st.installed || installing || !st.firstRun;
+  $("#comfyStart").hidden = !st.installed || st.up;
+  $("#comfyBench").hidden = !st.installed;
+  setComfyProgress(st.install);
+  if (st.installed) await renderWorkflows(st);
+
+  // Poll only while something is moving, so an idle drawer costs nothing.
+  if (installing && !comfyPoll) comfyPoll = setInterval(() => loadComfy(), 1000);
+  if (!installing && comfyPoll) { clearInterval(comfyPoll); comfyPoll = null; }
+  return st;
+}
+
+function wireComfy() {
+  $("#comfyInstall").onclick = async () => {
+    $("#comfyInstall").hidden = true;
+    try {
+      const r = await fetch(`${state.shim}/comfy/install`, {
+        method: "POST", headers: { "content-type": "application/json" }, body: "{}",
+      }).then((x) => x.json());
+      if (!r.ok && r.error) toast(r.error);
+      // A part-file from an interrupted run is resumed, not restarted, so
+      // pressing this after a kill picks up where the download stopped.
+      else toast(`downloading ${gb(r.plan.bytes)} to ${r.plan.dir}`);
+    } catch (e) { toast("install failed: " + e.message); }
+    loadComfy();
+  };
+  $("#comfySkip").onclick = async () => {
+    await fetch(`${state.shim}/comfy/skip`, { method: "POST", body: "{}" }).catch(() => {});
+    $("#comfySkip").hidden = true;
+    toast("Skipped. Install it later from this panel.");
+  };
+  $("#comfyStart").onclick = async () => {
+    toast("starting ComfyUI…");
+    const r = await fetch(`${state.shim}/comfy/start`, { method: "POST", body: "{}" })
+      .then((x) => x.json()).catch((e) => ({ ok: false, error: e.message }));
+    toast(r.ok ? "ComfyUI is up" : "start failed: " + r.error);
+    loadComfy();
+  };
+  $("#comfyBench").onclick = async () => {
+    toast("rendering a test image — this can take a few minutes on CPU");
+    const r = await fetch(`${state.shim}/comfy/benchmark`, { method: "POST", body: "{}" })
+      .then((x) => x.json()).catch((e) => ({ ok: false, error: e.message }));
+    toast(r.error ? "benchmark failed: " + r.error
+      : `${(r.ms / 1000).toFixed(1)}s · settings locked to ${r.device}`);
+    loadComfy();
+  };
+  $("#workflow").onchange = async (e) => {
+    const r = await fetch(`${state.shim}/comfy/workflows/${e.target.value}`, { method: "PUT" })
+      .then((x) => x.json()).catch((err) => ({ error: err.message }));
+    toast(r.error ? "could not select: " + r.error : "workflow: " + e.target.value);
+    loadComfy();
+  };
+  $("#workflowDelete").onclick = async () => {
+    const id = $("#workflow").value;
+    if (!confirm(`Delete the workflow "${id}"? Its downloaded weights stay on disk.`)) return;
+    const r = await fetch(`${state.shim}/comfy/workflows/${id}`, { method: "DELETE" })
+      .then((x) => x.json()).catch((err) => ({ error: err.message }));
+    toast(r.error ? "could not delete: " + r.error : "deleted " + id);
+    loadComfy();
+  };
+  $("#workflowAdd").onclick = () => $("#workflowFile").click();
+  $("#workflowFile").onchange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const body = await file.text();
+      // Validated server-side before it lands on disk, so a bad paste never
+      // becomes a workflow that fails halfway through a render instead.
+      const r = await fetch(`${state.shim}/comfy/workflows`, {
+        method: "POST", headers: { "content-type": "application/json" }, body,
+      }).then((x) => x.json());
+      toast(r.error ? r.error : "added " + r.id);
+    } catch (err) { toast("could not add: " + err.message); }
+    loadComfy();
+  };
+}
 
 /** One boot step: waiting, running, done or failed, plus an optional note. */
 function step(el, state, note) {
@@ -384,6 +545,16 @@ window.addEventListener("unhandledrejection", (e) => fatal(String(e.reason)));
     } catch (e) {
       step($("#stepModels"), "fail", "unreachable");
       toast("shim unreachable: " + e.message);
+    }
+    wireComfy();
+    const comfy = await loadComfy();
+    // First run, nothing installed and never declined: show the offer once,
+    // after the workbench is already usable. An 11GB download is not something
+    // to put between the user and their work — but it is also not something to
+    // leave buried in a panel they have no reason to open.
+    if (comfy?.firstRun) {
+      openDrawer(true);
+      $("#imagesSection")?.scrollIntoView({ block: "nearest" });
     }
   }
 })().catch((e) => fatal(String(e?.message || e)));

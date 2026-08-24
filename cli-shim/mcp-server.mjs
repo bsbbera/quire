@@ -68,13 +68,17 @@ const TOOLS = [
       properties: {
         prompt: { type: "string", description: "What to draw." },
         negative: { type: "string", description: "What to avoid." },
-        width: { type: "number", description: "Pixels. Default 1536." },
-        height: { type: "number", description: "Pixels. Default 1024." },
+        width: { type: "number", description: "Pixels. Omit to use this machine's benchmarked default." },
+        height: { type: "number", description: "Pixels. Omit to use this machine's benchmarked default." },
+        workflow: { type: "string", description: "Workflow id. Omit to use the selected one." },
         outFile: { type: "string", description: "Absolute path to write the PNG to." },
       },
       required: ["prompt", "outFile"],
     },
-    run: (a) => comfy.generate(a),
+    // The bytes are dropped on the way out: a 2MB base64 blob in a tool result
+    // costs the model its whole context window and it cannot look at the image
+    // anyway. The file path is the useful half.
+    run: async (a) => { const { b64, ...rest } = await comfy.generate(a); return rest; },
   },
   {
     name: "quire_image_backend_status",

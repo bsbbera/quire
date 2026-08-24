@@ -15,29 +15,21 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { MODELS } from "./comfy.mjs";
+import * as wf from "./workflows.mjs";
 
 const REPO = "https://api.github.com/repos/comfyanonymous/ComfyUI/releases/latest";
-const HF = "https://huggingface.co";
 
-/** Model file -> where ComfyUI's loaders look for it, and where to fetch it. */
-const WEIGHTS = [
-  {
-    sub: "diffusion_models",
-    file: MODELS.unet,
-    url: HF + "/Kijai/Z-Image_comfy_fp8_scaled/resolve/main/" + MODELS.unet,
-  },
-  {
-    sub: "text_encoders",
-    file: MODELS.clip,
-    url: HF + "/Comfy-Org/z_image_turbo/resolve/main/split_files/text_encoders/" + MODELS.clip,
-  },
-  {
-    sub: "vae",
-    file: MODELS.vae,
-    url: HF + "/Comfy-Org/z_image_turbo/resolve/main/split_files/vae/" + MODELS.vae,
-  },
-];
+/**
+ * The weights the selected workflow needs, and where each comes from.
+ *
+ * This used to be a hand-kept list beside the graph in comfy.mjs, so adding a
+ * node that loaded a fourth checkpoint left a machine that installed through
+ * Quire unable to render at all. A workflow carries its own downloads now, and
+ * workflows.mjs refuses to load one whose models have no URL.
+ */
+const weightsFor = (workflow) => (workflow?.models || []).map((m) => ({
+  sub: m.sub, file: m.file, url: m.url,
+}));
 
 /* --------------------------------------------------------------- progress */
 // One install at a time, and its state is read back through /comfy/status
@@ -77,8 +69,10 @@ function defaultDir(magRoot) {
 }
 
 /** What an install would do, so the panel can show it before anything is fetched. */
-export async function plan({ magRoot, dir } = {}) {
+export async function plan({ magRoot, dir, workflow: workflowId } = {}) {
   const vendor = await gpuVendor();
+  const workflow = workflowId ? wf.find(workflowId) : wf.selected();
+  if (!workflow) throw new Error("no workflow installed to fetch weights for");
   const rel = await (await fetch(REPO, { headers: { accept: "application/vnd.github+json" } })).json();
   const want = "ComfyUI_windows_portable_" + vendor + ".7z";
   const assets = rel.assets || [];
@@ -88,7 +82,7 @@ export async function plan({ magRoot, dir } = {}) {
   const target = dir || defaultDir(magRoot);
   const free = await freeBytes(target.slice(0, 1));
   // HEAD each weight so the panel quotes a real number rather than a guess.
-  const weights = await Promise.all(WEIGHTS.map(async (w) => {
+  const weights = await Promise.all(weightsFor(workflow).map(async (w) => {
     const r = await fetch(w.url, { method: "HEAD", redirect: "follow" });
     return { file: w.file, bytes: Number(r.headers.get("content-length")) || 0 };
   }));
@@ -97,6 +91,7 @@ export async function plan({ magRoot, dir } = {}) {
   const needed = bytes + asset.size * 2;
   return {
     vendor,
+    workflow,
     dir: target,
     version: rel.tag_name,
     runtime: { name: asset.name, url: asset.browser_download_url, bytes: asset.size },
@@ -150,9 +145,9 @@ function extract(archive, into) {
 }
 
 /* ---------------------------------------------------------------- install */
-export async function install({ magRoot, dir } = {}) {
+export async function install({ magRoot, dir, workflow } = {}) {
   if (JOB && !JOB.done) throw new Error("an install is already running");
-  const p = await plan({ magRoot, dir });
+  const p = await plan({ magRoot, dir, workflow });
   if (!p.enoughSpace) {
     throw new Error("needs about " + (p.needed / 1e9).toFixed(1) + "GB free on "
       + p.dir.slice(0, 2) + ", " + (p.free / 1e9).toFixed(1) + "GB available");
@@ -169,7 +164,9 @@ export async function install({ magRoot, dir } = {}) {
     // The archive unpacks into its own folder; if that is already there from a
     // half-finished run, extraction is the step to skip, not to repeat.
     const unpacked = join(p.dir, p.runtime.name.replace(/\.7z$/, ""));
-    if (!existsSync(join(unpacked, "run_nvidia_gpu.bat"))) {
+    const runnerThere = ["run_nvidia_gpu.bat", "run_cpu.bat"]
+      .some((b) => existsSync(join(unpacked, b)));
+    if (!runnerThere) {
       await download(p.runtime.url, archive, "runtime");
       set({ step: "extracting", got: 0, total: 0 });
       await extract(archive, p.dir);
@@ -177,7 +174,7 @@ export async function install({ magRoot, dir } = {}) {
     }
 
     const models = join(unpacked, "ComfyUI", "models");
-    for (const w of WEIGHTS) {
+    for (const w of weightsFor(p.workflow)) {
       const out = join(models, w.sub, w.file);
       if (existsSync(out)) continue;
       mkdirSync(join(models, w.sub), { recursive: true });

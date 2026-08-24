@@ -202,6 +202,14 @@ button.btn:disabled{opacity:.5;cursor:default}
 .cover .tiny{margin:0;color:var(--muted);font-variant-numeric:tabular-nums}
 .tiny{font-size:var(--fs-sm);color:var(--muted)}
 
+/* A row of buttons that wraps rather than overflowing the drawer on a narrow
+   window. Only the buttons that apply to the current state are ever shown. */
+.row{display:flex;flex-wrap:wrap;gap:.5rem;margin-block-start:.7rem}
+.row .btn:empty,.row .btn[hidden]{display:none}
+/* The install bar sits in the drawer, where the cover's max-width would leave
+   it stranded at half the panel's width. */
+#comfyBar{max-width:none;margin-block-start:.7rem}
+
 /* Updates and the version live at the foot of the drawer. */
 .update-row{display:flex;align-items:center;gap:.7rem;padding:var(--pad);
   border-block-start:1px solid var(--line)}

@@ -70,10 +70,35 @@
       </div>
       <div class="active"><span class="pill" id="activePill">active</span><span id="activeModel">—</span></div>
     </section>
+    <!-- Image generation: the one dependency Quire installs for the user, so
+         the machine half of it lives in the shell, not in the workbench. -->
+    <section id="imagesSection">
+      <div class="section-head">
+        <h2>Images</h2>
+        <p id="comfyLine">Checking ComfyUI…</p>
+      </div>
+      <div class="active"><span class="pill" id="comfyPill">unknown</span><span id="comfyDetail">—</span></div>
+      <div class="bar" id="comfyBar" hidden><i id="comfyFill"></i></div>
+      <p class="tiny" id="comfyStep" hidden></p>
+      <div class="field" id="workflowField" hidden>
+        <label for="workflow">Workflow</label>
+        <select id="workflow"></select>
+      </div>
+      <p class="tiny" id="workflowNote"></p>
+      <div class="row">
+        <button class="btn primary" id="comfyInstall" hidden>Install ComfyUI</button>
+        <button class="btn" id="comfySkip" hidden>Not now</button>
+        <button class="btn" id="comfyStart" hidden>Start</button>
+        <button class="btn" id="comfyBench" hidden>Benchmark</button>
+        <button class="btn" id="workflowDelete" hidden>Delete workflow</button>
+        <button class="btn" id="workflowAdd" hidden>Add workflow…</button>
+      </div>
+      <input type="file" id="workflowFile" accept="application/json,.json" hidden>
+    </section>
     <section>
       <div class="section-head">
         <h2>Integrations</h2>
-        <p>MCP servers, ComfyUI and Affinity. Shared by every kind of work, not only magazines.</p>
+        <p>MCP servers and Affinity. Shared by every kind of work, not only magazines.</p>
       </div>
       <button class="btn wide" id="openPlugs">Open integrations</button>
     </section>

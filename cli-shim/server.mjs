@@ -33,6 +33,7 @@ const comfy = await import("./comfy.mjs");
 const affinity = await import("./affinity.mjs");
 const preflight = await import("./preflight.mjs");
 const comfyInstall = await import("./comfy-install.mjs");
+const workflows = await import("./workflows.mjs");
 
 // ------------------------------------------------------------- persisted model
 // The chosen model lives in Studio's own project config, because each CLI is
@@ -573,11 +574,46 @@ createServer((req, res) => {
   // ~17GB of download.
   if (path === "/comfy/install-plan") return handle(comfyInstall.plan({ magRoot: PUBLICATION_ROOT }));
   if (path === "/comfy/install" && req.method === "POST") {
-    return handle(bodyOf().then((b) => comfyInstall.install({ magRoot: PUBLICATION_ROOT, dir: b.dir })));
+    return handle(bodyOf().then((b) =>
+      comfyInstall.install({ magRoot: PUBLICATION_ROOT, dir: b.dir, workflow: b.workflow })));
   }
   if (path === "/comfy/start" && req.method === "POST") return handle(comfy.start());
   if (path === "/comfy/generate" && req.method === "POST") {
     return handle(bodyOf().then((b) => comfy.generate(b)));
+  }
+  // Measured on this machine, not guessed from a spec sheet: one small render,
+  // timed, and the device tier it implies written down as the locked default.
+  if (path === "/comfy/benchmark" && req.method === "POST") return handle(comfy.benchmark());
+  // Declining the first-run install has to stick, or every launch asks again.
+  if (path === "/comfy/skip" && req.method === "POST") {
+    return handle(Promise.resolve().then(() => workflows.saveConfig({ skipped: true })));
+  }
+
+  // Workflows: list, select, add, delete. The builtin is what everything falls
+  // back to, so remove() refuses it rather than leaving a machine with an
+  // installed ComfyUI and no graph to run.
+  if (path === "/comfy/workflows" && req.method === "GET") {
+    return handle(Promise.resolve().then(() => {
+      const { workflows: all, diagnostics } = workflows.list();
+      const current = workflows.selected();
+      return {
+        selected: current?.id ?? null,
+        workflows: all.map((w) => ({
+          id: w.id, label: w.label, note: w.note ?? "", builtin: w.builtin,
+          source: w.source, models: (w.models || []).map((m) => m.file),
+          settings: w.settings,
+        })),
+        diagnostics,
+      };
+    }));
+  }
+  if (path === "/comfy/workflows" && req.method === "POST") {
+    return handle(bodyOf().then((b) => workflows.add(b)));
+  }
+  {
+    const m = /^\/comfy\/workflows\/([a-z0-9][a-z0-9-]*)$/.exec(path);
+    if (m && req.method === "DELETE") return handle(Promise.resolve().then(() => workflows.remove(m[1])));
+    if (m && req.method === "PUT") return handle(Promise.resolve().then(() => workflows.select(m[1])));
   }
 
   // Progress for the magazine workspace. Studio has its own /api/v1/events for

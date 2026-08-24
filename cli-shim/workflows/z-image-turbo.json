@@ -1,0 +1,48 @@
+{
+  "id": "z-image-turbo",
+  "label": "Z-Image Turbo",
+  "note": "Eight-step turbo diffusion. ~11GB of weights, runs in 6GB of VRAM and, slowly, on CPU.",
+  "builtin": true,
+  "models": [
+    {
+      "slot": "unet",
+      "sub": "diffusion_models",
+      "file": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+      "url": "https://huggingface.co/Kijai/Z-Image_comfy_fp8_scaled/resolve/main/z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors"
+    },
+    {
+      "slot": "clip",
+      "sub": "text_encoders",
+      "file": "qwen_3_4b.safetensors",
+      "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/text_encoders/qwen_3_4b.safetensors"
+    },
+    {
+      "slot": "vae",
+      "sub": "vae",
+      "file": "ae.safetensors",
+      "url": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/vae/ae.safetensors"
+    }
+  ],
+  "negative": "text, watermark, signature, logo, letters, words, caption, ugly, blurry, lowres, jpeg artifacts, deformed, extra limbs, stock photo, 3d render",
+  "settings": {
+    "gpu": { "width": 1536, "height": 1024, "steps": 8 },
+    "lowvram": { "width": 1216, "height": 832, "steps": 8 },
+    "cpu": { "width": 1024, "height": 688, "steps": 6 }
+  },
+  "graph": {
+    "1": { "class_type": "UNETLoader", "inputs": { "unet_name": "{{model.unet}}", "weight_dtype": "default" } },
+    "2": { "class_type": "ModelSamplingAuraFlow", "inputs": { "model": ["1", 0], "shift": 3 } },
+    "3": { "class_type": "CLIPLoader", "inputs": { "clip_name": "{{model.clip}}", "type": "lumina2", "device": "default" } },
+    "4": { "class_type": "CLIPTextEncode", "inputs": { "clip": ["3", 0], "text": "{{prompt}}" } },
+    "5": { "class_type": "CLIPTextEncode", "inputs": { "clip": ["3", 0], "text": "{{negative}}" } },
+    "6": { "class_type": "EmptySD3LatentImage", "inputs": { "width": "{{width}}", "height": "{{height}}", "batch_size": 1 } },
+    "7": { "class_type": "KSampler", "inputs": {
+      "model": ["2", 0], "positive": ["4", 0], "negative": ["5", 0], "latent_image": ["6", 0],
+      "seed": "{{seed}}", "steps": "{{steps}}", "cfg": 1, "sampler_name": "res_multistep", "scheduler": "simple", "denoise": 1
+    } },
+    "8": { "class_type": "VAELoader", "inputs": { "vae_name": "{{model.vae}}" } },
+    "9": { "class_type": "VAEDecode", "inputs": { "samples": ["7", 0], "vae": ["8", 0] } },
+    "10": { "class_type": "ImageAddNoise", "inputs": { "image": ["9", 0], "seed": "{{seed}}", "strength": 0.06 } },
+    "11": { "class_type": "SaveImage", "inputs": { "images": ["10", 0], "filename_prefix": "{{prefix}}" } }
+  }
+}

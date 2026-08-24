@@ -10,7 +10,7 @@ import { execFile } from "node:child_process";
 import { accessSync, constants, readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { MODELS } from "./comfy.mjs";
+import { models as workflowModels } from "./comfy.mjs";
 
 const HOME = homedir();
 const WIN = process.platform === "win32";
@@ -93,11 +93,14 @@ function comfyModelCheck(st) {
     return bad("comfy-models", "ComfyUI models", `cannot read ${dir}`,
       "Check the ComfyUI install, or set COMFY_DIR.", "optional");
   }
-  const missing = Object.values(MODELS).filter((f) => !have.has(f));
+  // The selected workflow's weights, not a fixed list: switch workflow and the
+  // check follows, rather than reporting the old one's files as missing.
+  const wanted = workflowModels();
+  const missing = Object.values(wanted).filter((f) => !have.has(f));
   return missing.length
     ? bad("comfy-models", "ComfyUI models", `missing: ${missing.join(", ")}`,
         `Place them under ${dir}. Renders fail without them.`, "optional")
-    : ok("comfy-models", "ComfyUI models", `all ${Object.keys(MODELS).length} present`);
+    : ok("comfy-models", "ComfyUI models", `all ${Object.keys(wanted).length} present`);
 }
 
 function affinityCheck(st) {
