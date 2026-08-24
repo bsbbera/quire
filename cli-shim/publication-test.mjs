@@ -226,6 +226,25 @@ try {
     assert.ok(runner.outstanding(after, "write", false).length > 0, "a stopped queue wrote everything");
   });
 
+  // Selecting a cover provider writes it into inkos.json, and the schema that
+  // reads that file back used to name the three providers again by hand. A
+  // fourth one therefore produced a config the workbench refused to load — it
+  // would not start at all until the file was edited by hand. Cheap to check,
+  // expensive to find.
+  await check("every cover provider survives the config schema", async () => {
+    const { COVER_PROVIDER_PRESETS } = await load("dist/llm/cover-providers.js");
+    const { LLMConfigSchema } = await load("dist/models/project.js");
+    for (const preset of COVER_PROVIDER_PRESETS) {
+      const parsed = LLMConfigSchema.safeParse({
+        provider: "openai",
+        baseUrl: "https://example.com/v1",
+        model: "x",
+        cover: { service: preset.service, model: preset.defaultModel },
+      });
+      assert.ok(parsed.success, `${preset.service}: ${JSON.stringify(parsed.error?.issues)}`);
+    }
+  });
+
   await check("listing reports progress per issue", async () => {
     const list = await runner.listIssues(ctx);
     const row = list.find((i) => i.id === created.id);
