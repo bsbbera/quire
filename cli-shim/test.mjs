@@ -169,7 +169,10 @@ check("mcp discovery finds configured servers", () => {
 // that installed through Quire but not on the one that developed it.
 {
   const { MODELS } = await import("./comfy.mjs");
-  const src = await import("node:fs").then((fs) => fs.readFileSync("./comfy-install.mjs", "utf8"));
+  // Resolved against this file, not the cwd: run from the repo root and the
+  // relative read threw ENOENT and killed the whole suite mid-run.
+  const here = new URL("./comfy-install.mjs", import.meta.url);
+  const src = await import("node:fs").then((fs) => fs.readFileSync(here, "utf8"));
   check("every workflow model has a download", () => {
     for (const [slot, file] of Object.entries(MODELS)) {
       assert.ok(src.includes("MODELS." + slot), `no download entry for MODELS.${slot} (${file})`);
