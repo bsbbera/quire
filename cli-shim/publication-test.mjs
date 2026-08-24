@@ -28,12 +28,29 @@ const root = mkdtempSync(join(tmpdir(), "quire-pub-"));
 try {
   const reg = await registry.loadPublicationRegistry(root);
   const magazine = reg.definitions.find((d) => d.definition.id === "magazine")?.definition;
-  const cookbook = reg.definitions.find((d) => d.definition.id === "cookbook")?.definition;
+
+  // A second type, defined here rather than shipped. The whole claim of the
+  // phase is that law comes from the definition and not from the code, and one
+  // installed type cannot demonstrate that. Shipping a cookbook nobody wants
+  // just to have a second example is the wrong way to buy the proof — a
+  // fixture buys it for free, and it can be made deliberately unlike a
+  // magazine: no even extent, no plate rule, its own densities and pillars.
+  const other = {
+    ...magazine,
+    id: "ledger", label: "Ledger", outDir: "Ledger",
+    extent: { min: 4, max: 40, default: 12 },
+    pillars: ["what", "why"],
+    archetypes: ["entry", "index"],
+    densities: { S: [20, 60], L: [200, 400] },
+    defaultDensity: "S",
+    rules: {},
+    needsImages: true,
+    needsPdf: false,
+  };
 
   console.log("publication runner:");
   await check("both builtin definitions load", () => {
     assert.ok(magazine, "magazine definition missing");
-    assert.ok(cookbook, "cookbook definition missing");
     assert.equal(reg.diagnostics.length, 0, JSON.stringify(reg.diagnostics));
   });
 
@@ -132,13 +149,13 @@ try {
 
   // The point of the whole phase: same runner, different definition, different
   // law and different storage.
-  const cookCtx = { projectRoot: root, definition: cookbook, ask };
+  const cookCtx = { projectRoot: root, definition: other, ask };
   const cookIssue = await runner.createIssue(cookCtx, { subject: "Test Subject", extent: 25 });
   await check("a second definition runs the same code with its own rules", () => {
-    assert.equal(cookIssue.type, "cookbook");
-    // Cookbook has no even-extent rule, so 25 survives; a magazine would round.
+    assert.equal(cookIssue.type, "ledger");
+    // No even-extent rule on this one, so 25 survives; a magazine would round.
     assert.equal(cookIssue.extent, 25);
-    assert.ok(existsSync(join(root, "Cookbook", "issues", cookIssue.id, "publication.json")));
+    assert.ok(existsSync(join(root, "Ledger", "issues", cookIssue.id, "publication.json")));
   });
   await check("an extent below the type's minimum is clamped up", async () => {
     const tiny = await runner.createIssue(ctx, { subject: "Tiny Extent", extent: 4 });
@@ -151,7 +168,7 @@ try {
   });
 
   await check("a definition with needsImages false has no art stage", async () => {
-    const noArt = { ...cookbook, needsImages: false };
+    const noArt = { ...other, needsImages: false };
     await assert.rejects(
       () => runner.artPage({ ...cookCtx, definition: noArt, shimUrl: "http://127.0.0.1:1" }, cookIssue.id, 1),
       /does not use generated images/,

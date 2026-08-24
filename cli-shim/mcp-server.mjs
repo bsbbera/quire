@@ -94,7 +94,7 @@ const TOOLS = [
   },
   {
     name: "quire_list_publications",
-    description: "List the publications in the Quire workspace — magazines, cookbooks, any installed type.",
+    description: "List the publications in the Quire workspace — magazines, or any installed type.",
     inputSchema: { type: "object", properties: {} },
     run: async () => ({ publications: await allPublications() }),
   },
