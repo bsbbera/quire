@@ -1,6 +1,6 @@
 [package]
 name = "quire"
-version = "0.1.14"
+version = "0.1.15"
 description = "Quire — InkOS with local agent-CLI model providers"
 authors = ["Subhadip"]
 edition = "2021"

@@ -27,9 +27,11 @@ const ROOT = process.env.QUIRE_WORKSPACE
  * preferred. The global npm package stays as a fallback for a dev tree where
  * the fork has not been staged yet.
  */
+const BUNDLED = join(dirname(fileURLToPath(import.meta.url)), "inkos");
+const isBundled = () => existsSync(join(BUNDLED, "studio", "dist", "api", "index.js"));
+
 function inkosRoot() {
-  const bundled = join(dirname(fileURLToPath(import.meta.url)), "inkos");
-  if (existsSync(join(bundled, "package.json"))) return bundled;
+  if (isBundled()) return BUNDLED;
   const guesses = [
     process.env.APPDATA && join(process.env.APPDATA, "npm/node_modules/@actalk/inkos"),
     join(homedir(), "AppData/Roaming/npm/node_modules/@actalk/inkos"),
@@ -53,11 +55,19 @@ if (!pkg) {
 
 const load = (rel) => import(pathToFileURL(join(pkg, rel)).href);
 const { ensureProjectDirectoryInitialized } = await load("dist/project-bootstrap.js");
-const { resolveStudioLaunch } = await load("dist/commands/studio.js");
 
 await ensureProjectDirectoryInitialized(ROOT, { language: "en" });
 
-const launch = await resolveStudioLaunch(ROOT);
+// With the staged runtime the entry point is known, so resolveStudioLaunch is
+// not consulted: it hunts for a global npm layout or a monorepo checkout and
+// finds neither here. It is still the right answer for the npm fallback.
+const launch = isBundled()
+  ? {
+      studioEntry: join(BUNDLED, "studio", "dist", "api", "index.js"),
+      command: process.execPath,
+      args: [join(BUNDLED, "studio", "dist", "api", "index.js"), ROOT],
+    }
+  : await (await load("dist/commands/studio.js")).resolveStudioLaunch(ROOT);
 if (!launch) {
   console.error("InkOS Studio build not found next to the inkos CLI");
   process.exit(1);

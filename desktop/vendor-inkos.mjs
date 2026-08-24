@@ -46,10 +46,13 @@ mkdirSync(OUT, { recursive: true });
 // 1. The compiled Studio, server and client both.
 cpSync(studioDist, join(OUT, "studio", "dist"), { recursive: true });
 
-// 2. The workspace bootstrap the shim calls before launching Studio.
-cpSync(join(SRC, "packages", "cli", "dist", "project-bootstrap.js"),
-  join(OUT, "project-bootstrap.js"));
-cpSync(join(SRC, "packages", "cli", "dist", "utils.js"), join(OUT, "utils.js"));
+// 2. The workspace bootstrap the shim calls before launching Studio. It goes
+// under dist/ so `import("dist/project-bootstrap.js")` resolves identically
+// whether the shim found this staged runtime or a global npm install.
+mkdirSync(join(OUT, "dist"), { recursive: true });
+for (const f of ["project-bootstrap.js", "utils.js"]) {
+  cpSync(join(SRC, "packages", "cli", "dist", f), join(OUT, "dist", f));
+}
 
 // 3. The runtime package.json. core's own dependencies are declared here, at
 // the root, so both core and Studio resolve them by walking up.
