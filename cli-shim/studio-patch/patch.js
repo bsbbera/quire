@@ -577,132 +577,8 @@
      boot
      ===================================================================== */
 
-  /* =======================================================================
-     4. Branding
-     ===================================================================== */
-
-  const MARK = '<svg viewBox="0 0 100 100" width="24" height="24" aria-hidden="true">'
-    + '<g fill="none" stroke="currentColor" stroke-width="5.2" stroke-linecap="round">'
-    + '<path d="M26.5 41.5 A23.5 23.5 0 0 0 73.5 41.5"/><path d="M34.5 41.5 A15.5 15.5 0 0 0 65.5 41.5"/><path d="M42.5 41.5 A7.5 7.5 0 0 0 57.5 41.5"/>'
-    + '</g></svg>';
-
-  /**
-   * Put Quire's identity on the sidebar.
-   *
-   * Studio is @actalk/inkos under AGPL-3.0, so its notice stays — the footer
-   * line below is not decoration, it is the attribution the licence requires.
-   * Never remove it, and never present the workbench as wholly ours.
-   */
-  function brandSidebar() {
-    const aside = document.querySelector("aside");
-    if (!aside || aside.dataset.quireBranded) return;
-
-    // The wordmark is whichever leaf node says "InkOS" — matching on text
-    // rather than a class, because the bundle is minified and its hashes move.
-    // Matches either name. renameInkos now rewrites "InkOS" everywhere, and it
-    // can win the race - matching only the old text meant branding silently
-    // did nothing, taking the mark, the version AND the AGPL notice with it.
-    const leaf = [...aside.querySelectorAll("*")]
-      .find((e) => !e.children.length && /^(InkOS|Quire)$/.test(e.textContent.trim()));
-    if (!leaf) return;                      // sidebar not rendered yet
-    aside.dataset.quireBranded = "1";
-    leaf.textContent = "Quire";
-
-    const sub = leaf.parentElement && [...leaf.parentElement.querySelectorAll("*")]
-      .find((e) => !e.children.length && /^STUDIO$/i.test(e.textContent.trim()));
-    if (sub) sub.textContent = "STUDIO";
-
-    // Walk up until an ancestor actually contains the logo. The wordmark's
-    // nearest div is a tight text wrapper that holds no artwork, so the old
-    // `leaf.closest("a,div")` looked one level too low, found nothing, and
-    // left InkOS's own drop sitting next to the Quire name. Match img as well
-    // as svg - the bundle is free to ship either.
-    let host = leaf.parentElement, art = null;
-    for (let i = 0; i < 5 && host && !art; i++) {
-      art = host.querySelector("svg, img");
-      if (!art) host = host.parentElement;
-    }
-    if (art) art.outerHTML = MARK;
-    else if (leaf.parentElement) leaf.parentElement.insertAdjacentHTML("afterbegin", MARK);
-
-    // Version, where a version belongs: under the wordmark, not buried in a
-    // drawer nobody opens. Studio runs in an iframe with no Tauri API, so the
-    // shell passes it on the hash.
-    const ver = new URLSearchParams(location.hash.slice(1)).get("qv");
-    if (ver && sub) sub.textContent = "STUDIO · " + ver;
-
-    ensureAttrib(aside);
-  }
-
-  /**
-   * The AGPL-3.0 notice, re-added whenever it is missing.
-   *
-   * Deliberately outside brandSidebar's run-once guard. That guard lives on
-   * the aside element, which survives a re-render even when children appended
-   * to it do not - so a notice added under the guard can be dropped and never
-   * come back. A licence notice that disappears on a repaint is not a notice.
-   */
-  function ensureAttrib(aside) {
-    if (!aside || aside.querySelector(".quire-attrib")) return;
-    const note = document.createElement("div");
-    note.className = "quire-attrib";
-    note.textContent = "Workbench: InkOS Studio (AGPL-3.0)";
-    aside.appendChild(note);
-  }
-
-  /**
-   * Rename the workbench in the UI chrome. Studio prints "InkOS Studio" in the
-   * breadcrumb, the tab title and a few headings; inside Quire that is the
-   * product's own name to the person using it.
-   *
-   * The attribution line is exempt by class, and must stay exempt. Studio is
-   * @actalk/inkos under AGPL-3.0 and the notice is a licence obligation, not a
-   * label - relabelling the chrome is fine, erasing the credit is not.
-   */
-  function renameInkos(root) {
-    const scope = root && root.nodeType === Node.ELEMENT_NODE ? root : document.body;
-    if (!scope) return;
-    if (/InkOS/.test(document.title)) {
-      document.title = document.title.replace(/InkOS Studio/g, "Quire Studio").replace(/InkOS/g, "Quire");
-    }
-    const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
-      acceptNode: (n) => (n.parentElement?.closest(".quire-attrib") || SKIP.has(n.parentElement?.tagName))
-        ? NodeFilter.FILTER_REJECT
-        : (n.textContent.includes("InkOS") ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
-    });
-    const hits = [];
-    let n;
-    while ((n = walker.nextNode())) hits.push(n);
-    for (const node of hits) {
-      node.textContent = node.textContent
-        .replace(/InkOS Studio/g, "Quire Studio")
-        .replace(/InkOS/g, "Quire");
-    }
-  }
-
-  /**
-   * Drop the "/ Quire Studio" tail from the breadcrumb. Every page inside the
-   * app is Quire Studio, so the crumb spent its width restating the window
-   * title. "Home" alone still tells you where you are.
-   */
-  function trimCrumb() {
-    for (const el of document.querySelectorAll("header *, nav *")) {
-      if (el.children.length || el.dataset.quireCrumb) continue;
-      if (el.textContent.trim() !== "Quire Studio") continue;
-      if (el.closest("aside")) continue;
-      const sibs = [...(el.parentElement?.children || [])];
-      if (!sibs.some((n) => n.textContent.trim() === "Home")) continue;
-      el.dataset.quireCrumb = "1";
-      el.hidden = true;
-      for (const n of sibs) if (n.textContent.trim() === "/") n.hidden = true;
-    }
-  }
-
   function start() {
     translateTree(document.body);
-    brandSidebar();                 // before renameInkos: it owns the wordmark
-    renameInkos(document.body);
-    trimCrumb();
     addResizer();
     buildPanel();
     connectEvents();
@@ -717,10 +593,6 @@
         }
       }
       addResizer();
-      brandSidebar();
-      ensureAttrib(document.querySelector("aside"));
-      renameInkos(document.body);
-      trimCrumb();
     });
     mo.observe(document.body, { childList: true, subtree: true, characterData: true });
   }

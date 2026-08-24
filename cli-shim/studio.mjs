@@ -20,8 +20,16 @@ const ROOT = process.env.QUIRE_WORKSPACE
   || [join(homedir(), "Quire"), join(homedir(), "InkDesk")].find(existsSync)
   || join(homedir(), "Quire");
 
-/** Locate the globally-installed @actalk/inkos package. */
+/**
+ * Locate the InkOS runtime. Quire ships its own build of the fork in
+ * ./inkos (staged by desktop/vendor-inkos.mjs, and carried into the
+ * installer because Tauri bundles all of cli-shim as a resource), so that is
+ * preferred. The global npm package stays as a fallback for a dev tree where
+ * the fork has not been staged yet.
+ */
 function inkosRoot() {
+  const bundled = join(dirname(fileURLToPath(import.meta.url)), "inkos");
+  if (existsSync(join(bundled, "package.json"))) return bundled;
   const guesses = [
     process.env.APPDATA && join(process.env.APPDATA, "npm/node_modules/@actalk/inkos"),
     join(homedir(), "AppData/Roaming/npm/node_modules/@actalk/inkos"),
@@ -39,7 +47,7 @@ function inkosRoot() {
 
 const pkg = inkosRoot();
 if (!pkg) {
-  console.error("inkos not found — install it with `npm i -g @actalk/inkos`");
+  console.error("inkos runtime not found — run: node desktop/vendor-inkos.mjs");
   process.exit(1);
 }
 
@@ -97,29 +105,7 @@ function installStudioPatch(entry) {
     // them loads two copies of the patch and the Magazine nav appears twice.
     html = html.replace(/^.*\/assets\/(inkdesk|quire)-(patch|mag)\.(css|js).*\r?\n/gm, "");
 
-    // Rename in the HTML itself, and rename again the instant the SPA paints.
-    // The patch scripts are deferred, so for the first moment of every launch
-    // Studio's own "InkOS Studio" title and first paint were visible - the
-    // rename could only ever run after the flash the user actually complained
-    // about. This inline script has no such gap.
-    html = html.replace(/<title>[^<]*<\/title>/, "<title>Quire Studio</title>");
-    const early = '<script>(function(){var f=function(){'
-      + 'var w=document.createTreeWalker(document.body||document.documentElement,4),n,h=[];'
-      + 'while((n=w.nextNode()))if(n.textContent.indexOf("InkOS")>-1)h.push(n);'
-      + 'for(var i=0;i<h.length;i++){var p=h[i].parentElement;'
-      // The attribution is the one place the name must survive. This script
-      // runs before the patch and again on every mutation, so without the
-      // exemption it rewrites the AGPL notice into "Workbench: Quire Studio"
-      // moments after the patch writes the correct one - crediting the wrong
-      // project, which is worse than not styling the notice at all.
-      + 'if(p&&p.closest&&p.closest(".quire-attrib"))continue;'
-      + 'h[i].textContent='
-      + 'h[i].textContent.replace(/InkOS Studio/g,"Quire Studio").replace(/InkOS/g,"Quire");}};'
-      + 'new MutationObserver(f).observe(document.documentElement,{childList:true,subtree:true,characterData:true});'
-      + 'document.addEventListener("DOMContentLoaded",f);})();<\/script>';
-
     html = html.replace("</head>", [
-      "    " + early,
       `    <link rel="stylesheet" href="/assets/quire-patch.css?v=${v}">`,
       `    <link rel="stylesheet" href="/assets/quire-mag.css?v=${v}">`,
       `    <script src="/assets/quire-patch.js?v=${v}" defer></script>`,

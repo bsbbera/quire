@@ -1,12 +1,13 @@
 {
   "name": "quire-desktop",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "node clean-resources.mjs && tauri dev",
-    "build": "node clean-resources.mjs && tauri build",
+    "build": "node vendor-inkos.mjs && node clean-resources.mjs && tauri build",
     "icons": "tauri icon assets/icon.png",
+    "vendor": "node vendor-inkos.mjs",
     "tauri": "node clean-resources.mjs && tauri"
   },
   "devDependencies": {

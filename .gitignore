@@ -36,3 +36,7 @@ ideaverse-skills/
 
 # The bundler needs these; the blanket *.png above is for artwork, not icons.
 !desktop/src-tauri/icons/**/*.png
+
+# Build output: the InkOS fork staged for the installer by
+# desktop/vendor-inkos.mjs. ~100 MB, regenerated from vendor/inkos.
+cli-shim/inkos/

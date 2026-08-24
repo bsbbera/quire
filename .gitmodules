@@ -1,0 +1,4 @@
+[submodule "vendor/inkos"]
+	path = vendor/inkos
+	url = https://github.com/bsbbera/inkos.git
+	branch = quire

@@ -24,10 +24,18 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # vendor/inkos is the InkOS fork Quire builds Studio from.
+          submodules: recursive
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 22 to match the fork's engines field; its build needs >=22.
+          node-version: 22
+
+      - name: Install pnpm
+        # The fork is a pnpm workspace; pnpm 10 matches its lockfile.
+        run: npm i -g pnpm@10
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -40,6 +48,14 @@ jobs:
       - name: Install frontend deps
         working-directory: desktop
         run: npm ci
+
+      # Builds the fork and stages a runtime-only copy into
+      # cli-shim/inkos, which Tauri ships as a resource. Doing it here
+      # rather than inside `npm run tauri build` keeps the failure
+      # visible as its own step.
+      - name: Build and stage InkOS
+        working-directory: desktop
+        run: node vendor-inkos.mjs
 
       - uses: tauri-apps/tauri-action@v0
         env:
