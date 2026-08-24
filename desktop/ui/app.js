@@ -41,10 +41,8 @@ function renderProviders(agents) {
     return;
   }
   for (const a of agents) {
-    const card = document.createElement("button");
+    const card = document.createElement("div");
     card.className = "card";
-    card.type = "button";
-    card.setAttribute("aria-pressed", String(a.id === state.cli));
     card.innerHTML = `
       <div class="card-top">
         <img class="logo" src="${state.shim}/assets/${a.id}" alt=""
@@ -53,57 +51,17 @@ function renderProviders(agents) {
         <span class="pill on" style="margin-left:auto">${a.models}</span>
       </div>
       <div class="meta" title="${a.version}">${a.version}</div>`;
-    card.onclick = () => {
-      state.cli = a.id;
-      renderProviders(agents);
-      renderModels();
-    };
+    // Cards report what is installed; they no longer select anything.
     box.appendChild(card);
   }
 }
 
-function renderModels() {
-  const sel = $("#model");
-  const q = $("#search").value.trim().toLowerCase();
-  const mine = state.models.filter((m) => m.owned_by === state.cli);
-  const shown = q ? mine.filter((m) => m.id.toLowerCase().includes(q)) : mine;
-  sel.innerHTML = "";
-  for (const m of shown) {
-    const o = document.createElement("option");
-    o.value = m.id;
-    o.textContent = m.id.split("/").slice(1).join("/");
-    sel.appendChild(o);
-  }
-  if (state.model && shown.some((m) => m.id === state.model)) sel.value = state.model;
-  $("#count").textContent =
-    `${shown.length} of ${mine.length} for ${state.cli ?? "—"} · ${state.models.length} total`;
-  sel.disabled = shown.length === 0;
-}
+// The shell used to carry its own model picker, reading and writing the shim
+// while the workbench's picker read and wrote the project config. Two
+// selectors, two sources of truth, and they disagreed on screen: the shell
+// showed a model while chat refused to send for want of one. The workbench
+// owns model selection now, and the shim reads that same config.
 
-function showModel(model) {
-  $("#activeModel").textContent = model || "—";
-  $("#fabModel").textContent = model ? model.split("/").slice(1).join("/") : "no model";
-}
-
-async function save(model) {
-  try {
-    const r = await fetch(`${state.shim}/config`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ model }),
-    });
-    const j = await r.json();
-    if (!j.ok) return toast("save failed: " + (j.error || "unknown"));
-    state.model = model;
-    showModel(model);
-    toast("saved — " + model);
-  } catch (e) {
-    toast("save failed: " + e.message);
-  }
-}
-
-$("#search").oninput = renderModels;
-$("#model").onchange = (e) => save(e.target.value);
 $("#refresh").onclick = () => loadShim(true).catch((e) => toast(e.message));
 
 async function loadShim(force) {
@@ -115,11 +73,9 @@ async function loadShim(force) {
   state.models = models.data;
   state.model = cfg.model || null;
   state.cli = (cfg.model && cfg.model.split("/")[0]) || status.agents[0]?.id || null;
-  showModel(state.model);
   $("#foot").textContent = `${appVersion ? "Quire " + appVersion + " · " : ""}shim :${status.port} · ${status.agents.length} CLIs · ${status.total} models`;
   $("#langFoot").textContent = "lang " + status.lang;
   renderProviders(status.agents);
-  renderModels();
 }
 
 

@@ -34,9 +34,12 @@
   </div>
 </div>
 
-<!-- Settings entry point: shows what model is live, opens the drawer. -->
+<!-- Settings entry point. It used to show the live model, which made two
+     model selectors on one screen with two different sources of truth: this
+     one read the shim, the workbench's own picker read the project config,
+     and they disagreed. Model selection belongs to the workbench. -->
 <button class="fab" id="openSettings" hidden>
-  <span class="fab-dot"></span><span id="fabModel">model</span>
+  <span class="fab-dot"></span><span>Settings</span>
 </button>
 
 <div class="scrim" id="scrim" hidden></div>
@@ -58,18 +61,6 @@
       <div class="providers" id="providers"></div>
     </section>
 
-    <section class="picker">
-      <div class="section-head"><h2>Model</h2><p id="count"></p></div>
-      <div class="field">
-        <label for="search">Filter</label>
-        <input type="search" id="search" placeholder="e.g. opus, gemini, codex" autocomplete="off">
-      </div>
-      <div class="field">
-        <label for="model">Model</label>
-        <select id="model"></select>
-      </div>
-      <div class="active"><span class="pill" id="activePill">active</span><span id="activeModel">—</span></div>
-    </section>
     <!-- Image generation: the one dependency Quire installs for the user, so
          the machine half of it lives in the shell, not in the workbench. -->
     <section id="imagesSection">

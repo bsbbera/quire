@@ -256,6 +256,126 @@ workflow manager.
 
 ---
 
+## Phase 5.5 — What a publication actually needs
+
+Phase 4 moved the old magazine engine into a definition and a generic runner,
+and the pipes connected. They carry very little. The engine being ported was
+already thin, and porting it faithfully preserved the thinness: research is one
+model call from memory, there is no design stage at all, the only user input is
+a single `notes` string set once, and a page has no room for anything that is
+not prose.
+
+This phase is that gap, closed. It comes before Phase 6 because Phase 6's
+executor needs a spec, and nothing currently produces one.
+
+**The shape of a run, after this phase:**
+
+```
+intake (asks, accepts attachments, confirms)
+  -> research (searches the web, keeps sources)
+  -> plan
+  -> write            <- InkOS's own writing engine, unchanged
+  -> [ you read it, edit it, say what is wrong ]
+  -> design decision  <- reads the final copy, emits a spec
+  -> [ you approve the design ]
+  -> art (ComfyUI, prompted by the spec)
+  -> build (Affinity, executes the spec)
+```
+
+**Writing is not touched.** InkOS's writing engine is the writer and keeps its
+own way of working. Design is decided *after* content exists and after your
+feedback lands on it — not alongside, not before.
+
+### 5.5.1 Research that searches
+
+Today `research()` asks the model what it remembers. It cites nothing because
+there is nothing to cite.
+
+- [ ] Search is a provider chain, best available wins: the model's own web
+      search when the selected model has it, else Tavily, else Brave, else
+      whatever key is present, else fail loudly rather than silently
+      hallucinating a research report
+- [ ] Per pillar, not per issue — each pillar gets its own queries and its own
+      slice, so page context stops being one undifferentiated blob
+- [ ] Findings are typed, not prose: `{claim, source_url, source_title, kind}`
+      where kind is fact / figure / quote / anecdote / comparison / date
+- [ ] Cached on disk per issue, keyed by query, so a re-run and a resume do not
+      pay for the same search twice
+- [ ] Sourced facts survive into the page: a page carries `facts[]`, and the
+      writer is given them as material rather than asked to recall them
+
+### 5.5.2 Fact-boxes as page furniture
+
+A magazine page is not one column of prose. The "did you know", the number
+pulled out large, the this-versus-that, the timeline — these are *objects on
+the page* with their own shape, their own word budget, and their own place in
+the layout. Modelled as prose, they cannot be laid out, counted, or checked.
+
+- [ ] Page gains typed blocks beside `body`: `didYouKnow`, `sidefact`,
+      `comparison`, `timeline`, `pullNumber`, `sources`
+- [ ] Which blocks a page may carry is declared per archetype in the
+      definition file, not hardcoded in the runner
+- [ ] Every block carries its own source reference where it states a fact
+- [ ] Blocks are what the design spec places; the design stage reads them
+
+### 5.5.3 Intake, declared in the definition
+
+- [ ] Definitions declare their intake fields: id, label, question, required,
+      default, and what parses an answer
+- [ ] Only required fields block. Everything else defaults and can be skipped
+- [ ] One free-text answer may satisfy several fields — parsed, not marched
+      through as a form
+- [ ] Attachments accepted at intake: notes, PDF, images. Text is extracted and
+      becomes research material with provenance "you gave me this"; images are
+      kept as reference material for the design stage
+- [ ] A confirm card before the run: resolved subject, angle, extent, estimated
+      model calls. Editable. Nothing starts until it is accepted — the same
+      courtesy every book-shaped tool already gets through `propose_action`
+
+### 5.5.4 Design decision, generic to every type
+
+Not a magazine feature. Any publication that renders anything needs one.
+
+- [ ] `design-spec` JSON: palette, type scale, grid, per-page layout, block
+      placement, image direction. Validated before anything consumes it
+- [ ] The design stage runs **after** content is written and after your notes
+      on it, and reads the final copy — the real headline lengths, the real
+      block counts, the real image slots
+- [ ] The spec is the single source for both renderers: ComfyUI prompts come
+      out of its image direction, Affinity's build comes out of its layout
+- [ ] **Approval gate before build.** Content approval and design approval are
+      two separate gates, because they are two separate decisions
+- [ ] Definitions that render nothing (`needsImages: false`, `needsPdf: false`)
+      skip the stage entirely
+
+### 5.5.5 Voice from the skill
+
+- [ ] `magazine.json` stops carrying voice rules inline; voice is loaded from
+      the mag-content skill at run time
+- [ ] The skill is read as **inspiration** — how to represent a subject
+      beautifully, how a spread earns attention — not copied as a script. The
+      writing engine stays InkOS's
+- [ ] A missing or malformed skill degrades to the definition's own default
+      voice with a diagnostic, never a crash
+
+### Tests
+| # | Test | Pass condition |
+|---|---|---|
+| 5.5.1 | Run research on a subject with recent news | Findings carry real URLs that resolve |
+| 5.5.2 | No search provider configured at all | Refuses with a clear reason; does not invent a report |
+| 5.5.3 | Re-run research unchanged | Served from cache; no second search spend |
+| 5.5.4 | A page with a did-you-know block | Block is typed and separately addressable, not buried in body |
+| 5.5.5 | Archetype that forbids a block type | Runner refuses to place it |
+| 5.5.6 | Create a publication with no angle given | Asks; does not silently pick one |
+| 5.5.7 | Attach a PDF at intake | Text extracted, cited as user-supplied |
+| 5.5.8 | Decline the confirm card | Nothing is created, nothing is spent |
+| 5.5.9 | Design stage before content is written | Refused — it has nothing to read |
+| 5.5.10 | Edit a page, then run design | Spec reflects the edited copy, not the draft |
+| 5.5.11 | Reject the design, revise, approve | Build uses the approved spec only |
+| 5.5.12 | Remove the mag-content skill | Falls back with a diagnostic; run completes |
+
+---
+
 ## Phase 6 — Design system (learning) + Affinity (executor)
 
 Split taste from execution. The **design-system skill** owns colour, type,
