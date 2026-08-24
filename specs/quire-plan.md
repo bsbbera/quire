@@ -291,17 +291,17 @@ feedback lands on it — not alongside, not before.
 Today `research()` asks the model what it remembers. It cites nothing because
 there is nothing to cite.
 
-- [ ] Search is a provider chain, best available wins: the model's own web
+- [x] Search is a provider chain, best available wins: the model's own web
       search when the selected model has it, else Tavily, else Brave, else
       whatever key is present, else fail loudly rather than silently
       hallucinating a research report
-- [ ] Per pillar, not per issue — each pillar gets its own queries and its own
+- [x] Per pillar, not per issue — each pillar gets its own queries and its own
       slice, so page context stops being one undifferentiated blob
-- [ ] Findings are typed, not prose: `{claim, source_url, source_title, kind}`
+- [x] Findings are typed, not prose: `{claim, source_url, source_title, kind}`
       where kind is fact / figure / quote / anecdote / comparison / date
-- [ ] Cached on disk per issue, keyed by query, so a re-run and a resume do not
+- [x] Cached on disk per issue, keyed by query, so a re-run and a resume do not
       pay for the same search twice
-- [ ] Sourced facts survive into the page: a page carries `facts[]`, and the
+- [x] Sourced facts survive into the page: a page carries `facts[]`, and the
       writer is given them as material rather than asked to recall them
 
 ### 5.5.2 Fact-boxes as page furniture
@@ -311,24 +311,24 @@ pulled out large, the this-versus-that, the timeline — these are *objects on
 the page* with their own shape, their own word budget, and their own place in
 the layout. Modelled as prose, they cannot be laid out, counted, or checked.
 
-- [ ] Page gains typed blocks beside `body`: `didYouKnow`, `sidefact`,
+- [x] Page gains typed blocks beside `body`: `didYouKnow`, `sidefact`,
       `comparison`, `timeline`, `pullNumber`, `sources`
-- [ ] Which blocks a page may carry is declared per archetype in the
+- [x] Which blocks a page may carry is declared per archetype in the
       definition file, not hardcoded in the runner
-- [ ] Every block carries its own source reference where it states a fact
-- [ ] Blocks are what the design spec places; the design stage reads them
+- [x] Every block carries its own source reference where it states a fact
+- [x] Blocks are what the design spec places; the design stage reads them
 
 ### 5.5.3 Intake, declared in the definition
 
-- [ ] Definitions declare their intake fields: id, label, question, required,
+- [x] Definitions declare their intake fields: id, label, question, required,
       default, and what parses an answer
-- [ ] Only required fields block. Everything else defaults and can be skipped
-- [ ] One free-text answer may satisfy several fields — parsed, not marched
+- [x] Only required fields block. Everything else defaults and can be skipped
+- [x] One free-text answer may satisfy several fields — parsed, not marched
       through as a form
-- [ ] Attachments accepted at intake: notes, PDF, images. Text is extracted and
+- [x] Attachments accepted at intake: notes, PDF, images. Text is extracted and
       becomes research material with provenance "you gave me this"; images are
       kept as reference material for the design stage
-- [ ] A confirm card before the run: resolved subject, angle, extent, estimated
+- [x] A confirm card before the run: resolved subject, angle, extent, estimated
       model calls. Editable. Nothing starts until it is accepted — the same
       courtesy every book-shaped tool already gets through `propose_action`
 
@@ -336,26 +336,26 @@ the layout. Modelled as prose, they cannot be laid out, counted, or checked.
 
 Not a magazine feature. Any publication that renders anything needs one.
 
-- [ ] `design-spec` JSON: palette, type scale, grid, per-page layout, block
+- [x] `design-spec` JSON: palette, type scale, grid, per-page layout, block
       placement, image direction. Validated before anything consumes it
-- [ ] The design stage runs **after** content is written and after your notes
+- [x] The design stage runs **after** content is written and after your notes
       on it, and reads the final copy — the real headline lengths, the real
       block counts, the real image slots
-- [ ] The spec is the single source for both renderers: ComfyUI prompts come
+- [x] The spec is the single source for both renderers: ComfyUI prompts come
       out of its image direction, Affinity's build comes out of its layout
-- [ ] **Approval gate before build.** Content approval and design approval are
+- [x] **Approval gate before build.** Content approval and design approval are
       two separate gates, because they are two separate decisions
-- [ ] Definitions that render nothing (`needsImages: false`, `needsPdf: false`)
+- [x] Definitions that render nothing (`needsImages: false`, `needsPdf: false`)
       skip the stage entirely
 
 ### 5.5.5 Voice from the skill
 
-- [ ] `magazine.json` stops carrying voice rules inline; voice is loaded from
+- [x] `magazine.json` stops carrying voice rules inline; voice is loaded from
       the mag-content skill at run time
-- [ ] The skill is read as **inspiration** — how to represent a subject
+- [x] The skill is read as **inspiration** — how to represent a subject
       beautifully, how a spread earns attention — not copied as a script. The
       writing engine stays InkOS's
-- [ ] A missing or malformed skill degrades to the definition's own default
+- [x] A missing or malformed skill degrades to the definition's own default
       voice with a diagnostic, never a crash
 
 ### Tests

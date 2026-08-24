@@ -60,8 +60,18 @@ try {
   const prompts = {};
   const ask = async (prompt, tag) => {
     prompts[tag] = prompt;
-    if (tag === "research") {
-      return { title: "A Test Issue", thesis: "Things are not what they seem.", origin: [{ fact: "x" }] };
+    if (tag === "research:queries") {
+      return {
+        title: "A Test Issue",
+        thesis: "Things are not what they seem.",
+        queries: Object.fromEntries(magazine.pillars.map((p) => [p, [`${p} query`]])),
+      };
+    }
+    if (tag.startsWith("research:")) {
+      return { findings: [
+        { claim: "a checkable thing", kind: "fact", source_url: "https://example.com/a" },
+        { claim: "an invented thing", kind: "fact", source_url: "https://nowhere.example/x" },
+      ] };
     }
     if (tag === "plan") {
       return {
@@ -101,7 +111,32 @@ try {
     );
   });
 
+  // Research now searches. Without a provider it refuses rather than writing
+  // an issue out of the model's memory, which is the behaviour worth pinning.
+  await check("research refuses when nothing can search", async () => {
+    await assert.rejects(() => runner.runResearch(ctx, created.id), /no web search is configured/);
+  });
+
+  process.env.TAVILY_API_KEY = "test-key";
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    results: [{ title: "A Source", url: "https://example.com/a", content: "something true" }],
+  }), { headers: { "content-type": "application/json" } });
+
   await runner.runResearch(ctx, created.id);
+  const researched = await runner.readIssue(ctx, created.id);
+  await check("research keeps only claims with a source it was given", () => {
+    const findings = researched.research.pillars[magazine.pillars[0]].findings;
+    assert.deepEqual(findings.map((f) => f.claim), ["a checkable thing"]);
+    assert.equal(findings[0].sourceUrl, "https://example.com/a");
+  });
+  await check("a repeated query is served from the cache", () => {
+    const cache = join(root, "Magazine", "issues", created.id, "research-cache.json");
+    assert.ok(existsSync(cache), "no research cache written");
+  });
+  globalThis.fetch = realFetch;
+  delete process.env.TAVILY_API_KEY;
+
   await runner.runPlan(ctx, created.id);
   const planned = await runner.readIssue(ctx, created.id);
   await check("plan produces pages and runs the law", () => {
@@ -232,7 +267,14 @@ try {
 
   await check("a stopped queue leaves the rest outstanding", async () => {
     const q = await runner.createIssue(ctx, { subject: "Queue Test", extent: 16 });
+    process.env.TAVILY_API_KEY = "test-key";
+    const saved = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      results: [{ title: "A Source", url: "https://example.com/a", content: "something true" }],
+    }), { headers: { "content-type": "application/json" } });
     await runner.runResearch(ctx, q.id);
+    globalThis.fetch = saved;
+    delete process.env.TAVILY_API_KEY;
     await runner.runPlan(ctx, q.id);
     const state = await runner.startQueue(ctx, q.id, { kind: "write" });
     assert.equal(state.total, 16);
