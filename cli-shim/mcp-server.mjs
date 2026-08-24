@@ -14,7 +14,48 @@
 import { createInterface } from "node:readline";
 import * as comfy from "./comfy.mjs";
 import * as affinity from "./affinity.mjs";
-import * as mag from "./magazine.mjs";
+import { homedir } from "node:os";
+import { existsSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+// The publication store lives in core now, so these tools read what the runner
+// writes rather than the old magazine engine's own files.
+const WORKSPACE = process.env.QUIRE_WORKSPACE
+  || [join(homedir(), "Quire"), join(homedir(), "InkDesk")].find(existsSync)
+  || join(homedir(), "Quire");
+const CORE = join(dirname(fileURLToPath(import.meta.url)), "inkos", "node_modules", "@actalk", "inkos-core");
+const core = (rel) => import(pathToFileURL(join(CORE, rel)).href);
+
+/** Every publication, across every installed type. */
+async function allPublications() {
+  const { loadPublicationRegistry } = await core("dist/publications/registry.js");
+  const { listIssues } = await core("dist/pipeline/publication-runner.js");
+  const registry = await loadPublicationRegistry(WORKSPACE);
+  const out = [];
+  for (const { definition } of registry.definitions) {
+    out.push(...await listIssues({ projectRoot: WORKSPACE, definition, ask: async () => {
+      throw new Error("listing does not call the model");
+    } }));
+  }
+  return out;
+}
+
+async function readPublication(id) {
+  const { loadPublicationRegistry } = await core("dist/publications/registry.js");
+  const { readIssue } = await core("dist/pipeline/publication-runner.js");
+  const registry = await loadPublicationRegistry(WORKSPACE);
+  for (const { definition } of registry.definitions) {
+    try {
+      return await readIssue({ projectRoot: WORKSPACE, definition, ask: async () => {
+        throw new Error("reading does not call the model");
+      } }, id);
+    } catch {
+      // Wrong type for this id; try the next definition.
+    }
+  }
+  throw new Error("no such publication: " + id);
+}
 
 const TOOLS = [
   {
@@ -48,20 +89,20 @@ const TOOLS = [
     run: () => affinity.status(),
   },
   {
-    name: "quire_list_issues",
-    description: "List the magazine issues in the Quire workspace.",
+    name: "quire_list_publications",
+    description: "List the publications in the Quire workspace — magazines, cookbooks, any installed type.",
     inputSchema: { type: "object", properties: {} },
-    run: () => ({ issues: mag.list() }),
+    run: async () => ({ publications: await allPublications() }),
   },
   {
-    name: "quire_read_issue",
-    description: "Read one magazine issue: its plan, sections, pages and design.",
+    name: "quire_read_publication",
+    description: "Read one publication: its plan, sections, pages and design.",
     inputSchema: {
       type: "object",
-      properties: { id: { type: "string", description: "Issue id." } },
+      properties: { id: { type: "string", description: "Publication id." } },
       required: ["id"],
     },
-    run: (a) => mag.read(a.id),
+    run: (a) => readPublication(a.id),
   },
 ];
 

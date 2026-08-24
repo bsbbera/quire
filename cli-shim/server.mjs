@@ -13,13 +13,23 @@ const PORT = process.env.SHIM_PORT || 8787;
 const LANG = process.env.SHIM_LANG || "English";
 const HOME = homedir();
 const HERE = dirname(fileURLToPath(import.meta.url));
+
+// Where publications live now: the workspace, under each definition's own
+// outDir. The old magazine engine kept its own store and told everything else
+// where it was; the runner in core owns that, so this is only what the
+// ComfyUI installer and the doctor need in order to look in the right place.
+const PUBLICATION_ROOT = join(
+  process.env.QUIRE_WORKSPACE
+    || [join(HOME, "Quire"), join(HOME, "InkDesk")].find(existsSync)
+    || join(HOME, "Quire"),
+  "Magazine",
+);
 const STUDIO_URL = process.env.STUDIO_URL || `http://localhost:${process.env.STUDIO_PORT || 4567}`;
 
 // Integrations. Loaded eagerly: a broken module should fail at boot with a
 // stack, not at 3am inside a request handler.
 const mcp = await import("./mcp.mjs");
 const comfy = await import("./comfy.mjs");
-const mag = await import("./magazine.mjs");
 const affinity = await import("./affinity.mjs");
 const preflight = await import("./preflight.mjs");
 const comfyInstall = await import("./comfy-install.mjs");
@@ -542,18 +552,28 @@ createServer((req, res) => {
       ]);
       let servers = {};
       try { servers = await mcp.servers(); } catch {}
-      return preflight.doctor({ comfyStatus, affinityStatus, servers, magRoot: mag.MAG_ROOT });
+      return preflight.doctor({ comfyStatus, affinityStatus, servers, magRoot: PUBLICATION_ROOT });
     })());
   }
 
   if (path === "/affinity/status") return handle(affinity.status());
+  // Affinity as a pure executor: everything it needs — copy, design decision,
+  // images — is already decided and on disk by the time this is called.
+  if (path === "/affinity/build" && req.method === "POST") {
+    return handle(bodyOf().then(async (b) => {
+      if (!b.issue || !b.issueDir) throw new Error("issue and issueDir are required");
+      const pdf = b.pdf || join(b.issueDir, "build", `${b.issue.id}.pdf`);
+      const out = await affinity.build(b.issue, { pdf, issueDir: b.issueDir });
+      return { ok: true, ...out, pdf: existsSync(pdf) ? pdf : null };
+    }));
+  }
   if (path === "/comfy/status") return handle(comfy.status());
   // Installing ComfyUI is the one setup step Quire can do for the user; the
   // plan is a separate call so the panel can show the size before committing
   // ~17GB of download.
-  if (path === "/comfy/install-plan") return handle(comfyInstall.plan({ magRoot: mag.MAG_ROOT }));
+  if (path === "/comfy/install-plan") return handle(comfyInstall.plan({ magRoot: PUBLICATION_ROOT }));
   if (path === "/comfy/install" && req.method === "POST") {
-    return handle(bodyOf().then((b) => comfyInstall.install({ magRoot: mag.MAG_ROOT, dir: b.dir })));
+    return handle(bodyOf().then((b) => comfyInstall.install({ magRoot: PUBLICATION_ROOT, dir: b.dir })));
   }
   if (path === "/comfy/start" && req.method === "POST") return handle(comfy.start());
   if (path === "/comfy/generate" && req.method === "POST") {
@@ -562,75 +582,6 @@ createServer((req, res) => {
 
   // Progress for the magazine workspace. Studio has its own /api/v1/events for
   // book writing; this is the same idea for a pipeline Studio knows nothing of.
-  if (path === "/mag/events") {
-    res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache",
-      connection: "keep-alive" });
-    res.write("retry: 2000\n\n");
-    const off = mag.subscribe((ev) => res.write("data: " + JSON.stringify(ev) + "\n\n"));
-    const beat = setInterval(() => res.write(": ping\n\n"), 25000);
-    req.on("close", () => { clearInterval(beat); off(); });
-    return;
-  }
-
-  // The 50-style vocabulary, so the UI can offer it rather than make the user
-  // remember which of them may run a page.
-  if (path === "/mag/styles") {
-    return handle(import("./styles.mjs").then((m) => ({
-      styles: m.STYLES, registers: m.registers().map((s) => s.name), law: m.LAW,
-    })));
-  }
-  if (path === "/mag/issues") {
-    if (req.method === "GET") return handle(Promise.resolve({ issues: mag.list(), root: mag.MAG_ROOT, busy: mag.busy() }));
-    if (req.method === "POST") return handle(bodyOf().then((b) => mag.create(b)));
-  }
-  if (path.startsWith("/mag/issue/")) {
-    const [, , , id, verb, arg] = path.split("/");
-    if (!verb) {
-      if (req.method === "DELETE") return handle(Promise.resolve({ ok: mag.remove(id) }));
-      return handle(Promise.resolve(mag.read(id)));
-    }
-    // Long stages are fired and watched over SSE — holding the socket open for
-    // a forty-page write would trip every proxy and timeout in the stack.
-    const detach = (work, stage) => {
-      if (mag.busy()) return Promise.reject(new Error("already running: " + mag.busy().id));
-      // run() puts its own failures on the event stream; a bare stage does not,
-      // and a swallowed one left the issue reading "designing" for ever with
-      // nothing anywhere saying why.
-      work().catch((e) => mag.failStage(id, stage, e));
-      return Promise.resolve({ ok: true, started: stage });
-    };
-    if (verb === "notes" && req.method === "POST") {
-      return handle(bodyOf().then((b) => mag.setNotes(id, b.notes)));
-    }
-    if (verb === "approve" && req.method === "POST") {
-      return handle(bodyOf().then((b) => (b.approved === false ? mag.unapprove(id) : mag.approve(id))));
-    }
-    if (verb === "run")      return handle(bodyOf().then((b) => detach(() => mag.run(id, b), "run")));
-    if (verb === "design") {
-      if (req.method === "POST") return handle(bodyOf().then((b) => mag.setDesignPrefs(id, b)));
-      return handle(detach(() => mag.design(id), "design"));
-    }
-    // The two expensive stages are queues, not calls: they run a page at a
-    // time and stop between pages, so the request returns straight away.
-    if (verb === "queue") {
-      if (req.method === "POST") return handle(bodyOf().then((b) => mag.startQueue(id, b)));
-      if (req.method === "DELETE") return handle(Promise.resolve(mag.stopQueue()));
-      return handle(Promise.resolve(mag.queueState() || { idle: true }));
-    }
-    if (verb === "buildpage") return handle(mag.buildPage(id, arg));
-    if (verb === "research") return handle(detach(() => mag.research(id), "research"));
-    if (verb === "plan")     return handle(detach(() => mag.plan(id), "plan"));
-    if (verb === "write")    return handle(mag.writePage(id, arg));
-    if (verb === "art")      return handle(mag.artPage(id, arg));
-    if (verb === "build")    return handle(mag.build(id));
-    if (verb === "asset") {  // rendered page art, for the workspace preview
-      const page = mag.read(id).pages.find((p) => String(p.n) === String(arg));
-      if (!page?.image?.file || !existsSync(page.image.file)) return json(res, 404, { error: "no art" });
-      res.writeHead(200, { "content-type": "image/png", "cache-control": "no-store" });
-      return res.end(readFileSync(page.image.file));
-    }
-  }
-
   if (!path.endsWith("/chat/completions")) return json(res, 404, { error: { message: "not found" } });
 
   let raw = "";

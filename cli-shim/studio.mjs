@@ -93,7 +93,7 @@ function installStudioPatch(entry) {
     // Only /assets/* is served statically — anything else falls through to the
     // SPA and comes back as index.html.
     const src = join(dirname(fileURLToPath(import.meta.url)), "studio-patch");
-    const files = ["patch.css", "patch.js", "mag.css", "mag.js", "geist.woff2"];
+    const files = ["patch.css", "patch.js", "geist.woff2"];
     const hash = createHash("sha1");
     for (const f of files) {
       const body = readFileSync(join(src, f));
@@ -108,22 +108,22 @@ function installStudioPatch(entry) {
     const v = hash.digest("hex").slice(0, 8);
 
     let html = readFileSync(indexHtml, "utf8");
-    if (html.includes(`quire-mag.js?v=${v}`)) return; // already wired, same content
+    if (html.includes(`quire-patch.js?v=${v}`)) return; // already wired, same content
     // Strip EVERY previously injected tag before adding the current set, under
     // either name. The product was renamed from InkDesk to Quire, so a Studio
     // bundle patched before the rename still carries inkdesk-* tags; leaving
-    // them loads two copies of the patch and the Magazine nav appears twice.
+    // them loads two copies of the patch. It also matches the mag-* pair, which
+    // is how a bundle patched by an older Quire loses the magazine overlay:
+    // the overlay is no longer written, so stripping it is the whole removal.
     html = html.replace(/^.*\/assets\/(inkdesk|quire)-(patch|mag)\.(css|js).*\r?\n/gm, "");
 
     html = html.replace("</head>", [
       `    <link rel="stylesheet" href="/assets/quire-patch.css?v=${v}">`,
-      `    <link rel="stylesheet" href="/assets/quire-mag.css?v=${v}">`,
       `    <script src="/assets/quire-patch.js?v=${v}" defer></script>`,
-      `    <script src="/assets/quire-mag.js?v=${v}" defer></script>`,
       "  </head>",
     ].join("\n"));
     writeFileSync(indexHtml, html);
-    console.log("studio patch installed (panels, English, progress, magazine)");
+    console.log("studio patch installed (panels, English, progress)");
   } catch (e) {
     // A failed patch must never stop Studio from starting.
     console.warn("studio patch skipped: " + e.message);

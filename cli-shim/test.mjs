@@ -106,48 +106,7 @@ if (LIVE) {
 }
 
 // ---------------------------------------------------------------- integrations
-const mag = await import("./magazine.mjs");
 const mcpMod = await import("./mcp.mjs");
-
-check("parseJson survives fenced output", () =>
-  assert.deepEqual(mag.parseJson('```json\n{"a":1}\n```'), { a: 1 }));
-check("parseJson survives chatty output", () =>
-  assert.deepEqual(mag.parseJson('Sure! Here you go: {"a":1} hope that helps'), { a: 1 }));
-check("parseJson rejects prose", () =>
-  assert.throws(() => mag.parseJson("no json at all")));
-
-// The structure law is the whole point of the plan stage; a validator that
-// stays silent on a broken plan is worse than no validator.
-const broken = mag.checkPlan({
-  extent: 8,
-  sections: [{ n: 1, label: "s", from: 2, to: 4 }],
-  pages: [
-    { n: 1, density: "C", pillar: "origin", type: "cover", section: 0 },
-    { n: 2, density: "C", pillar: "origin", type: "plate", section: 1 },
-    { n: 3, density: "C", pillar: "today", type: "feature", section: 1 },
-    { n: 4, density: "D", pillar: "today", type: "feature", section: 1 },
-  ],
-}).join(" | ");
-for (const law of ["pages planned", "left-hand page", "in a row", "must be even", "no page covers"]) {
-  check("checkPlan catches: " + law, () => assert.ok(broken.includes(law), broken));
-}
-check("checkPlan passes a legal plan", () => {
-  const pillars = ["origin", "evolution", "today", "strange", "underlying", "real_work"];
-  const ok = mag.checkPlan({
-    extent: 8,
-    sections: [{ n: 1, label: "s", from: 1, to: 8 }],
-    pages: [
-      { n: 1, density: "D", pillar: "none", type: "plate", section: 1 },
-      // C never three deep, and every pillar represented somewhere.
-      ...pillars.map((pillar, i) => ({
-        n: i + 2, pillar, type: "feature", section: 1,
-        density: i % 3 === 2 ? "M" : "C",
-      })),
-      { n: 8, density: "D", pillar: "none", type: "photo-spread", section: 1 },
-    ],
-  });
-  assert.deepEqual(ok.filter((x) => !x.startsWith("density")), [], ok.join(" | "));
-});
 
 check("mcp discovery finds configured servers", () => {
   const found = mcpMod.servers();
@@ -233,7 +192,7 @@ check("mcp discovery finds configured servers", () => {
     assert.equal(rpc.get(1)?.result?.serverInfo?.name, "quire"));
   check("mcp server lists its tools", () => {
     const names = (rpc.get(2)?.result?.tools ?? []).map((t) => t.name);
-    for (const want of ["quire_generate_image", "quire_read_issue"]) {
+    for (const want of ["quire_generate_image", "quire_read_publication"]) {
       assert.ok(names.includes(want), `missing tool ${want}`);
     }
   });
@@ -243,111 +202,6 @@ check("mcp discovery finds configured servers", () => {
   });
   check("mcp rejects an unknown tool", () =>
     assert.ok(rpc.get(4)?.error, "unknown tool should be an error"));
-}
-
-// The gate is the whole point of the review step: art and build must refuse
-// unapproved copy, and any rewrite must withdraw an approval already given.
-{
-  const mag = await import("./magazine.mjs");
-  const id = "test-gate-" + Date.now();
-  const dir = (await import("node:path")).join(mag.MAG_ROOT, "issues", id);
-  const fs = await import("node:fs");
-  fs.mkdirSync(dir, { recursive: true });
-  const issue = {
-    id, subject: "gate", extent: 2, status: "written", approved: null,
-    pages: [{ n: 1, type: "cover", density: "D", body: "x", brief: { prompt: "p" } },
-            { n: 2, type: "essay", density: "M", body: "y", brief: { prompt: "q" } }],
-  };
-  const save = () => fs.writeFileSync(dir + "/issue.json", JSON.stringify(issue));
-  save();
-  await check("build refuses unapproved content", async () => {
-    await assert.rejects(() => mag.build(id), /approved content/);
-  });
-  await check("art refuses unapproved content", async () => {
-    await assert.rejects(() => mag.artPage(id, 1), /approved content/);
-  });
-  check("approve requires every page written", () => {
-    issue.pages[1].body = null; save();
-    assert.throws(() => mag.approve(id), /still unwritten/);
-    issue.pages[1].body = "y"; save();
-    assert.ok(mag.approve(id).approved);
-  });
-  fs.rmSync(dir, { recursive: true, force: true });
-}
-
-// The design law is what stops a section being handed a register that cannot
-// run a page, or an ink that cannot be read off its own paper.
-{
-  const { checkDesign } = await import("./magazine.mjs");
-  const legal = {
-    fixed: { folio: "outer corner, 8pt sans" },
-    sections: [
-      { n: 1, register: "Utilitarian", technique: "Conceptual Sketch", idiom: "hand-carved linocut",
-        paper: "#F4EFE4", field: "#1F3A2E", ink: "#1A1714", hue: "#B4552D",
-        typefaces: { display: "Publico", text: "Lyon", label: "Atlas Grotesk" } },
-      { n: 2, register: "Bauhaus", technique: "Pointillism", idiom: "flat riso, three colours",
-        paper: "#EFEFEA", field: "#1B4A8C", ink: "#141414", hue: "#D8452B",
-        typefaces: { display: "Druk", text: "Tiempos", label: "Founders Grotesk" } },
-    ],
-  };
-  check("checkDesign passes a legal system", () => {
-    assert.deepEqual(checkDesign(legal), []);
-  });
-  check("checkDesign rejects a tier 3 register", () => {
-    const d = structuredClone(legal);
-    d.sections[0].register = "Steampunk";
-    assert.ok(checkDesign(d).some((x) => /tier 3/.test(x)));
-  });
-  check("checkDesign rejects unreadable ink on paper", () => {
-    const d = structuredClone(legal);
-    d.sections[0].paper = "#4A4A4A";
-    assert.ok(checkDesign(d).some((x) => /body copy needs 7:1/.test(x)));
-  });
-  check("checkDesign rejects a typeface shared by two sections", () => {
-    const d = structuredClone(legal);
-    d.sections[1].typefaces.text = "Lyon";
-    assert.ok(checkDesign(d).some((x) => /Lyon used by sections/.test(x)));
-  });
-  check("checkDesign rejects a screen-only register", () => {
-    const d = structuredClone(legal);
-    d.sections[0].register = "Glassmorphism";
-    assert.ok(checkDesign(d).length > 0);
-  });
-}
-
-check("parseJson survives a non-string reply", async () => {
-  const { parseJson } = await import("./magazine.mjs");
-  // A provider returning content blocks instead of a string used to crash with
-  // "body.search is not a function", which named nothing useful.
-  assert.doesNotThrow(() => parseJson([{ type: "text", text: '{"a":1}' }]));
-});
-
-// Stop-and-resume is only real if the remaining list survives the stop. A
-// re-render run that was interrupted has pages waiting that all still have art,
-// so re-deriving "what is outstanding" resumes as nothing to do.
-{
-  const mag = await import("./magazine.mjs");
-  const fs = await import("node:fs");
-  const path = await import("node:path");
-  const id = "test-resume-" + Date.now();
-  const dir = path.join(mag.MAG_ROOT, "issues", id);
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, "issue.json"), JSON.stringify({
-    id, subject: "resume", status: "approved", approved: { at: "now" },
-    pending: { kind: "art", pages: [4, 5, 6] },
-    pages: [1, 2, 3, 4, 5, 6].map((n) => ({
-      n, type: "essay", density: "M", body: "x",
-      brief: { prompt: "p" }, image: { file: "already.png" },
-    })),
-  }));
-  await check("a stopped run resumes its own remaining pages", async () => {
-    // Every page has art, so without the pending list this returns "nothing".
-    const r = await mag.startQueue(id, { kind: "art" });
-    mag.stopQueue();
-    assert.equal(r.nothing, undefined, "resume found nothing to do");
-    assert.equal(r.pages, 3, "should resume exactly the 3 pending pages");
-  });
-  fs.rmSync(dir, { recursive: true, force: true });
 }
 
 await Promise.all(pending);

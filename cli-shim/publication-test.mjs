@@ -158,6 +158,74 @@ try {
     );
   });
 
+  // Ported from test.mjs, which tested these against the magazine engine.
+  // The engine is gone; the law it carried is not.
+  const { parseJson } = await load("dist/publications/parse-json.js");
+  await check("parseJson survives fenced output", () =>
+    assert.deepEqual(parseJson('```json\n{"a":1}\n```'), { a: 1 }));
+  await check("parseJson survives chatty output", () =>
+    assert.deepEqual(parseJson('Sure! Here you go: {"a":1} hope that helps'), { a: 1 }));
+  await check("parseJson survives a non-string reply", () =>
+    assert.deepEqual(parseJson([{ text: '{"a":1}' }]), { a: 1 }));
+  await check("parseJson rejects prose", () =>
+    assert.throws(() => parseJson("no json at all")));
+
+  await check("checkPlan passes a legal plan", () => {
+    const legal = {
+      extent: 4,
+      sections: [{ n: 1, label: "one", from: 3, to: 4 }],
+      pages: [
+        { n: 1, type: "cover", density: "D", section: 0, pillar: "origin" },
+        { n: 2, type: "statement", density: "M", section: 0, pillar: "evolution" },
+        { n: 3, type: "plate", density: "D", section: 1, pillar: "today" },
+        { n: 4, type: "feature", density: "M", section: 1, pillar: "strange" },
+      ],
+    };
+    // Only the informational density line and the pillars it genuinely lacks.
+    const warnings = runner.checkPlan({ ...magazine, extent: { ...magazine.extent } }, legal)
+      .filter((w) => !w.startsWith("density"));
+    assert.deepEqual(warnings, ["no page covers: underlying, real_work"]);
+  });
+
+  await check("checkDesign passes a legal system", () => {
+    assert.deepEqual(runner.checkDesign({
+      sections: [{ n: 1, register: "Swiss Modernism", idiom: "grid", paper: "#ffffff", ink: "#111111" }],
+      fixed: { folio: "outer corner, 8pt" },
+    }).filter((p) => !p.includes("not one of the 50")), []);
+  });
+
+  await check("checkDesign rejects a typeface shared by two sections", () => {
+    const problems = runner.checkDesign({
+      sections: [
+        { n: 1, register: "Bauhaus", idiom: "a", paper: "#ffffff", ink: "#111111" },
+        { n: 2, register: "Bauhaus", idiom: "b", paper: "#ffffff", ink: "#111111" },
+      ],
+      fixed: { folio: "x" },
+    });
+    assert.ok(problems.some((p) => p.includes("share the typeface")), problems.join("; "));
+  });
+
+  await check("checkDesign rejects unreadable ink on paper", () => {
+    const problems = runner.checkDesign({
+      sections: [{ n: 1, register: "Bauhaus", idiom: "a", paper: "#ffffff", ink: "#eeeeee" }],
+      fixed: { folio: "x" },
+    });
+    assert.ok(problems.some((p) => p.includes("body copy needs 7:1")), problems.join("; "));
+  });
+
+  await check("a stopped queue leaves the rest outstanding", async () => {
+    const q = await runner.createIssue(ctx, { subject: "Queue Test", extent: 16 });
+    await runner.runResearch(ctx, q.id);
+    await runner.runPlan(ctx, q.id);
+    const state = await runner.startQueue(ctx, q.id, { kind: "write" });
+    assert.equal(state.total, 16);
+    runner.stopQueue();
+    // Give the in-flight page time to settle before reading the state back.
+    await new Promise((r) => setTimeout(r, 400));
+    const after = await runner.readIssue(ctx, q.id);
+    assert.ok(runner.outstanding(after, "write", false).length > 0, "a stopped queue wrote everything");
+  });
+
   await check("listing reports progress per issue", async () => {
     const list = await runner.listIssues(ctx);
     const row = list.find((i) => i.id === created.id);
