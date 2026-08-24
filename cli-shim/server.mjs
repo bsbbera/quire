@@ -391,7 +391,7 @@ async function complete({ agent, model, prompt, streaming, res, fullModel }) {
 
   const child = spawn(agent.bin, agent.args(model),
     { env: childEnv, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
-  let buf = "", err = "", sawDelta = false, finalText = "";
+  let buf = "", err = "", sawDelta = false, finalText = "", cliError = false;
   child.stdout.setEncoding("utf8");
   child.stderr.setEncoding("utf8");
   child.stderr.on("data", (c) => { err = (err + c).slice(-8000); });
@@ -400,6 +400,15 @@ async function complete({ agent, model, prompt, streaming, res, fullModel }) {
     if (d) { sawDelta = true; send(d); return; }
     const f = finalOf(agent.stream, l);
     if (f) finalText = f;
+    // claude exits 0 even when the run failed, and reports it only here. Left
+    // unread, "API Error: Unable to connect to API" arrives as a 200 and gets
+    // written into the book as if the model had said it.
+    if (agent.stream === "claude-json") {
+      try {
+        const m = JSON.parse(l);
+        if (m.type === "result" && m.is_error === true) cliError = true;
+      } catch { /* not a result line */ }
+    }
   };
   child.stdout.on("data", (c) => {
     buf += c;
@@ -411,12 +420,31 @@ async function complete({ agent, model, prompt, streaming, res, fullModel }) {
   child.stdin.on("error", () => {});
   child.stdin.write(prompt);
   child.stdin.end();
-  await new Promise((r) => child.on("close", r));
+  const exitCode = await new Promise((r) => child.on("close", r));
   if (buf.trim()) onLine(buf.trim());
   // --include-partial-messages only exists on newer claude builds; fall back
   // to the single final `result` event when no deltas ever arrived.
   if (!sawDelta && finalText) send(finalText);
   if (!got && err) send("[" + agent.id + " error] " + err.trim().slice(0, 1000));
+  // A CLI that failed still prints something on stdout ("API Error: Unable to
+  // connect..."), and handing that back as a 200 completion made every caller
+  // treat the failure as prose: it lands in a chapter, a page, a cover prompt.
+  // Exit code is the only honest signal, so a non-zero one is an HTTP error.
+  if ((exitCode !== 0 || cliError) && !res.writableEnded) {
+    const detail = (err.trim() || got.trim() || "no output").slice(0, 1000);
+    const how = exitCode !== 0 ? "exited " + exitCode : "reported failure";
+    if (streaming) {
+      sse(res, chunkOf(fullModel, "", "stop"));
+      res.write("data: [DONE]\n\n");
+      res.end();
+    } else {
+      res.writeHead(502, { "content-type": "application/json" });
+      res.end(JSON.stringify({
+        error: { message: agent.id + " " + how + ": " + detail },
+      }));
+    }
+    return;
+  }
   done();
 }
 
