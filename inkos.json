@@ -7,7 +7,7 @@
     "service": "custom:Env LLM",
     "configSource": "studio",
     "baseUrl": "http://127.0.0.1:8787/v1",
-    "model": "devin/claude-5-fable-high",
+    "model": "devin/glm-5-2",
     "apiFormat": "chat",
     "stream": true,
     "services": [
@@ -17,7 +17,7 @@
         "baseUrl": "http://127.0.0.1:8787/v1"
       }
     ],
-    "defaultModel": "devin/claude-5-fable-high"
+    "defaultModel": "devin/glm-5-2"
   },
   "notify": [],
   "daemon": {

@@ -169,9 +169,15 @@ function openAppWindow(url, { width = 1280, height = 860 } = {}) {
   if (await portOpen(STUDIO_PORT)) {
     log("quire", `port ${STUDIO_PORT} already in use — reusing whatever is there`);
   } else {
-    const win = process.platform === "win32";
-    supervise("studio", win ? "inkos.cmd" : "inkos",
-      ["studio", "--port", String(STUDIO_PORT)], { cwd: CWD, shell: win });
+    // cli-shim/studio.mjs, not the global `inkos` CLI. They are not the same
+    // program: the global one is upstream InkOS from npm, which has no
+    // publication system at all, so the Magazine page answered 404 and the
+    // whole fork — publications, CLI providers, MCP — was absent from the
+    // running app while sitting built on disk. studio.mjs prefers the staged
+    // fork in cli-shim/inkos and falls back to the global package only when
+    // the fork has not been staged yet.
+    supervise("studio", process.execPath, [join(HERE, "cli-shim", "studio.mjs")],
+      { cwd: CWD });
     await waitForPort(STUDIO_PORT, "studio");
   }
 
