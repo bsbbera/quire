@@ -36,32 +36,58 @@ Publication type is not special. A magazine is a story type that can also build 
 
 ---
 
-## Phase 1 — CLI models become ordinary providers
+## Phase 1 — CLI models become ordinary providers — **DONE**
 
-**Why.** `agent-session.ts:1208` currently reads:
+**What was actually wrong.** The plan said two tool channels. There were three, and
+the host owned one:
 
-```ts
-const externalMcpTools = isCliBackedModel(model) ? [] : await createExternalMcpTools();
-```
+| # | Channel | Who executed | Gated |
+|---|---|---|---|
+| 1 | `body.tools` → `toolProtocol()` → fenced block → `tool_calls` | InkOS host | yes |
+| 2 | MCP servers at launch (`--mcp-config`, `-c mcp_servers.*`, ACP `session/new`) | CLI's own loop | no |
+| 3 | `toolNote()` — "run `node mcp-server.mjs <tool>` as a command" | CLI shells out | no |
 
-`isCliBackedModel` (`agent-session.ts:814-818`, prefixes `claude/ codex/ devin/ antigravity/`) is our addition — upstream has zero occurrences. It creates two tool systems that never meet: InkOS's tool table for API models, the shim's fenced-block parser for CLI models.
+`server.mjs` said it outright: *"by the time we see a tool event the work is already
+done."* Channels 2 and 3 are how `quire_affinity_build` was reachable without the
+approval and spec checks the runner enforces. Making `createExternalMcpTools()`
+unconditional as originally planned would have added a **fourth** channel and left both
+bypasses standing.
 
-A CLI gives access to an LLM plus extra built-in features. That is a provider with a different transport, not a different class of model. Treat it as one.
+**What was built.** Collapsed to channel 1.
 
-**Steps.**
+- `cli-shim/harness.mjs` — new. Single authority for how a CLI turn is assembled and how
+  calls come back. `launchServers()` returns nothing, in one place, so there is one
+  answer to "can the CLI run something we did not authorise".
+  `QUIRE_CLI_OWN_TOOLS=1` restores the old behaviour for debugging; not supported.
+- Channel 3 (`toolNote()`) deleted.
+- Channel 2 emptied. `claude` additionally gets `--strict-mcp-config` so its own
+  configured servers stay out. **`codex` has no equivalent** — its `config.toml` servers
+  still load and Quire cannot stop them. Noted in the adapter, not papered over.
+- `isCliBackedModel` deleted from `agent-session.ts`. `createExternalMcpTools()` now
+  unconditional — the host reaches MCP, and offers it to every model through channel 1.
+- An empty tool table is now declared to the model rather than left silent, so it says
+  it cannot do the work instead of describing work it did not perform.
 
-1. Delete `isCliBackedModel` and the branch at `agent-session.ts:1208-1210`. `createExternalMcpTools()` becomes unconditional.
-2. Move dedup into the shim: if the shim already launched a server for the CLI, it reconciles by server identity rather than InkOS pre-emptively blanking the table.
-3. Transport adapter. One tool registry, two wire formats:
-   - API models → native tool-call protocol (unchanged)
-   - CLI models → tool table serialized into the system prompt as fenced ` ```tool_call ` blocks; `cli-shim/tool-calls.mjs` parses calls back, host executes, result injected as the next turn.
+**Verified live, devin-backed:**
 
-   The registry is the single source of truth. The adapter only changes encoding.
-4. Multi-turn tool loop over the CLI transport. Today `tool-calls.mjs` parses a call. It must also feed the result back and let the model call again — a loop, not a one-shot.
+1. Tool call returns through the host as OpenAI `tool_calls`, `finish_reason:
+   "tool_calls"`. ✅
+2. Tool result feeds the next turn; model issues a *different* call using the returned
+   path. ✅
+3. Same prompt with an empty table → "I have no tools available this turn", no shell-out.
+   Bypass closed. ✅
+4. Streaming: no fence leaks into text deltas, call arrives as a `tool_calls` delta. ✅
+5. Regression: 92 core tests (agent-tools, agent-tools-params, publication-audit,
+   publication-intake) + 49 agent-session tests pass; core typecheck clean.
 
-**Done when.** A devin-backed run calls `comfy_generate`, host executes it, the result returns to the model, and the model issues a second, different tool call based on it. Live run, not a unit test.
+**Known gaps carried forward.**
 
-**Blocks everything below.**
+- `codex` config.toml servers remain outside the gate (above).
+- Serializing a large MCP tool table into the prompt has an unmeasured token cost.
+  Measure when the table grows.
+- Testing from inside a Claude Code session pollutes `ANTHROPIC_API_KEY` /
+  `ANTHROPIC_BASE_URL` for a spawned `claude`. Product-side concern for a Quire launched
+  from such a terminal; not a shim defect. Untriaged.
 
 ---
 
