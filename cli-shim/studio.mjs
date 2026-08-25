@@ -140,7 +140,18 @@ const child = spawn(launch.command, launch.args, {
   cwd: ROOT,
   stdio: "inherit",
   shell: /\.(cmd|bat)$/i.test(launch.command),
-  env: { ...process.env, INKOS_STUDIO_PORT: PORT },
+  // CLI agents (devin, claude) think silently for minutes at a time - tool
+  // calls, web search, no text emitted. Studio's stream watchdog is tuned for
+  // hosted APIs that emit tokens continuously, so its 120s/90s defaults kill a
+  // perfectly healthy agentic turn. Empty keepalive deltas do not help: the
+  // parser drops them before they become events, so they never reset the
+  // deadline. These are the documented overrides.
+  env: {
+    INKOS_LLM_FIRST_EVENT_TIMEOUT_MS: "900000",
+    INKOS_LLM_STREAM_IDLE_TIMEOUT_MS: "900000",
+    ...process.env,
+    INKOS_STUDIO_PORT: PORT,
+  },
 });
 child.on("exit", (code) => process.exit(code ?? 0));
 child.on("error", (e) => {

@@ -18,12 +18,10 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 // outDir. The old magazine engine kept its own store and told everything else
 // where it was; the runner in core owns that, so this is only what the
 // ComfyUI installer and the doctor need in order to look in the right place.
-const PUBLICATION_ROOT = join(
-  process.env.QUIRE_WORKSPACE
-    || [join(HOME, "Quire"), join(HOME, "InkDesk")].find(existsSync)
-    || join(HOME, "Quire"),
-  "Magazine",
-);
+const WORKSPACE = process.env.QUIRE_WORKSPACE
+  || [join(HOME, "Quire"), join(HOME, "InkDesk")].find(existsSync)
+  || join(HOME, "Quire");
+const PUBLICATION_ROOT = join(WORKSPACE, "Magazine");
 const STUDIO_URL = process.env.STUDIO_URL || `http://localhost:${process.env.STUDIO_PORT || 4567}`;
 
 // Integrations. Loaded eagerly: a broken module should fail at boot with a
@@ -114,21 +112,52 @@ function acpModelIds(result) {
 // JSON-RPC over stdio: initialize -> session/new -> result.models
 function acp(bin, args, handler) {
   return new Promise((resolve, reject) => {
-    const child = spawn(bin, args, { env: childEnv, windowsHide: true, stdio: ["pipe", "pipe", "ignore"] });
+    const child = spawn(bin, args, { cwd: WORKSPACE, env: childEnv, windowsHide: true, stdio: ["pipe", "pipe", "ignore"] });
     let buf = "", done = false;
     const send = (id, method, params) =>
       child.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n");
     const finish = (v) => { if (done) return; done = true; clearTimeout(timer);
       try { child.kill("SIGTERM"); } catch {} resolve(v); };
-    const timer = setTimeout(() => { if (!done) { done = true; try { child.kill("SIGTERM"); } catch {}
-      reject(new Error("acp timeout")); } }, 300000);
+    // Idle, not total. A full publication run legitimately takes half an hour of
+    // tool calls; a wall-clock cap kills it mid-pipeline while it is plainly
+    // healthy. What actually indicates a hung agent is silence, so the clock is
+    // restarted by every ACP message the child sends.
+    const ACP_IDLE_MS = Number(process.env.QUIRE_ACP_IDLE_MS) || 300000;
+    let timer;
+    const bump = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { if (!done) { done = true; try { child.kill("SIGTERM"); } catch {}
+        reject(new Error("acp idle " + ACP_IDLE_MS + "ms")); } }, ACP_IDLE_MS);
+    };
+    bump();
     child.stdout.setEncoding("utf8");
     child.stdout.on("data", (c) => {
       buf += c;
       for (let nl; (nl = buf.indexOf("\n")) >= 0;) {
         const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
         if (!line) continue;
+        bump();
         let m; try { m = JSON.parse(line); } catch { continue; }
+        // ACP is bidirectional: before running a tool the agent sends US a
+        // request and blocks on the answer. Nothing here ever replied, so the
+        // very first `ls` deadlocked the run — which surfaced only as silence,
+        // and got blamed on every timeout in the stack in turn. The CLI is
+        // launched in a dangerous/bypass permission mode by the flags above, so
+        // the standing answer is yes; prefer a durable option so a long
+        // pipeline is not stopped once per command.
+        if (m.method === "session/request_permission" && m.id !== undefined) {
+          const opts = m.params?.options || [];
+          const pick = opts.find((o) => o.kind === "allow_always")
+            || opts.find((o) => o.kind === "allow_once")
+            || opts[0];
+          child.stdin.write(JSON.stringify({
+            jsonrpc: "2.0", id: m.id,
+            result: pick
+              ? { outcome: { outcome: "selected", optionId: pick.optionId } }
+              : { outcome: { outcome: "cancelled" } },
+          }) + "\n");
+          continue;
+        }
         // A refusal on handshake or session/new is fatal: nothing downstream
         // ever sends a prompt, so without this the run sat silent until the ACP
         // timer, which is longer than Studio's own stream timeout — the failure
@@ -146,8 +175,12 @@ function acp(bin, args, handler) {
         if (m.id === 1 && m.result) {
           // Only a real run gets the tools: the model-listing call passes no
           // handler and would just pay the startup cost for nothing.
-          const servers = MCP_ON && handler ? [{ name: "quire", ...MCP_SPEC_ACP }] : [];
-          send(2, "session/new", { cwd: process.cwd(), mcpServers: servers });
+          const servers = handler ? acpServers("devin") : [];
+          // The agent's working directory is the user's workspace, not wherever
+          // the shim happens to have been started from - which under the packaged
+          // app is the install directory, so everything a run wrote landed next
+          // to the binary instead of in the books it was written for.
+          send(2, "session/new", { cwd: WORKSPACE, mcpServers: servers });
           continue;
         }
         if (m.id === 2 && m.result) {
@@ -186,6 +219,39 @@ const MCP_SPEC_ACP = {
   env: Object.entries(MCP_SPEC.env).map(([name, value]) => ({ name, value: String(value) })),
 };
 
+/**
+ * Every tool server this run should be able to reach.
+ *
+ * Quire discovers and enables servers of its own - Affinity above all, which is
+ * the build target and not optional - but for a long time it handed the CLI
+ * only its own `quire` server and kept the rest to itself. The agent was then
+ * correct to report that Affinity was not connected: from inside its session it
+ * was not. Anything the user has enabled here goes across.
+ *
+ * A server the CLI already loads from its own config is skipped, so devin does
+ * not get a second copy of its own servers.
+ */
+function agentServers(agentId) {
+  if (!MCP_ON) return {};
+  const out = { quire: MCP_SPEC };
+  let discovered = {};
+  try { discovered = mcp.servers(); } catch { discovered = {}; }
+  for (const [name, s] of Object.entries(discovered)) {
+    if (name === "quire" || !s.enabled || !s.command) continue;
+    if (s.source === agentId) continue;
+    out[name] = { command: s.command, args: s.args || [], env: s.env || {}, cwd: s.cwd };
+  }
+  return out;
+}
+
+// Same list, in the shape ACP types it: env as {name, value} pairs.
+const acpServers = (agentId) => Object.entries(agentServers(agentId)).map(([name, s]) => ({
+  name,
+  command: s.command,
+  args: s.args || [],
+  env: Object.entries(s.env || {}).map(([k, v]) => ({ name: k, value: String(v) })),
+}));
+
 const DEVIN_ACP_ARGS = ["--permission-mode", "dangerous", "--respect-workspace-trust", "false", "acp"];
 
 // ------------------------------------------------------------------- adapters
@@ -198,8 +264,8 @@ const AGENTS = [
       ...(m && m !== "default" ? ["--model", m] : []), "--permission-mode", "bypassPermissions",
       // Deliberately not --strict-mcp-config: that would also switch off the
       // servers the user configured for themselves.
-      ...(MCP_ON ? ["--mcp-config", JSON.stringify({ mcpServers: { quire: MCP_SPEC } }),
-        "--allowedTools", "mcp__quire__*"] : [])],
+      ...(MCP_ON ? ["--mcp-config", JSON.stringify({ mcpServers: agentServers("claude-code") }),
+        "--allowedTools", Object.keys(agentServers("claude-code")).map((n) => `mcp__${n}__*`).join(",")] : [])],
     stream: "claude-json",
   },
   {
@@ -215,8 +281,10 @@ const AGENTS = [
       ...(m && m !== "default" ? ["-m", m] : []),
       // codex exec has no --mcp-config; -c overrides the same keys its
       // config.toml uses, so the server is added for this run only.
-      ...(MCP_ON ? ["-c", `mcp_servers.quire.command=${JSON.stringify(process.execPath)}`,
-        "-c", `mcp_servers.quire.args=[${JSON.stringify(MCP_SERVER)}]`] : [])],
+      ...Object.entries(agentServers("codex")).flatMap(([n, sp]) => [
+        "-c", `mcp_servers.${n}.command=${JSON.stringify(sp.command)}`,
+        "-c", `mcp_servers.${n}.args=[${(sp.args || []).map((a) => JSON.stringify(a)).join(",")}]`,
+      ])],
     stream: "codex-json",
   },
   {
@@ -352,18 +420,86 @@ const chunkOf = (model, delta, finish = null) => ({
   choices: [{ index: 0, delta: delta ? { content: delta } : {}, finish_reason: finish }],
 });
 
+/**
+ * A message's text, whatever shape it arrived in.
+ *
+ * `content` is a plain string in the simple case, but the chat API also allows
+ * a list of typed parts, and that is what Studio sends as soon as a turn can
+ * carry an image. Reading it as a string put the literal "[object Object]" in
+ * front of the model, which then answered the only way it could — by saying the
+ * request looked empty.
+ */
+function textOf(content) {
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((p) => (typeof p === "string" ? p : p?.text ?? p?.content ?? ""))
+      .filter(Boolean).join("\n");
+  }
+  // An assistant turn that is only tool calls has no content at all.
+  return content == null ? "" : String(content?.text ?? "");
+}
+
+/**
+ * How the agent is told about Quire's own tools.
+ *
+ * They are offered over MCP as well, but MCP is not a channel every CLI
+ * actually has - some load tool servers only from their own config and ignore
+ * what the host passes them, with no error to say so. Running a command is the
+ * one capability all of them share, so the tools are described here in the form
+ * every agent can use. Whichever CLI the user picked, the tools are the same.
+ */
+function toolNote() {
+  if (!MCP_ON) return "";
+  return [
+    "Quire's own tools are on this machine. If your MCP tool list already has them",
+    "(names starting quire_), call them there. If it does not, run them as commands -",
+    "same tools, same names, same arguments:",
+    "",
+    "  node " + JSON.stringify(MCP_SERVER) + " --list",
+    "  node " + JSON.stringify(MCP_SERVER) + " <tool> '<json arguments>'",
+    "",
+    "They cover local image generation (ComfyUI), reading and listing the",
+    "publications in the workspace, and laying an issue out in Affinity Publisher",
+    "and exporting its PDF. Run --list before saying a capability is missing.",
+  ].join("\n");
+}
+
 function flatten(msgs) {
-  const sys = msgs.filter((m) => m.role === "system").map((m) => m.content).join("\n");
+  const sys = msgs.filter((m) => m.role === "system").map((m) => textOf(m.content)).join("\n");
   const rest = msgs.filter((m) => m.role !== "system")
-    .map((m) => "[" + m.role + "]\n" + m.content).join("\n\n");
-  return (sys ? sys + "\n\n" : "") + "Always respond in " + LANG + ".\n\n" + rest;
+    .map((m) => "[" + m.role + "]\n" + textOf(m.content)).join("\n\n");
+  const note = toolNote();
+  return (sys ? sys + "\n\n" : "") + (note ? note + "\n\n" : "")
+    + "Always respond in " + LANG + ".\n\n" + rest;
 }
 
 // ------------------------------------------------------------------ completion
 async function complete({ agent, model, prompt, streaming, res, fullModel }) {
   let got = "";
+  // A CLI is an agent runtime: it thinks, calls its own tools, reads files, and
+  // says nothing at all while it does. The client watches for *new* events and
+  // gives up after 90s of quiet, so a working run that spends two minutes in a
+  // tool loop was being killed as a stalled stream. An empty delta is a legal
+  // chunk that carries no content, which keeps the connection honest — it says
+  // "still running", not "here is some output".
+  const HEARTBEAT_MS = 15000;
+  let beat = null;
+  const stopBeat = () => { if (beat) { clearInterval(beat); beat = null; } };
+  if (streaming) {
+    // One immediately, so the client sees the stream open rather than waiting
+    // out its whole idle budget before the first sign of life.
+    sse(res, chunkOf(fullModel, ""));
+    beat = setInterval(() => {
+      if (res.writableEnded) return stopBeat();
+      sse(res, chunkOf(fullModel, ""));
+    }, HEARTBEAT_MS);
+    // Nothing should outlive the request that owns it.
+    res.on("close", stopBeat);
+  }
   const send = (t) => { if (!t) return; got += t; if (streaming) sse(res, chunkOf(fullModel, t)); };
   const done = () => {
+    stopBeat();
     if (res.writableEnded) return;
     if (streaming) {
       sse(res, chunkOf(fullModel, "", "stop"));
@@ -408,13 +544,13 @@ async function complete({ agent, model, prompt, streaming, res, fullModel }) {
         }
       },
     };
-    await acp(agent.bin, DEVIN_ACP_ARGS, handler);
+    try { await acp(agent.bin, DEVIN_ACP_ARGS, handler); } finally { stopBeat(); }
     done();
     return;
   }
 
   const child = spawn(agent.bin, agent.args(model),
-    { env: childEnv, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
+    { cwd: WORKSPACE, env: childEnv, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
   let buf = "", err = "", sawDelta = false, finalText = "", cliError = false;
   child.stdout.setEncoding("utf8");
   child.stderr.setEncoding("utf8");
@@ -454,6 +590,7 @@ async function complete({ agent, model, prompt, streaming, res, fullModel }) {
   // connect..."), and handing that back as a 200 completion made every caller
   // treat the failure as prose: it lands in a chapter, a page, a cover prompt.
   // Exit code is the only honest signal, so a non-zero one is an HTTP error.
+  stopBeat();
   if ((exitCode !== 0 || cliError) && !res.writableEnded) {
     const detail = (err.trim() || got.trim() || "no output").slice(0, 1000);
     const how = exitCode !== 0 ? "exited " + exitCode : "reported failure";
@@ -689,6 +826,12 @@ createServer((req, res) => {
     if (streaming) {
       res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache",
         connection: "keep-alive" });
+      // Without these the first bytes sit in Node's buffer until enough has
+      // accumulated, so a client watching for events saw nothing at all until
+      // the CLI finished — the stream looked dead for exactly as long as the
+      // agent took to think.
+      res.flushHeaders?.();
+      res.socket?.setNoDelay?.(true);
     }
     try {
       await complete({ agent, model: rest.join("/"), prompt: flatten(body.messages || []),

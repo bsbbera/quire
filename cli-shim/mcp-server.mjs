@@ -93,6 +93,30 @@ const TOOLS = [
     run: () => affinity.status(),
   },
   {
+    name: "quire_affinity_build",
+    description:
+      "Lay out a publication in Affinity Publisher and export the PDF. Affinity is a pure "
+      + "executor here: the copy, the design decision and the page art must already be on "
+      + "disk. Starts Affinity if it is not running. Returns the path of the exported PDF.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Publication id, as returned by quire_list_publications." },
+      },
+      required: ["id"],
+    },
+    run: async (a) => {
+      const issue = await readPublication(a.id);
+      // readIssue reports where it read from; without it there is nothing to
+      // stage the page art from and nowhere to put the PDF.
+      const issueDir = issue.dir || issue.issueDir || join(WORKSPACE, "Magazine", "issues", a.id);
+      const pdf = join(issueDir, "build", a.id + ".pdf");
+      await affinity.ensureRunning();
+      const out = await affinity.build(issue, { pdf, issueDir });
+      return { ...out, pdf: existsSync(pdf) ? pdf : null };
+    },
+  },
+  {
     name: "quire_list_publications",
     description: "List the publications in the Quire workspace — magazines, or any installed type.",
     inputSchema: { type: "object", properties: {} },
@@ -144,6 +168,41 @@ async function handle(msg) {
     }
   }
   if (id !== undefined) fail(id, `unknown method: ${method}`);
+}
+
+// Two transports, one tool table.
+//
+// MCP is the good channel, but it is not a channel every agent actually has:
+// some CLIs only load tool servers from their own (sometimes cloud-managed)
+// config and silently ignore what the host offers them. Every agent can run a
+// command, though - so the same tools are also callable as argv. Nothing is
+// duplicated: this is the same TOOLS array the MCP path dispatches.
+//
+//   node mcp-server.mjs                      -> MCP over stdio
+//   node mcp-server.mjs --list               -> tool names and descriptions
+//   node mcp-server.mjs <tool> '<json args>' -> run one tool, print JSON
+if (process.argv[2]) {
+  const [, , name, json] = process.argv;
+  if (name === "--list") {
+    console.log(TOOLS.map((t) => `${t.name}\n    ${t.description}`).join("\n"));
+    process.exit(0);
+  }
+  const tool = TOOLS.find((t) => t.name === name);
+  if (!tool) {
+    console.error(`unknown tool: ${name}\nknown: ${TOOLS.map((t) => t.name).join(", ")}`);
+    process.exit(2);
+  }
+  let args = {};
+  if (json) {
+    try { args = JSON.parse(json); } catch (e) { console.error("arguments must be JSON: " + e.message); process.exit(2); }
+  }
+  try {
+    console.log(JSON.stringify(await tool.run(args), null, 2));
+    process.exit(0);
+  } catch (e) {
+    console.error(String(e?.message || e));
+    process.exit(1);
+  }
 }
 
 createInterface({ input: process.stdin }).on("line", (line) => {
