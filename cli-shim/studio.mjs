@@ -12,6 +12,12 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+// Keys that must not live in a tracked file (search providers, and anything
+// else machine-local) come from a gitignored .env beside the repo. The spawned
+// studio inherits process.env, so loading here is enough for the whole tree.
+const ENV_FILE = join(dirname(fileURLToPath(import.meta.url)), "..", ".env");
+if (existsSync(ENV_FILE)) process.loadEnvFile(ENV_FILE);
+
 const PORT = process.env.STUDIO_PORT || "4567";
 // The product was renamed from InkDesk to Quire, but the workspace holds real
 // books and worlds - so an existing ~/InkDesk keeps being used rather than
