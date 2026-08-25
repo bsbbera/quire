@@ -46,26 +46,54 @@ best-effort, not a guarantee. Every other adapter holds.
 
 ## Built but never exercised end to end
 
-### D3 — The model half of the audit has only ever run against fakes — **VERIFY**
+### D3 — The model half of the audit — **CLOSED**
+*Created: Phase 5. Closed: 2026-08-26, live run against the shipped magazine.*
+
+Two questions were open: whether models return usable `dimension` numbers, and
+whether findings are specific enough to revise from. Both answered.
+
+First attempt failed on all 12 pages with `ENOENT` on
+`.inkos/sessions/publication:<issue>:audit-1.jsonl` — `publicationSessionId`
+put colons in the id, and a session id becomes a filename. A colon in a Windows
+path is the NTFS alternate-data-stream separator. **Every publication stage —
+plan, every page, design — had been failing to persist its transcript on this
+platform since Phase 2**; it was invisible because no earlier stage read the
+transcript back. Fixed (`--` separator, everything outside `[A-Za-z0-9._-]`
+folded down).
+
+Second run: **46 findings across 12 pages, no page unread.**
+
+| Cluster | Count |
+|---|---|
+| Sourcing and accuracy (dim 6, 7, 8, 9) | 20 |
+| Furniture (dim 22, 23) | 11 |
+| Rule pass (ai-tell, length) | 8 |
+| Structural (dim 16, 26, 27) | 6 |
+| Abstraction (dim 13) | 1 |
+
+Findings are specific, checkable, and quote the offending text. Real defects in
+the printed issue, including: a typeface dated to 1925 called "four years before
+the word photography settled into common English" (it was coined in 1839); a
+stat box asserting a modern phone makes Sasson's image "12,000 times over" when
+the arithmetic gives 1,200; Kodak's suppression called twenty-six years when
+patent-to-disclosure is twenty-three; and an analogy that inverts how bitumen of
+Judea actually behaves.
+
+**Still open:** whether the *revise* half converges. This run used
+`revise: false` — the model chose that itself from a "report only" instruction,
+which is its own small proof that the parameter works. Nothing yet knows whether
+two rounds fix these or thrash. That is D15.
+
+### D15 — The revise half has never run against a real model — **VERIFY**
 *Created: Phase 5.*
-`reviewPage` / `revisePage` are covered by tests with a scripted `ask`. No real
-model has yet audited a real page against the 31 dimensions, so nothing is known
-about: whether models return usable `dimension` numbers, whether findings are
-specific enough to revise from, or whether two revise rounds converge or thrash.
+`revisePage` is covered by tests with a scripted `ask`, and the live audit above
+deliberately ran with `revise: false`. So nothing is known about whether a real
+revise round actually clears its findings, holds the word band, or drifts the
+voice — and D6 predicts structural findings will survive every round by design.
 
-**Update (first live run, 2026-08-26):** the tool routed correctly and the audit
-ran, but all 12 model reads failed with `ENOENT` — `publicationSessionId` put
-colons in the id, and a session id becomes a filename under `.inkos/sessions`.
-A colon there is the NTFS alternate-data-stream separator. Fixed (`--`
-separator, everything outside `[A-Za-z0-9._-]` folded down). **This means every
-publication stage — plan, every page, design — had been failing to persist its
-transcript on Windows since Phase 2.** The rule half of the audit worked and
-returned 20 findings.
-
-**Cost:** the loop is correct; its output quality is still a guess, because the
-model half has not yet returned a single finding on real copy.
-**To close:** re-run `publication_audit` on the shipped magazine now the session
-id is legal, read the findings, compare the before/after copy.
+**Cost:** "the audit fixes what it finds" is proven as a loop, not as an outcome.
+**To close:** run `publication_audit` with `revise: true` on the shipped
+magazine, diff the copy, count findings before and after.
 
 ### D14 — The sidebar and the detail page count "written" differently — **OPEN**
 *Created: Phase 6.*
