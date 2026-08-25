@@ -129,10 +129,24 @@ function acp(bin, args, handler) {
         const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
         if (!line) continue;
         let m; try { m = JSON.parse(line); } catch { continue; }
+        // A refusal on handshake or session/new is fatal: nothing downstream
+        // ever sends a prompt, so without this the run sat silent until the ACP
+        // timer, which is longer than Studio's own stream timeout — the failure
+        // surfaced as "produced no event" with the real reason thrown away.
+        if (m.error && (m.id === 1 || m.id === 2)) {
+          clearTimeout(timer);
+          if (!done) {
+            done = true;
+            try { child.kill("SIGTERM"); } catch {}
+            reject(new Error(`${m.id === 1 ? "initialize" : "session/new"} refused: `
+              + JSON.stringify(m.error).slice(0, 400)));
+          }
+          return;
+        }
         if (m.id === 1 && m.result) {
           // Only a real run gets the tools: the model-listing call passes no
           // handler and would just pay the startup cost for nothing.
-          const servers = MCP_ON && handler ? [{ name: "quire", ...MCP_SPEC }] : [];
+          const servers = MCP_ON && handler ? [{ name: "quire", ...MCP_SPEC_ACP }] : [];
           send(2, "session/new", { cwd: process.cwd(), mcpServers: servers });
           continue;
         }
@@ -161,6 +175,16 @@ const MCP_ON = process.env.QUIRE_MCP !== "0";
 // Named "quire" everywhere, so the tools appear under one predictable prefix
 // (claude exposes them as mcp__quire__*).
 const MCP_SPEC = { command: process.execPath, args: [MCP_SERVER], env: {} };
+// ACP types a stdio server's `env` as a list of {name, value} pairs; claude's
+// --mcp-config takes the object form. One server, two encodings — and sending
+// the object shape over ACP is refused with "data did not match any variant of
+// untagged enum McpServer", so devin answered session/new with an error and
+// every prompt through it hung until the ACP timer fired.
+const MCP_SPEC_ACP = {
+  command: MCP_SPEC.command,
+  args: MCP_SPEC.args,
+  env: Object.entries(MCP_SPEC.env).map(([name, value]) => ({ name, value: String(value) })),
+};
 
 const DEVIN_ACP_ARGS = ["--permission-mode", "dangerous", "--respect-workspace-trust", "false", "acp"];
 

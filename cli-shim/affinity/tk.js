@@ -70,6 +70,26 @@
     onDark: '#F4F1EA', onDarkSoft: '#C9CACD', onDarkFaint: '#8B8D93', onDarkLine: '#3A3D45',
     grey: '#9B9DA2', shell: '#E3E2DE'
   };
+  // ---- the design decision, when one has been made -------------------------
+  // A spec that has been decided and approved outranks the constants above one
+  // atom at a time. Anything it does not name keeps the default, so a thin spec
+  // degrades to the house look rather than to an unstyled page.
+  //
+  // ponytail: the grid is NOT taken from the spec. live() and the column maths
+  // assume 174mm across 6 columns and 53 baselines; changing that is a real
+  // refactor, not a substitution. Wire it when a publication needs a different
+  // measure, and read SPEC.grid there.
+  var SPEC = CFG.spec || null;
+  var hex6 = function (v) {
+    return (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v.trim())) ? v.trim() : null;
+  };
+  if (SPEC && SPEC.palette) {
+    var SP = SPEC.palette;
+    if (hex6(SP.paper)) { C.bone = C.cream = C.onDark = hex6(SP.paper); }
+    if (hex6(SP.ink)) { C.ink = C.slate = hex6(SP.ink); }
+    if (hex6(SP.accent)) { C.actLight = C.actStuff = C.actFeel = C.clay = hex6(SP.accent); }
+  }
+
   // Section boundaries come from the issue's own flatplan, not a fixed
   // three-act map — an issue may have two sections or nine, and the section is
   // what decides a page's colour world and folio tint.
@@ -99,6 +119,20 @@
                  poster: 'Poster Compressed',     // NEVER select this by weight
                  brutal: 'Regular', cond: 'Regular',
                  sansSemi: 'Regular', dispWide: 'Bold' };
+
+  // Faces the spec asked for, if this machine has them. A named font that is
+  // not installed is dropped back to the default rather than thrown, because a
+  // missing typeface should cost a typeface and not a whole issue.
+  if (SPEC && SPEC.type) {
+    var have = function (name) {
+      if (typeof name !== 'string' || !name.trim()) return null;
+      try { return FontFamily.all.find(function (x) { return x.name === name.trim(); }) ? name.trim() : null; }
+      catch (e) { return null; }
+    };
+    var disp = have(SPEC.type.display), text = have(SPEC.type.text);
+    if (disp) { F.disp = disp; FACE.disp = 'Bold'; FACE.dispReg = 'Regular'; FACE.dispIt = 'Italic'; }
+    if (text) { F.body = text; }
+  }
 
   function col(h, a) {
     const c = new RGBAuf();

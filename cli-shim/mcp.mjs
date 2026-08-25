@@ -10,7 +10,7 @@
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 const HOME = homedir();
 const OVERRIDES = join(HOME, ".inkos", "mcp.json");
@@ -111,9 +111,38 @@ function jsonConfigServers(path, source) {
 const DEVIN = join(HOME, "AppData", "Roaming", "devin", "mcp_config.json");
 const DESKTOP = join(HOME, "AppData", "Roaming", "Claude", "claude_desktop_config.json");
 
+/**
+ * Servers Quire depends on itself, rather than inheriting from another app.
+ *
+ * Affinity is the build target, so "is it configured?" is not a question the
+ * user should have to answer — the connector reported "unknown MCP server:
+ * affinity" whenever discovery came up empty, which reads as a Quire
+ * misconfiguration for a condition Quire can resolve. Canva ship the bridge
+ * inside the Claude extension; it is a plain stdio server, so it is run
+ * directly. Discovery still wins if it finds the same extension, and the
+ * override file still wins over both.
+ */
+function builtinServers() {
+  const bridge = join(
+    HOME, "AppData", "Roaming", "Claude", "Claude Extensions",
+    "ant.dir.gh.canva.affinity", "server", "index.js",
+  );
+  if (!existsSync(bridge)) return {};
+  return {
+    affinity: {
+      command: process.execPath,
+      args: [bridge],
+      env: { SSE_URL: process.env.AFFINITY_SSE_URL || "http://localhost:6767/sse" },
+      cwd: dirname(dirname(bridge)),
+      source: "quire",
+    },
+  };
+}
+
 export function servers() {
   const claude = readJson(join(HOME, ".claude.json"))?.mcpServers || {};
   const merged = {
+    ...builtinServers(),
     ...extensionServers(),
     ...jsonConfigServers(DESKTOP, "claude-desktop"),
     ...jsonConfigServers(DEVIN, "devin"),

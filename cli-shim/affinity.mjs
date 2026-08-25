@@ -15,6 +15,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawn } from "node:child_process";
 import * as mcp from "./mcp.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -28,6 +29,61 @@ const win = (p) => String(p).replace(/\//g, "\\");
 // per session — including execute_script, which fails with a message about
 // documentation rather than anything script-shaped. Any restart of the shim
 // starts a new session, so this is checked rather than assumed.
+/**
+ * Bring Affinity up.
+ *
+ * The connector used to assume the application was already running with its
+ * MCP server switched on, and reported "unknown MCP server: affinity" when it
+ * was not — an error about Quire's own config for a condition Quire can fix.
+ * Affinity ships as an MSIX package, so it is launched through the apps folder
+ * rather than a path, and the wait is on its SSE port rather than on the
+ * process: the window opens well before the server behind it answers.
+ */
+const AFFINITY_APP = "Canva.Affinity_8a0j1tnjnt4a4!Canva.Affinity";
+const AFFINITY_SSE = process.env.AFFINITY_SSE_URL || "http://localhost:6767/sse";
+
+async function ssePort(ms = 2000) {
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), ms);
+  try {
+    // The endpoint streams and never completes, so arriving at the response
+    // headers is the whole test; the body is left unread. A timeout counts as
+    // down, not up — reading it the other way reported a filtered port as a
+    // working server and sent the connector on to fail further along.
+    const res = await fetch(AFFINITY_SSE, { signal: c.signal });
+    try { await res.body?.cancel(); } catch { /* already gone */ }
+    return true;
+  } catch { return false; } finally { clearTimeout(t); }
+}
+
+let launching = null;
+export async function ensureRunning({ timeoutMs = 120000 } = {}) {
+  if (await ssePort()) return { started: false };
+  // Two builds racing to launch the same application gets two windows and a
+  // dialog, so a launch already in flight is joined rather than repeated.
+  if (launching) return launching;
+  launching = (async () => {
+    try {
+      spawn("explorer.exe", ["shell:AppsFolder\\" + AFFINITY_APP], {
+        detached: true, stdio: "ignore", windowsHide: true,
+      }).unref();
+    } catch (e) {
+      throw new Error(`could not launch Affinity: ${e.message}`);
+    }
+    const until = Date.now() + timeoutMs;
+    while (Date.now() < until) {
+      await new Promise((r) => setTimeout(r, 2000));
+      if (await ssePort()) return { started: true };
+    }
+    throw new Error(
+      "Affinity was launched but its MCP server did not answer on "
+      + `${AFFINITY_SSE} within ${Math.round(timeoutMs / 1000)}s. `
+      + "Switch it on in Affinity: Settings > MCP Server.",
+    );
+  })();
+  try { return await launching; } finally { launching = null; }
+}
+
 let preambleRead = false;
 async function ensurePreamble() {
   if (preambleRead) return;
@@ -37,6 +93,7 @@ async function ensurePreamble() {
 
 /** Run one script in Affinity and parse the JSON its console.log prints. */
 async function run(script, ms = 300000) {
+  await ensureRunning();
   await ensurePreamble();
   let r = await mcp.call("affinity", "execute_script", { script }, ms);
   if (/preamble documentation topic has not yet been read/i.test(String(r.text))) {
@@ -274,6 +331,11 @@ export async function build(issue, { pdf, issueDir }) {
       root: win(join(st.desktop, "Quire", issue.id)) + "\\",
       img: win(stage.dir) + "\\",
       sections: (issue.sections || []).map((s) => ({ n: s.n, from: s.from, to: s.to })),
+      // The design decision, when one has been made. tk.js takes its
+      // palette, faces and grid from here and falls back to its own
+      // defaults per atom, so a spec naming a font this machine does
+      // not have loses that font, not the build.
+      spec: (issue.design && issue.design.spec) || null,
     })};`,
     TK(),
     layoutScript(issue, stage.staged),
@@ -330,6 +392,11 @@ function cfgFor(issue, stageDir, desktop) {
     root: win(join(desktop, "Quire", issue.id)) + "\\",
     img: win(stageDir) + "\\",
     sections: (issue.sections || []).map((s) => ({ n: s.n, from: s.from, to: s.to })),
+    // The design decision, when one has been made. tk.js takes its
+    // palette, faces and grid from here and falls back to its own
+    // defaults per atom, so a spec naming a font this machine does
+    // not have loses that font, not the build.
+    spec: (issue.design && issue.design.spec) || null,
     // The design stage's worlds, so the layout paints in the register the
     // editor approved instead of tk.js's generic colour wheel.
     worlds: (issue.design?.sections || []).map((w) => ({
