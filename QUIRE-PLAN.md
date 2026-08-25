@@ -68,7 +68,7 @@ bypasses standing.
 - An empty tool table is now declared to the model rather than left silent, so it says
   it cannot do the work instead of describing work it did not perform.
 
-**Verified live, devin-backed:**
+**Verified live, devin-backed** — repeatable, `node cli-shim/harness-live.mjs devin`:
 
 1. Tool call returns through the host as OpenAI `tool_calls`, `finish_reason:
    "tool_calls"`. ✅
@@ -85,9 +85,14 @@ bypasses standing.
 - `codex` config.toml servers remain outside the gate (above).
 - Serializing a large MCP tool table into the prompt has an unmeasured token cost.
   Measure when the table grows.
-- Testing from inside a Claude Code session pollutes `ANTHROPIC_API_KEY` /
-  `ANTHROPIC_BASE_URL` for a spawned `claude`. Product-side concern for a Quire launched
-  from such a terminal; not a shim defect. Untriaged.
+- **`claude` is untested against the live harness on this machine.** Not a harness
+  defect and not environment pollution (an earlier note here said pollution; that was
+  wrong). `~/.claude/settings.json` carries an env block pointing the CLI at Ollama —
+  `ANTHROPIC_BASE_URL=http://localhost:11434` — and nothing is listening there, so every
+  `claude` run returns ConnectionRefused. `claude` runs through Quire will fail the same
+  way until Ollama is running or that block is removed. `devin` passes all four checks.
+- A CLI reading its own settings file can redirect itself somewhere the shim cannot see.
+  Worth surfacing in the app as a provider health check rather than as a failed run.
 
 ---
 
