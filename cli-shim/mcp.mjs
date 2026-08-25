@@ -11,6 +11,7 @@ import { spawn } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const HOME = homedir();
 const OVERRIDES = join(HOME, ".inkos", "mcp.json");
@@ -122,21 +123,47 @@ const DESKTOP = join(HOME, "AppData", "Roaming", "Claude", "claude_desktop_confi
  * directly. Discovery still wins if it finds the same extension, and the
  * override file still wins over both.
  */
+/**
+ * The servers Quire brings itself, as opposed to the ones it finds.
+ *
+ * `quire` ships with the app and is always here: it is this repo's own
+ * mcp-server.mjs, and it is how Affinity, ComfyUI and the publication store
+ * are reachable as tools at all. It used to be handed to each CLI at launch
+ * instead, which put its calls inside the CLI's own loop where no gate could
+ * reach them; now it is an ordinary server the host connects to and the host
+ * executes.
+ *
+ * `affinity` is Canva's Claude Desktop extension, which is not ours to ship —
+ * it is picked up when the user has installed it, and its absence is not a
+ * problem, because Quire drives Affinity through its own connector regardless.
+ */
 function builtinServers() {
+  const out = {
+    quire: {
+      command: process.execPath,
+      args: [join(dirname(fileURLToPath(import.meta.url)), "mcp-server.mjs")],
+      env: {},
+      cwd: dirname(fileURLToPath(import.meta.url)),
+      source: "quire",
+      bundled: true,
+    },
+  };
+
   const bridge = join(
     HOME, "AppData", "Roaming", "Claude", "Claude Extensions",
     "ant.dir.gh.canva.affinity", "server", "index.js",
   );
-  if (!existsSync(bridge)) return {};
-  return {
-    affinity: {
+  if (existsSync(bridge)) {
+    out.affinity = {
       command: process.execPath,
       args: [bridge],
       env: { SSE_URL: process.env.AFFINITY_SSE_URL || "http://localhost:6767/sse" },
       cwd: dirname(dirname(bridge)),
       source: "quire",
-    },
-  };
+      bundled: true,
+    };
+  }
+  return out;
 }
 
 export function servers() {

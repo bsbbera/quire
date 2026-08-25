@@ -41,20 +41,23 @@ async function allPublications() {
   return out;
 }
 
+/**
+ * A publication and the runner context for it.
+ *
+ * core owns this now. Rebuilding a context by hand here is what allowed the
+ * build tool below to call affinity.build() directly — with a context of its
+ * own making there was nothing to enforce, and the gates the runner applies
+ * were simply not in the path.
+ */
+async function openPublication(id) {
+  const { openIssueContext } = await core("dist/pipeline/publication-context.js");
+  return openIssueContext(WORKSPACE, id, {
+    shimUrl: `http://127.0.0.1:${process.env.SHIM_PORT || "8787"}`,
+  });
+}
+
 async function readPublication(id) {
-  const { loadPublicationRegistry } = await core("dist/publications/registry.js");
-  const { readIssue } = await core("dist/pipeline/publication-runner.js");
-  const registry = await loadPublicationRegistry(WORKSPACE);
-  for (const { definition } of registry.definitions) {
-    try {
-      return await readIssue({ projectRoot: WORKSPACE, definition, ask: async () => {
-        throw new Error("reading does not call the model");
-      } }, id);
-    } catch {
-      // Wrong type for this id; try the next definition.
-    }
-  }
-  throw new Error("no such publication: " + id);
+  return (await openPublication(id)).issue;
 }
 
 const TOOLS = [
@@ -105,15 +108,19 @@ const TOOLS = [
       },
       required: ["id"],
     },
+    // Through the runner, not around it.
+    //
+    // This called affinity.build() directly, which skips the three checks the
+    // runner's own build() makes: the copy approved, the design approved, and
+    // the design passing its own spec. That is not theoretical — the shipped
+    // film-photography issue has `approved` set and no `designApproved` at
+    // all, which is the fingerprint of exactly this path.
     run: async (a) => {
-      const issue = await readPublication(a.id);
-      // readIssue reports where it read from; without it there is nothing to
-      // stage the page art from and nowhere to put the PDF.
-      const issueDir = issue.dir || issue.issueDir || join(WORKSPACE, "Magazine", "issues", a.id);
-      const pdf = join(issueDir, "build", a.id + ".pdf");
+      const { ctx } = await openPublication(a.id);
+      const { build } = await core("dist/pipeline/publication-runner.js");
       await affinity.ensureRunning();
-      const out = await affinity.build(issue, { pdf, issueDir });
-      return { ...out, pdf: existsSync(pdf) ? pdf : null };
+      const issue = await build(ctx, a.id);
+      return { ok: true, pdf: issue.build?.pdf ?? null, status: issue.status };
     },
   },
   {
