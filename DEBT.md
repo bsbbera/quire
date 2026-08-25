@@ -53,9 +53,19 @@ model has yet audited a real page against the 31 dimensions, so nothing is known
 about: whether models return usable `dimension` numbers, whether findings are
 specific enough to revise from, or whether two revise rounds converge or thrash.
 
-**Cost:** the loop is correct; its output quality is a guess.
-**To close:** run `publication_audit` on the shipped magazine, read the findings,
-compare the before/after copy.
+**Update (first live run, 2026-08-26):** the tool routed correctly and the audit
+ran, but all 12 model reads failed with `ENOENT` — `publicationSessionId` put
+colons in the id, and a session id becomes a filename under `.inkos/sessions`.
+A colon there is the NTFS alternate-data-stream separator. Fixed (`--`
+separator, everything outside `[A-Za-z0-9._-]` folded down). **This means every
+publication stage — plan, every page, design — had been failing to persist its
+transcript on Windows since Phase 2.** The rule half of the audit worked and
+returned 20 findings.
+
+**Cost:** the loop is correct; its output quality is still a guess, because the
+model half has not yet returned a single finding on real copy.
+**To close:** re-run `publication_audit` on the shipped magazine now the session
+id is legal, read the findings, compare the before/after copy.
 
 ### D4 — Resume, approve and feedback routes are untested against a running server — **VERIFY**
 *Created: Phase 6.*
