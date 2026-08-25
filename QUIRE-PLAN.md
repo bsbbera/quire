@@ -153,7 +153,7 @@ exposed once every model started reaching MCP. Now mocked.
 
 ---
 
-## Phase 4 — Gates hold, MCP ships default
+## Phase 4 — Gates hold, MCP ships default — **DONE**
 
 **Steps.**
 
@@ -167,34 +167,80 @@ exposed once every model started reaching MCP. Now mocked.
 
 ---
 
-## Phase 5 — The checks, as defaults
+## Phase 5 — The checks, as defaults — **DONE**
 
-This is the substance. Everything above is plumbing to make this reachable.
+**What was actually wrong.** Three separate things, and only one of them was the
+missing auditor:
 
-**Steps.**
+| | |
+|---|---|
+| `stopAt` defaulted to `"write"` | Every run that took the default — which is every run — stopped one stage *before* the audit. The checks were reachable on paper and skipped in practice. |
+| No model ever read a page | `publication-audit.ts` counts words and paragraph variance. Everything that only shows on reading (an unsourced number, a deck that promises what the body never delivers) went unchecked. |
+| Findings went nowhere | An audit that found eighteen problems fixed none of them. Nobody was reading the reports. |
 
-1. `audit` stage cannot be skipped. Today `stopAt` can stop short of it.
-2. **37-dimension audit for publications.** Chapters get `ContinuityAuditor` (`pipeline/runner.ts:1299,1378,1448`). Publications get nothing. Port it or write the publication equivalent — dimensions differ for a magazine, the mechanism does not.
-3. **De-AI-ification.** `analyzeAITells` runs for chapters. `publication-audit.ts` calls it, but the stage is reachable on paper only.
-4. **Revise loop.** An audit that finds 18 problems and fixes 0 is a report. Findings feed a revise pass, which re-audits, bounded rounds.
-5. Both checks default for every type, not opt-in per type.
-6. Regression harness: re-run the shipped magazine, findings must drop measurably.
+**What was built.**
 
-**Done when.** A fresh magazine run produces findings, revises, and re-audits without anyone asking it to.
+- `pipeline/publication-review.ts` — new. 31 editorial dimensions, the audit prompt,
+  the finding parser, and the revise prompt. Per page, not per issue: a forty-page
+  issue in one prompt gets a model that skims, which is the failure mode that makes
+  an audit look like it ran when it did not.
+- `runAudit(ctx, id, {deep, revise, rounds, only})` — rules **and** model, then the
+  findings are rewritten out and the pages audited again. Two rounds by default.
+  Stops early when a round changes nothing.
+- `revisePage(ctx, id, n, findings)` — bounded to the page, forbidden from adding a
+  fact not already in the page or the research, and it clears the copy approval,
+  because approval is of specific copy.
+- `runDeslop` — the same loop with a slop filter, not a second implementation.
+- `publication_audit` and `publication_deslop` — the tools. Both open their own
+  context by issue id, so any existing issue is reachable.
+- `run()` now promotes `stopAt: "write"` to `"audit"`. A run that wrote pages audits
+  them.
+
+**Honest count.** "37 dimensions" is 31 model-judged plus the 6 the rule pass already
+owned. It is not the chapter pipeline's 37, and it should not be — those are story
+dimensions. See DEBT.md D5.
+
+**Verified.** 12 tests on the review module, 11 on the loop (revises, re-audits, stops
+on the round budget, gives up when a rewrite changes nothing, clears approval, survives
+a page the model cannot read, filters correctly for deslop). Core suite 1932/1934 — the
+two failures are Windows symlink EPERM, unrelated.
+
+**Not verified.** No real model has run this yet. DEBT.md D3.
 
 ---
 
-## Phase 6 — Studio reachability
+## Phase 6 — Studio reachability — **DONE**
 
-Today: one tool (`publication_create`), two routes, both GET (`studio/src/api/server.ts:4039,4059`). No approve, resume, build, or re-run anywhere.
+**What was actually wrong.** Two routes, both GET. No approve, resume, build or re-run
+anywhere. That was not a missing convenience: `designApproved` had **no surface in the
+app at all**, so every build gate added in Phase 4 was a gate nobody could open, and a
+run stopped after `write` was finished for good.
 
-**Steps.**
+**What was built.**
 
-1. Issue detail route + page — stages, findings, artifacts, current gate state.
-2. Approve / reject controls wired to Phase 4 gates. Content approval and design approval separate.
-3. Resume from stage. A run stopped at `write` is currently unrecoverable.
-4. Page previews, fed by `affinity_render` (Phase 3.3).
-5. Feedback input on a page or section, submitting into the Phase 3.6 loop.
+- `studio/src/api/publications.ts` — new module, kept out of server.ts because these
+  routes need a pipeline and that dependency is passed in rather than reached for.
+  `GET /:id`, `POST /:id/approve`, `/resume`, `/audit`, `/render`, `/feedback`.
+- `stageStates()` and `gateState()` — derived from the issue file, never from the
+  `status` string, which drifts the moment a tool changes something outside the run
+  that set it. Every shut gate names what is keeping it shut.
+- `pages/PublicationDetail.tsx` + `#/publication/:id` — stages, gate cards with
+  approve/revoke, resume-from/through, the findings list, per-page bodies, spread
+  render, and a per-page note box.
+- Sidebar now lists what has been made, not only the types that could be made.
+
+**One decision worth naming.** A note on a page is not a comment field. It becomes a
+finding and goes through the same revise pass the audit uses — so feedback lands where
+the checks land.
+
+**Design approval is refusable.** Copy approval warns and lets the editor through;
+design approval is blocked while `checkDesign` fails, because `build` reads the spec
+and approving a broken one only moves the failure later.
+
+**Verified.** 7 tests on the derived state. Route wiring and the page itself are
+click-tested, not unit-tested — DEBT.md D4.
+
+**Not built.** Section-scoped feedback (D8). Approval has no identity behind it (D9).
 
 ---
 
@@ -231,8 +277,16 @@ If cross-device sync is ever wanted, the SQLite-compatible option is Turso (free
 ## Order
 
 ```
-1 ─→ 2 ─→ 3 ─→ 5 ─→ 4 ─→ 7 ─→ 6 ─→ 8
+1 ─→ 2 ─→ 3 ─→ 4 ─→ 5 ─→ 6 ─→ 7 ─→ 8
+        done ───────────────┘
 ```
+
+Phases 4 and 5 swapped: the build-gate bypass turned out to be real and evidenced (the
+shipped issue has `approved` but no `designApproved` key at all), so it was closed
+before building on top of it. Phase 6 moved ahead of 7 because Phase 4 left gates that
+nothing could open.
+
+Everything skipped, stubbed or unverified along the way is in **[DEBT.md](DEBT.md)**.
 
 Phase 1 is the gate. Two items in Phase 2 (steps 4, 5) are marked UNVERIFIED and must be checked before that phase is written.
 
