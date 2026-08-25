@@ -84,16 +84,49 @@ Judea actually behaves.
 which is its own small proof that the parameter works. Nothing yet knows whether
 two rounds fix these or thrash. That is D15.
 
-### D15 — The revise half has never run against a real model — **VERIFY**
-*Created: Phase 5.*
-`revisePage` is covered by tests with a scripted `ask`, and the live audit above
-deliberately ran with `revise: false`. So nothing is known about whether a real
-revise round actually clears its findings, holds the word band, or drifts the
-voice — and D6 predicts structural findings will survive every round by design.
+### D15 — The revise loop deleted content on its first live run — **FIXED, needs re-proof**
+*Created: Phase 5. Failure found 2026-08-26, live, on the shipped magazine.*
 
-**Cost:** "the audit fixes what it finds" is proven as a loop, not as an outcome.
-**To close:** run `publication_audit` with `revise: true` on the shipped
-magazine, diff the copy, count findings before and after.
+Ran `publication_audit` with `revise: true`. The loop converged as designed:
+**46 findings → 28, two rounds**, stopping at the round budget. Real errors were
+genuinely fixed — the false "1925, four years before the word photography
+settled into common English" is gone, replaced with the correct 1839 Herschel
+attribution.
+
+It also **destroyed 27 of 36 furniture blocks.** Every one of the twelve revised
+pages lost boxes; four pages lost all of them. Cause: `revisePage` did
+`out.furniture ? keepAllowedBlocks(...) : page.furniture`. An empty array is
+truthy, and a model that omits the unchanged boxes — or returns them in a shape
+`keepAllowedBlocks` rejects — silently wiped the page. Restored from backup.
+
+Two fixes: the runner now keeps the old blocks unless the revise returns usable
+ones, and emits a warning when it has to; and the revise prompt now says to
+return the furniture in full, including the blocks it did not change.
+
+**Also observed, not yet fixed:**
+- `dim2/Premise delivery` went 0 → 3. The revise *dropped* content the plan
+  called for: p13 lost Gerwig from a named trio, p14 lost "the processing
+  machine sold for scrap". The prompt fix above addresses this too, unproven.
+- `dim9/Attribution` went 4 → 0, but p10's "hid it in a drawer for twenty-six
+  years" is **verbatim unchanged** and still wrong (patent 1978, disclosure
+  2001 = twenty-three). The finding stopped being reported without the error
+  being fixed. See D16.
+
+**To close:** re-run with `revise: true` on a backup copy and confirm no page
+loses a block or a premise element.
+
+### D16 — A finding disappearing is not evidence it was fixed — **OPEN**
+*Created: 2026-08-26, from the D15 run.*
+The model audit is non-deterministic. Across two rounds, `dim9` findings went
+4 → 0 while at least one of the errors they described survived untouched in the
+copy. So the headline number — "46 → 28" — overstates what was actually
+repaired, and a category reaching zero means nothing on its own.
+
+**Cost:** the convergence metric is not trustworthy as a quality measure, which
+is exactly what someone will read it as.
+**To close:** carry finding identity across rounds (page + dimension + a hash of
+the quoted text) so a residual finding is distinguishable from a forgotten one,
+and report "fixed / still present / no longer reported" rather than a count.
 
 ### D14 — The sidebar and the detail page count "written" differently — **OPEN**
 *Created: Phase 6.*
