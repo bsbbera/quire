@@ -436,6 +436,46 @@ export async function closeIssue({ pdf } = {}) {
 }
 
 /**
+ * Export one spread as a PNG, so the model can look at what it laid out.
+ *
+ * Everything else here is write-only: a script places objects and reports
+ * findings in text, which tells a model whether its instructions were followed
+ * and nothing about whether the result is any good. A page can satisfy every
+ * rule the inspector checks and still be ugly.
+ *
+ * UNVERIFIED against a live Affinity. The export call mirrors the PDF one,
+ * which does work, but the PNG preset name and per-spread export are read from
+ * the shape of that API rather than confirmed. If Affinity rejects it the error
+ * comes back as exportError rather than a thrown script, so a render failure
+ * degrades to "no image" instead of taking the build down with it.
+ */
+export async function renderPage(issue, page, out) {
+  if (!session) throw new Error("no build session - openIssue first");
+  const target = out || join(session.desktop, "Quire", session.id, `spread-${page}.png`);
+  const script = [
+    FIND(),
+    `globalThis.TK_CFG = ${JSON.stringify(session.cfg)};`,
+    `(function () {
+  const out = globalThis.TK_RESULT || {};
+  const _doc = globalThis.TK_DOC;
+  try {
+    const { FileExportOptions } = require("/document");
+    const opts = FileExportOptions.createWithPresetName("PNG");
+    if (opts && "spreadIndex" in opts) opts.spreadIndex = ${Number(page)} - 1;
+    _doc.export(${JSON.stringify(win(target))}, opts);
+    out.rendered = true; out.path = ${JSON.stringify(win(target))};
+  } catch (e) {
+    out.rendered = false; out.renderError = e.message;
+  }
+  console.log(JSON.stringify(out));
+})();`,
+  ].join("\n");
+  const res = await run(script, 300000);
+  if (res.rendered && existsSync(target)) return { ok: true, image: target };
+  return { ok: false, error: res.renderError || "Affinity did not write the image" };
+}
+
+/**
  * Lay out one page and inspect it. Returns the page's findings so the queue can
  * record them per page rather than as one undifferentiated warning list.
  */

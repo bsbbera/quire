@@ -707,6 +707,36 @@ createServer((req, res) => {
       return { ok: true, ...out, pdf: existsSync(pdf) ? pdf : null };
     }));
   }
+  // Per-page layout, so a design decision about one section does not mean
+  // rebuilding forty pages. openIssue creates the document and stages the
+  // assets; page lays out one spread; close exports and ends the session.
+  if (path === "/affinity/open" && req.method === "POST") {
+    return handle(bodyOf().then(async (b) => {
+      if (!b.issue || !b.issueDir) throw new Error("issue and issueDir are required");
+      return { ok: true, ...await affinity.openIssue(b.issue, { issueDir: b.issueDir, pdf: b.pdf }) };
+    }));
+  }
+  if (path === "/affinity/page" && req.method === "POST") {
+    return handle(bodyOf().then(async (b) => {
+      if (!b.issue || b.page === undefined) throw new Error("issue and page are required");
+      const page = b.issue.pages?.find((p) => Number(p.n) === Number(b.page));
+      if (!page) throw new Error(`no page ${b.page} in ${b.issue.id}`);
+      // Opening is idempotent from the caller's side and cheap when a session
+      // is already up, so a single-page fix does not require the caller to
+      // know whether a document is open.
+      if (b.issueDir) await affinity.openIssue(b.issue, { issueDir: b.issueDir, pdf: b.pdf });
+      return { ok: true, ...await affinity.buildPage(b.issue, page) };
+    }));
+  }
+  if (path === "/affinity/render" && req.method === "POST") {
+    return handle(bodyOf().then(async (b) => {
+      if (b.page === undefined) throw new Error("page is required");
+      return affinity.renderPage(b.issue, Number(b.page), b.out);
+    }));
+  }
+  if (path === "/affinity/close" && req.method === "POST") {
+    return handle(bodyOf().then(async (b) => ({ ok: true, ...await affinity.closeIssue({ pdf: b.pdf }) })));
+  }
   if (path === "/comfy/status") return handle(comfy.status());
   // Installing ComfyUI is the one setup step Quire can do for the user; the
   // plan is a separate call so the panel can show the size before committing
