@@ -67,6 +67,16 @@ model half has not yet returned a single finding on real copy.
 **To close:** re-run `publication_audit` on the shipped magazine now the session
 id is legal, read the findings, compare the before/after copy.
 
+### D14 — The sidebar and the detail page count "written" differently — **OPEN**
+*Created: Phase 6.*
+`listIssues` counts a page written when `body !== null && body !== undefined`, so
+an empty string counts. `stageStates` counts it written when the body has
+non-whitespace in it. The shipped magazine therefore reads `16/16` in the
+sidebar and `12/16 pages written` on its own detail page.
+
+**Cost:** small but corrosive — the two numbers are on screen together.
+**To close:** one predicate, used by both.
+
 ### D4 — Resume, approve and feedback routes are untested against a running server — **VERIFY**
 *Created: Phase 6.*
 `gateState` and `stageStates` are unit-tested. The five routes around them
