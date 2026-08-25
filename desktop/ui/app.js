@@ -387,8 +387,12 @@ function wireUpdates() {
   $("#checkBtn")?.addEventListener("click", () => checkUpdate({ silent: false }));
   // Integrations render inside Studio, so the drawer asks the iframe to show
   // them rather than duplicating the view in the shell.
+  // The workbench routes on the hash, so the shell navigates it rather than
+  // posting a message — a message needs a listener on the other side, and the
+  // one this used to post had none, which is why the button did nothing.
   $("#openPlugs")?.addEventListener("click", () => {
-    $("#frame")?.contentWindow?.postMessage({ quire: "open-view", view: "plugs" }, "*");
+    const frame = $("#frame");
+    if (frame?.contentWindow) frame.contentWindow.location.hash = "#/mcp";
     openDrawer(false);
   });
   // Studio's sidebar "Updates" entry: it has no Tauri API of its own, so it

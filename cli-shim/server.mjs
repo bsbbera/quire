@@ -8,6 +8,12 @@ import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from 
 import { join, dirname, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
+// Tool calling for agents that will not accept a host-supplied tool server.
+// Its own file so it can be run directly for its self-check; server.mjs
+// starts listening on import.
+import {
+  TOOL_RE, parseToolCalls, renderTurn, streamableUpTo, textOf, toolProtocol,
+} from "./tool-calls.mjs";
 
 const PORT = process.env.SHIM_PORT || 8787;
 const LANG = process.env.SHIM_LANG || "English";
@@ -415,39 +421,28 @@ const finalOf = (stream, line) => {
 };
 
 const sse = (res, obj) => res.write("data: " + JSON.stringify(obj) + "\n\n");
-const chunkOf = (model, delta, finish = null) => ({
+const chunkOf = (model, delta, finish = null, calls = null) => ({
   id: "shim", object: "chat.completion.chunk", created: (Date.now() / 1e3) | 0, model,
-  choices: [{ index: 0, delta: delta ? { content: delta } : {}, finish_reason: finish }],
+  choices: [{
+    index: 0,
+    delta: calls ? { tool_calls: calls.map((c, i) => ({ index: i, ...c })) }
+      : delta ? { content: delta } : {},
+    finish_reason: finish,
+  }],
 });
-
-/**
- * A message's text, whatever shape it arrived in.
- *
- * `content` is a plain string in the simple case, but the chat API also allows
- * a list of typed parts, and that is what Studio sends as soon as a turn can
- * carry an image. Reading it as a string put the literal "[object Object]" in
- * front of the model, which then answered the only way it could — by saying the
- * request looked empty.
- */
-function textOf(content) {
-  if (typeof content === "string") return content;
-  if (Array.isArray(content)) {
-    return content
-      .map((p) => (typeof p === "string" ? p : p?.text ?? p?.content ?? ""))
-      .filter(Boolean).join("\n");
-  }
-  // An assistant turn that is only tool calls has no content at all.
-  return content == null ? "" : String(content?.text ?? "");
-}
 
 /**
  * How the agent is told about Quire's own tools.
  *
- * They are offered over MCP as well, but MCP is not a channel every CLI
- * actually has - some load tool servers only from their own config and ignore
+ * These are offered over MCP as well, but MCP is not a channel every CLI
+ * actually has — some load tool servers only from their own config and ignore
  * what the host passes them, with no error to say so. Running a command is the
  * one capability all of them share, so the tools are described here in the form
  * every agent can use. Whichever CLI the user picked, the tools are the same.
+ *
+ * Distinct from toolProtocol(): that one carries the tools the *workbench*
+ * will execute on the model's behalf, and expects a call back. These the agent
+ * runs itself, in its own loop, and nothing comes back here.
  */
 function toolNote() {
   if (!MCP_ON) return "";
@@ -465,17 +460,15 @@ function toolNote() {
   ].join("\n");
 }
 
-function flatten(msgs) {
+function flatten(msgs, tools) {
   const sys = msgs.filter((m) => m.role === "system").map((m) => textOf(m.content)).join("\n");
-  const rest = msgs.filter((m) => m.role !== "system")
-    .map((m) => "[" + m.role + "]\n" + textOf(m.content)).join("\n\n");
-  const note = toolNote();
-  return (sys ? sys + "\n\n" : "") + (note ? note + "\n\n" : "")
-    + "Always respond in " + LANG + ".\n\n" + rest;
+  const rest = msgs.filter((m) => m.role !== "system").map(renderTurn).join("\n\n");
+  return [sys, toolNote(), toolProtocol(tools), "Always respond in " + LANG + ".", rest]
+    .filter(Boolean).join("\n\n");
 }
 
 // ------------------------------------------------------------------ completion
-async function complete({ agent, model, prompt, streaming, res, fullModel }) {
+async function complete({ agent, model, prompt, streaming, res, fullModel, tools }) {
   let got = "";
   // A CLI is an agent runtime: it thinks, calls its own tools, reads files, and
   // says nothing at all while it does. The client watches for *new* events and
@@ -497,12 +490,35 @@ async function complete({ agent, model, prompt, streaming, res, fullModel }) {
     // Nothing should outlive the request that owns it.
     res.on("close", stopBeat);
   }
-  const send = (t) => { if (!t) return; got += t; if (streaming) sse(res, chunkOf(fullModel, t)); };
+  /**
+   * Text goes out as it arrives — except a tool-call block, which must not.
+   * That block is a control message, not prose: streamed through, the client
+   * renders raw markup and then runs the tool anyway when the same block comes
+   * back parsed. So output is held back far enough to recognise the opening
+   * tag even when it arrives split across two chunks, and once the tag is seen
+   * nothing further is streamed as text.
+   */
+  let sentTo = 0;
+  const pump = () => {
+    if (!streaming) return;
+    const limit = streamableUpTo(got);
+    if (limit <= sentTo) return;
+    sse(res, chunkOf(fullModel, got.slice(sentTo, limit)));
+    sentTo = limit;
+  };
+  const send = (t) => { if (!t) return; got += t; pump(); };
   const done = () => {
     stopBeat();
     if (res.writableEnded) return;
+    const calls = tools?.length ? parseToolCalls(got) : [];
+    // With a call in hand the prose around it is still the model's, but the
+    // block itself is machinery and never belongs in the transcript.
+    const text = calls.length ? got.replace(TOOL_RE, "").trim() : got;
+    const finish = calls.length ? "tool_calls" : "stop";
     if (streaming) {
-      sse(res, chunkOf(fullModel, "", "stop"));
+      if (calls.length) sse(res, chunkOf(fullModel, "", null, calls));
+      else if (got.length > sentTo) sse(res, chunkOf(fullModel, got.slice(sentTo)));
+      sse(res, chunkOf(fullModel, "", finish));
       res.write("data: [DONE]\n\n");
       res.end();
     } else {
@@ -511,7 +527,16 @@ async function complete({ agent, model, prompt, streaming, res, fullModel }) {
       res.end(JSON.stringify({
         id: "shim-" + Date.now(), object: "chat.completion", created: (Date.now() / 1e3) | 0,
         model: fullModel,
-        choices: [{ index: 0, message: { role: "assistant", content: got }, finish_reason: "stop" }],
+        choices: [{
+          index: 0,
+          message: {
+            role: "assistant",
+            // The contract wants null, not "", when a turn is only tool calls.
+            content: text || (calls.length ? null : ""),
+            ...(calls.length ? { tool_calls: calls } : {}),
+          },
+          finish_reason: finish,
+        }],
         usage: { prompt_tokens: n(prompt), completion_tokens: n(got), total_tokens: n(prompt) + n(got) },
       }));
     }
@@ -834,8 +859,10 @@ createServer((req, res) => {
       res.socket?.setNoDelay?.(true);
     }
     try {
-      await complete({ agent, model: rest.join("/"), prompt: flatten(body.messages || []),
-        streaming, res, fullModel: wanted });
+      const tools = Array.isArray(body.tools) ? body.tools : [];
+      await complete({ agent, model: rest.join("/"),
+        prompt: flatten(body.messages || [], tools),
+        streaming, res, fullModel: wanted, tools });
     } catch (e) {
       if (res.writableEnded) return;
       if (streaming) { sse(res, chunkOf(body.model, "[shim error] " + e.message, "stop")); res.end(); }
