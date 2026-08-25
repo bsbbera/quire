@@ -39,19 +39,50 @@ if (!existsSync(join(studioDist, "api", "index.js"))) {
   process.exit(1);
 }
 
+/**
+ * Remove a staged tree, allowing for Windows.
+ *
+ * A plain rmSync fails with EBUSY whenever anything still holds a file under
+ * it — a running Studio above all, but a just-exited one too, because handles
+ * and virus scanners release on their own schedule. Node's own retry options
+ * exist for exactly this.
+ */
+function removeTree(dir, what) {
+  if (!existsSync(dir)) return;
+  try {
+    rmSync(dir, { recursive: true, force: true, maxRetries: 12, retryDelay: 250 });
+  } catch (error) {
+    if (error?.code !== "EBUSY" && error?.code !== "EPERM" && error?.code !== "ENOTEMPTY") throw error;
+    console.error(
+      `\ncannot replace ${what}: something is still using it.\n`
+      + `  ${error.path || dir}\n\n`
+      + "Quire is probably running. Stop it and run this again — staging over a\n"
+      + "live install is what leaves the app serving half of one build and half\n"
+      + "of another.\n",
+    );
+    process.exit(1);
+  }
+}
+
+// Staged beside the target and swapped in at the end. A failure halfway used
+// to leave cli-shim/inkos partly deleted, which the shim will still happily
+// launch: the app then runs a mix of two builds and looks like a code bug
+// rather than a staging one.
+const STAGE = OUT + ".staging";
+
 console.log("staging runtime into cli-shim/inkos…");
-rmSync(OUT, { recursive: true, force: true });
-mkdirSync(OUT, { recursive: true });
+removeTree(STAGE, "the previous staging directory");
+mkdirSync(STAGE, { recursive: true });
 
 // 1. The compiled Studio, server and client both.
-cpSync(studioDist, join(OUT, "studio", "dist"), { recursive: true });
+cpSync(studioDist, join(STAGE, "studio", "dist"), { recursive: true });
 
 // 2. The workspace bootstrap the shim calls before launching Studio. It goes
 // under dist/ so `import("dist/project-bootstrap.js")` resolves identically
 // whether the shim found this staged runtime or a global npm install.
-mkdirSync(join(OUT, "dist"), { recursive: true });
+mkdirSync(join(STAGE, "dist"), { recursive: true });
 for (const f of ["project-bootstrap.js", "utils.js"]) {
-  cpSync(join(SRC, "packages", "cli", "dist", f), join(OUT, "dist", f));
+  cpSync(join(SRC, "packages", "cli", "dist", f), join(STAGE, "dist", f));
 }
 
 // 3. The runtime package.json. core's own dependencies are declared here, at
@@ -63,7 +94,7 @@ const need = (name) => {
   if (!v) throw new Error(`studio no longer depends on ${name} — update this script`);
   return v;
 };
-writeFileSync(join(OUT, "package.json"), JSON.stringify({
+writeFileSync(join(STAGE, "package.json"), JSON.stringify({
   name: "quire-inkos-runtime",
   version: studioPkg.version,
   private: true,
@@ -80,13 +111,13 @@ writeFileSync(join(OUT, "package.json"), JSON.stringify({
 // npm, not pnpm: the staged tree is copied into an installer, and pnpm's
 // symlinked store does not survive that.
 console.log("installing runtime dependencies…");
-sh("npm", ["install", "--omit=dev", "--no-audit", "--no-fund", "--install-strategy=hoisted"], OUT);
+sh("npm", ["install", "--omit=dev", "--no-audit", "--no-fund", "--install-strategy=hoisted"], STAGE);
 
 // 4. inkos-core, staged AFTER npm: it is not a registry dependency, so an
 // npm install run afterwards prunes it as extraneous and Studio then dies
 // with ERR_MODULE_NOT_FOUND '@actalk/inkos-core'. Its own dependencies are
 // in the root package.json above, so Node resolves them by walking up.
-const coreOut = join(OUT, "node_modules", "@actalk", "inkos-core");
+const coreOut = join(STAGE, "node_modules", "@actalk", "inkos-core");
 mkdirSync(coreOut, { recursive: true });
 cpSync(coreDist, join(coreOut, "dist"), { recursive: true });
 // core's package.json ships "files": ["dist","genres","skills","publications"]
@@ -103,6 +134,48 @@ writeFileSync(join(coreOut, "package.json"), JSON.stringify({
   exports: corePkg.exports, dependencies: corePkg.dependencies,
 }, null, 2));
 
+
+/**
+ * Move the staged tree into place without moving the tree.
+ *
+ * Neither deleting nor renaming cli-shim/inkos is reliable on Windows: any
+ * shell whose working directory sits inside it, and any handle not yet
+ * released by an exited process, makes both fail — and a failed delete used to
+ * leave the app with half a runtime, which then looks like a code bug. Copying
+ * over the top always works, because it never needs the directory itself.
+ *
+ * Files the new build no longer has are removed afterwards, so a module that
+ * was deleted upstream does not keep answering imports. That pass is
+ * best-effort: a file still open is stale but harmless, while failing the
+ * whole stage over it is not.
+ */
+function syncInto(from, to) {
+  cpSync(from, to, { recursive: true, force: true });
+
+  const relFiles = (root) => {
+    const out = new Set();
+    const walk = (dir, prefix) => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const rel = prefix ? `${prefix}/${e.name}` : e.name;
+        if (e.isDirectory()) walk(join(dir, e.name), rel);
+        else out.add(rel);
+      }
+    };
+    walk(root, "");
+    return out;
+  };
+
+  const wanted = relFiles(from);
+  let stale = 0;
+  for (const rel of relFiles(to)) {
+    if (wanted.has(rel)) continue;
+    try { rmSync(join(to, ...rel.split("/")), { force: true }); stale++; } catch {}
+  }
+  if (stale) console.log(`removed ${stale} file(s) the new build no longer has`);
+}
+
+syncInto(STAGE, OUT);
+removeTree(STAGE, "the staging directory");
 
 const size = (dir) => {
   let bytes = 0;

@@ -96,22 +96,40 @@ bypasses standing.
 
 ---
 
-## Phase 2 — Publication types run on the harness path
+## Phase 2 — Publication types run on the harness path — **DONE**
 
-**Why.** `PublicationAgent extends BaseAgent` (`agents/publication.ts`) — `BaseAgent` calls `runWorkerAgent`, the toolless path. `AskFn` returns raw JSON from a single completion. No tools reachable from any stage.
+**Both UNVERIFIED items resolved before writing any code:**
 
-`runAgentSession` (`agent-session.ts:1064`) is a plain exported async function, already driven headlessly by the test suite. Nothing prevents the pipeline from using it. (Verified.)
+- `bookId: null` is supported. Exactly one throw exists (`agent-session.ts:942`) and it
+  is for `interactive-film-authoring` only. Publications pass null.
+- `PipelineConfig` requires only `client`, `model`, `projectRoot`. Not chapter-bound.
 
-**Steps.**
+**Built.**
 
-1. Add `"publication"` to `SessionKindSchema` (`interaction/session.ts:6` — 10 kinds today, none fit). Tool table and system prompt both key off session kind.
-2. Tool set for that kind in `createModeTools` (`agent-session.ts:825`).
-3. Replace `AskFn` with `runAgentSession`. Retire `PublicationAgent extends BaseAgent`.
-4. **UNVERIFIED, check before writing step 3:** `runAgentSession` takes `bookId: string | null`. Publications live in `Magazine/issues/`, not `books/`. Determine whether the null-book path survives a 40-page run, or whether an issue needs a book-shaped handle.
-5. **UNVERIFIED:** `pipeline: PipelineRunner` is required and chapter-shaped. Confirm a publication run can supply one without dragging in chapter state.
-6. Generalize: whatever makes publications work must work for any type. No magazine-specific branch in the session path.
+- `pipeline/publication-session.ts` — new. `createPublicationAsk()` returns an `AskFn`
+  backed by `runAgentSession`, so every stage carries a tool table and the host keeps
+  its confirmation and persistence around each call.
+- `PublicationAgent` deleted. Nothing referenced it.
+- `"publication"` added to `SessionKindSchema`, with its own tool set (research, image,
+  project read, material retrieval) and its own system prompt. It previously fell
+  through to the **chat** prompt — which tells a session it may propose actions and
+  start books, so a stage would answer the user instead of producing the stage's JSON.
+- `workerModel` exported from `worker-agent.ts`, so a stage uses the client the run was
+  configured with rather than re-resolving the id through the provider registry and
+  possibly landing on a different endpoint.
+- `publication_create` wired to the new ask, with the issue id resolved lazily — the
+  issue is created *from* the context that carries it.
 
-**Done when.** A magazine and a short story both go through `runAgentSession`, same loop, differing only in which tools their session kind exposes.
+**Deliberately not changed:** one session per stage, keyed by issue and tag. A page is
+still written from its prompt, not from a growing transcript. Memory across pages is
+Phase 7.2; folding it in here would make a context-growth bug look like a tools bug.
+
+**Tests:** 10 new (`publication-session.test.ts`), 151 passing across the touched
+suites, core typecheck clean.
+
+**Also fixed:** `agent-session.test.ts` ran real MCP discovery against the shim, so its
+tool-table assertions passed with Quire closed and failed with it open — latent before,
+exposed once every model started reaching MCP. Now mocked.
 
 ---
 
