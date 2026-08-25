@@ -8,12 +8,11 @@ import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from 
 import { join, dirname, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
-// Tool calling for agents that will not accept a host-supplied tool server.
-// Its own file so it can be run directly for its self-check; server.mjs
-// starts listening on import.
+// The one tool channel. Its own file so it can be run directly for its
+// self-check; server.mjs starts listening on import.
 import {
-  TOOL_RE, parseToolCalls, renderTurn, streamableUpTo, textOf, toolProtocol,
-} from "./tool-calls.mjs";
+  buildPrompt, finishTurn, launchServers, launchServersAcp, streamableUpTo, textOf,
+} from "./harness.mjs";
 
 const PORT = process.env.SHIM_PORT || 8787;
 const LANG = process.env.SHIM_LANG || "English";
@@ -204,59 +203,18 @@ function acp(bin, args, handler) {
   });
 }
 
-// Quire's own tools, offered to the CLIs as an MCP server.
-//
-// A CLI is an agent runtime: it runs its own tool loop, and every one of them
-// speaks MCP. So the tools go across as a tool server rather than being
-// translated into each CLI's own protocol. QUIRE_MCP=0 turns it off.
-const MCP_SERVER = join(HERE, "mcp-server.mjs");
-const MCP_ON = process.env.QUIRE_MCP !== "0";
-// Named "quire" everywhere, so the tools appear under one predictable prefix
-// (claude exposes them as mcp__quire__*).
-const MCP_SPEC = { command: process.execPath, args: [MCP_SERVER], env: {} };
-// ACP types a stdio server's `env` as a list of {name, value} pairs; claude's
-// --mcp-config takes the object form. One server, two encodings — and sending
-// the object shape over ACP is refused with "data did not match any variant of
-// untagged enum McpServer", so devin answered session/new with an error and
-// every prompt through it hung until the ACP timer fired.
-const MCP_SPEC_ACP = {
-  command: MCP_SPEC.command,
-  args: MCP_SPEC.args,
-  env: Object.entries(MCP_SPEC.env).map(([name, value]) => ({ name, value: String(value) })),
-};
-
 /**
- * Every tool server this run should be able to reach.
+ * Tool servers handed to a CLI at launch.
  *
- * Quire discovers and enables servers of its own - Affinity above all, which is
- * the build target and not optional - but for a long time it handed the CLI
- * only its own `quire` server and kept the rest to itself. The agent was then
- * correct to report that Affinity was not connected: from inside its session it
- * was not. Anything the user has enabled here goes across.
+ * None. The host owns the tool table and executes every call itself, so a CLI
+ * that ran tools in its own loop would be running work Quire never gated. See
+ * harness.mjs for what that cost and why it is paid.
  *
- * A server the CLI already loads from its own config is skipped, so devin does
- * not get a second copy of its own servers.
+ * MCP is still how Quire reaches those tools — but it reaches them itself, in
+ * InkOS's tool table, and offers them to the model through the one channel.
  */
-function agentServers(agentId) {
-  if (!MCP_ON) return {};
-  const out = { quire: MCP_SPEC };
-  let discovered = {};
-  try { discovered = mcp.servers(); } catch { discovered = {}; }
-  for (const [name, s] of Object.entries(discovered)) {
-    if (name === "quire" || !s.enabled || !s.command) continue;
-    if (s.source === agentId) continue;
-    out[name] = { command: s.command, args: s.args || [], env: s.env || {}, cwd: s.cwd };
-  }
-  return out;
-}
-
-// Same list, in the shape ACP types it: env as {name, value} pairs.
-const acpServers = (agentId) => Object.entries(agentServers(agentId)).map(([name, s]) => ({
-  name,
-  command: s.command,
-  args: s.args || [],
-  env: Object.entries(s.env || {}).map(([k, v]) => ({ name: k, value: String(v) })),
-}));
+const agentServers = (agentId) => launchServers(agentId, () => mcp.servers());
+const acpServers = (agentId) => launchServersAcp(agentId, () => mcp.servers());
 
 const DEVIN_ACP_ARGS = ["--permission-mode", "dangerous", "--respect-workspace-trust", "false", "acp"];
 
@@ -268,10 +226,11 @@ const AGENTS = [
     models: () => ["default", "opus", "sonnet", "haiku"],
     args: (m) => ["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
       ...(m && m !== "default" ? ["--model", m] : []), "--permission-mode", "bypassPermissions",
-      // Deliberately not --strict-mcp-config: that would also switch off the
-      // servers the user configured for themselves.
-      ...(MCP_ON ? ["--mcp-config", JSON.stringify({ mcpServers: agentServers("claude-code") }),
-        "--allowedTools", Object.keys(agentServers("claude-code")).map((n) => `mcp__${n}__*`).join(",")] : [])],
+      // --strict-mcp-config so the user's own configured servers do not load
+      // either: for this turn the CLI is a language model and nothing else.
+      // Anything it should be able to reach arrives in the host's tool table.
+      "--strict-mcp-config", "--mcp-config",
+      JSON.stringify({ mcpServers: agentServers("claude-code") })],
     stream: "claude-json",
   },
   {
@@ -285,8 +244,10 @@ const AGENTS = [
     fallback: ["default", "gpt-5.6-terra", "gpt-5.3-codex", "gpt-5-codex", "gpt-5"],
     args: (m) => ["exec", "--json", "--skip-git-repo-check", "--sandbox", "danger-full-access",
       ...(m && m !== "default" ? ["-m", m] : []),
-      // codex exec has no --mcp-config; -c overrides the same keys its
-      // config.toml uses, so the server is added for this run only.
+      // codex exec has no --mcp-config and no strict mode: servers in the
+      // user's own config.toml still load, and Quire cannot stop them. The
+      // list below is empty by policy; codex is the one adapter where that is
+      // not the whole story.
       ...Object.entries(agentServers("codex")).flatMap(([n, sp]) => [
         "-c", `mcp_servers.${n}.command=${JSON.stringify(sp.command)}`,
         "-c", `mcp_servers.${n}.args=[${(sp.args || []).map((a) => JSON.stringify(a)).join(",")}]`,
@@ -431,41 +392,7 @@ const chunkOf = (model, delta, finish = null, calls = null) => ({
   }],
 });
 
-/**
- * How the agent is told about Quire's own tools.
- *
- * These are offered over MCP as well, but MCP is not a channel every CLI
- * actually has — some load tool servers only from their own config and ignore
- * what the host passes them, with no error to say so. Running a command is the
- * one capability all of them share, so the tools are described here in the form
- * every agent can use. Whichever CLI the user picked, the tools are the same.
- *
- * Distinct from toolProtocol(): that one carries the tools the *workbench*
- * will execute on the model's behalf, and expects a call back. These the agent
- * runs itself, in its own loop, and nothing comes back here.
- */
-function toolNote() {
-  if (!MCP_ON) return "";
-  return [
-    "Quire's own tools are on this machine. If your MCP tool list already has them",
-    "(names starting quire_), call them there. If it does not, run them as commands -",
-    "same tools, same names, same arguments:",
-    "",
-    "  node " + JSON.stringify(MCP_SERVER) + " --list",
-    "  node " + JSON.stringify(MCP_SERVER) + " <tool> '<json arguments>'",
-    "",
-    "They cover local image generation (ComfyUI), reading and listing the",
-    "publications in the workspace, and laying an issue out in Affinity Publisher",
-    "and exporting its PDF. Run --list before saying a capability is missing.",
-  ].join("\n");
-}
-
-function flatten(msgs, tools) {
-  const sys = msgs.filter((m) => m.role === "system").map((m) => textOf(m.content)).join("\n");
-  const rest = msgs.filter((m) => m.role !== "system").map(renderTurn).join("\n\n");
-  return [sys, toolNote(), toolProtocol(tools), "Always respond in " + LANG + ".", rest]
-    .filter(Boolean).join("\n\n");
-}
+const flatten = (msgs, tools) => buildPrompt(msgs, tools, { language: LANG });
 
 // ------------------------------------------------------------------ completion
 async function complete({ agent, model, prompt, streaming, res, fullModel, tools }) {
@@ -510,11 +437,9 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
   const done = () => {
     stopBeat();
     if (res.writableEnded) return;
-    const calls = tools?.length ? parseToolCalls(got) : [];
     // With a call in hand the prose around it is still the model's, but the
     // block itself is machinery and never belongs in the transcript.
-    const text = calls.length ? got.replace(TOOL_RE, "").trim() : got;
-    const finish = calls.length ? "tool_calls" : "stop";
+    const { calls, text, finish } = finishTurn(got, tools);
     if (streaming) {
       if (calls.length) sse(res, chunkOf(fullModel, "", null, calls));
       else if (got.length > sentTo) sse(res, chunkOf(fullModel, got.slice(sentTo)));
