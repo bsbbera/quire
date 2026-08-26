@@ -1,9 +1,43 @@
 # Where things are
 
-`IDEAVERSE` is three unrelated projects sharing one directory, plus the working
-data of two of them, plus about four gigabytes of build cache. That is why it
-reads as a mess: nothing is broken, but nothing says which of the three it
-belongs to. This file says.
+`IDEAVERSE` is a container, not a repository. It holds three copies of Quire at
+different stages of its life, the workspace they all write into, and the two
+projects that are not Quire.
+
+```
+IDEAVERSE/
+├── Quire-Dev/        the git repo. Work happens here. Branch `dev`.
+├── Quire-Prod/       the installed release. Updates itself from GitHub.
+├── Quire-Backup/     the last known-good installer, kept by hand.
+├── Output/           the workspace. Everything the app makes.
+├── design/           references, systems, prompts, method.
+├── site/             the Ideaverse Books store page.
+├── PRODUCT.md        product context for `site/`, where impeccable reads it.
+└── ideaverse-skills/ its own repository, its own remote.
+```
+
+**The release path.** Work on `dev` in `Quire-Dev`. Merge to `master`. Tag
+`vX.Y.Z`; `.github/workflows/release.yml` builds the NSIS installer, signs the
+update artifact with the minisign key, publishes the release and writes the
+`latest.json` the in-app updater reads. `Quire-Prod` picks it up on next launch.
+Before tagging, copy the proven installer and its `.sig` into `Quire-Backup/`,
+because neither of the other two keeps a build that worked.
+
+**Where the workspace is, and why twice.** `Output/` is the workspace — what
+used to be `~/InkDesk`. Two things point at it, deliberately:
+
+- `QUIRE_WORKSPACE` is set to it for this user.
+- `~/Quire` is a junction to it.
+
+Either alone would do. Both, because the resolution order is
+`QUIRE_WORKSPACE` → `~/Quire` → `~/InkDesk`, an environment variable set after
+Explorer started does not always reach a process Explorer launches, and
+`~/InkDesk` no longer exists to fall back to. The junction also disarms the old
+trap: `~/Quire` existing used to mean a silently empty workspace, and now it
+means the right one.
+
+The shipped default is untouched. Someone who installs Quire still gets
+`~/Quire`, because a folder called IDEAVERSE means nothing to them.
 
 ---
 
@@ -11,7 +45,7 @@ belongs to. This file says.
 
 ### 1. Quire — the desktop app
 
-The only one this repository actually versions.
+Paths below are inside `Quire-Dev/`.
 
 | Path | What |
 |---|---|
@@ -50,6 +84,7 @@ the rest.
 | `PRODUCT.md` | Product context for the store landing page. Read by the `impeccable` skill, which expects it at the repo root — leave it there. |
 | `site/` | The landing page, whole. Was `Books/website/`. Moved as a unit rather than split, because `index.html` links `design-system/tokens.css` and taking that apart breaks the page. |
 | `design/` | Everything reference-and-method, gathered from the six places it used to be |
+| | Both sit at the IDEAVERSE root, beside the Quire folders — not inside the repo. |
 | `.impeccable/` | That skill's cache, shots and surface briefs. Ignored. |
 
 `design/` replaced `UI-Vault/`, `Books/_design/`, `Books/Template ref/` and
@@ -58,9 +93,13 @@ the rest.
 | Path | What |
 |---|---|
 | `design/systems/` | Seven design systems — Corsair Codex, Grimoire, Pirate Codex, mywiki, old-archive, digital-archaeology |
-| `design/references/` | `book-ui/`, `shapeshifter/` (623 files), `layout-templates/`, `magazine-refs/`, `book-images/` |
+| `design/references/` | `book-ui/`, `shapeshifter/` (623), `layout-templates/`, `magazine-refs/` (68), `magazine-archive/` (119), `book-images/` (64) |
 | `design/prompts/` | bookvault, grantha, mywiki, theme-landing |
-| `design/method/` | `LAYOUT-PLAN.md`, `affinity-toolkit.js`, `reference-layouts.md` |
+| `design/method/` | `LAYOUT-PLAN.md`, `affinity-toolkit.js`, `reference-layouts.md`, `EDITORIAL-METHOD.md` |
+
+**If a pinned Explorer shortcut breaks, this is why.** `Magazine\Reference
+Image` is now `designeferences\magazine-refs`. All 68 files are there;
+nothing was deleted. 148 images live under `design/` in total.
 
 **`Books/` is gone from this repository.** It held eight projects and 473 MB;
 six of those were books, and they were deleted on 2026-08-26 at the owner's
