@@ -1,7 +1,8 @@
 # Heavy working data, not source. Backed up separately, never versioned here.
 Books/
 Magazine/
-UI-Vault/
+design/
+site/
 radar/
 worlds/
 desktop/node_modules/
