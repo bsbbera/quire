@@ -24,7 +24,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const WORKSPACE = process.env.QUIRE_WORKSPACE
   || [join(homedir(), "Quire"), join(homedir(), "InkDesk")].find(existsSync)
   || join(homedir(), "Quire");
-const CORE = join(dirname(fileURLToPath(import.meta.url)), "inkos", "node_modules", "@actalk", "inkos-core");
+const CORE = join(dirname(fileURLToPath(import.meta.url)), "inkos", "node_modules", "@actalk", "quire-core");
 const core = (rel) => import(pathToFileURL(join(CORE, rel)).href);
 
 /** Every publication, across every installed type. */

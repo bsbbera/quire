@@ -113,11 +113,11 @@ writeFileSync(join(STAGE, "package.json"), JSON.stringify({
 console.log("installing runtime dependencies…");
 sh("npm", ["install", "--omit=dev", "--no-audit", "--no-fund", "--install-strategy=hoisted"], STAGE);
 
-// 4. inkos-core, staged AFTER npm: it is not a registry dependency, so an
+// 4. quire-core, staged AFTER npm: it is not a registry dependency, so an
 // npm install run afterwards prunes it as extraneous and Studio then dies
-// with ERR_MODULE_NOT_FOUND '@actalk/inkos-core'. Its own dependencies are
+// with ERR_MODULE_NOT_FOUND '@actalk/quire-core'. Its own dependencies are
 // in the root package.json above, so Node resolves them by walking up.
-const coreOut = join(STAGE, "node_modules", "@actalk", "inkos-core");
+const coreOut = join(STAGE, "node_modules", "@actalk", corePkg.name.split("/")[1]);
 mkdirSync(coreOut, { recursive: true });
 cpSync(coreDist, join(coreOut, "dist"), { recursive: true });
 // core's package.json ships "files": ["dist","genres","skills","publications"]

@@ -12,7 +12,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const CORE = process.env.INKOS_CORE
-  || join(process.cwd(), "inkos", "node_modules", "@actalk", "inkos-core");
+  || join(process.cwd(), "inkos", "node_modules", "@actalk", "quire-core");
 const load = (rel) => import(pathToFileURL(join(CORE, rel)).href);
 
 let failures = 0;
