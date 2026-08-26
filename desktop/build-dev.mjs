@@ -53,6 +53,18 @@ try {
 mkdirSync(dest, { recursive: true });
 cpSync(join(built, "quire.exe"), join(dest, "quire.exe"));
 cpSync(join(built, "cli-shim"), join(dest, "cli-shim"), { recursive: true });
+
+// cli-shim/studio.mjs reads a .env one level above itself, which in the repo
+// is Quire-Dev/.env and in the install is this directory. Nothing put one
+// here, so search keys reached a dev run and never the installed app: a
+// magazine got as far as research and refused to invent its sources.
+// Gitignored at the source and the install is not a repo, so the key stays
+// out of version control either way.
+const envFile = join(HERE, "..", ".env");
+if (existsSync(envFile)) {
+  cpSync(envFile, join(dest, ".env"));
+  console.log("copied .env (search and machine-local keys)");
+}
 // --no-bundle skips the NSIS installer, so nothing registers Quire-Dev with
 // Windows: no Start Menu entry, no desktop icon, no way to launch it without
 // knowing this path. Write the two shortcuts the installer would have.
