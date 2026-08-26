@@ -128,15 +128,14 @@ is exactly what someone will read it as.
 the quoted text) so a residual finding is distinguishable from a forgotten one,
 and report "fixed / still present / no longer reported" rather than a count.
 
-### D14 — The sidebar and the detail page count "written" differently — **OPEN**
-*Created: Phase 6.*
-`listIssues` counts a page written when `body !== null && body !== undefined`, so
-an empty string counts. `stageStates` counts it written when the body has
-non-whitespace in it. The shipped magazine therefore reads `16/16` in the
-sidebar and `12/16 pages written` on its own detail page.
-
-**Cost:** small but corrosive — the two numbers are on screen together.
-**To close:** one predicate, used by both.
+### D14 — The sidebar and the detail page counted "written" differently — **CLOSED**
+*Created: Phase 6. Closed: Phase 7, verified on screen.*
+Two predicates: `listIssues` counted a body that existed, `stageStates` counted
+one with non-whitespace in it, and the shipped magazine read `16/16` in the
+sidebar and `12/16` on its own detail page. Existence was the right test — a
+plate page is written when it has an empty body, because an empty body is what
+a plate is. Both now call `isPageWritten`. Both read `16/16` on screen, and the
+API agrees for both issues in the workspace.
 
 ### D4 — Resume, approve and feedback routes are untested against a running server — **VERIFY**
 *Created: Phase 6.*
@@ -214,21 +213,77 @@ mistaken for an audit trail.
 
 ---
 
+## Phase 7 — memory, state parity, durability
+
+### D10 — Phase 7: memory, state parity, schema validation — **CLOSED**
+*Closed: Phase 7. See D17 for what is built but not yet proven in a live run.*
+
+All four are built. What each turned out to mean:
+
+1. **Memory.** Publications now index themselves per issue —
+   `publication-memory.ts`, over `LocalSearchIndex`, the same BM25 kernel book
+   memory retrieves through. What did **not** transfer is `MemoryDB`'s temporal
+   layer: it tracks a fact's validity across chapters because a character's
+   state changes, and page 13 does not invalidate what page 12 established. So
+   publications get the retrieval half and not the temporal half, deliberately.
+2. **Retrieval into context.** Two places had been faking recall by truncation —
+   the writer got 140 characters of every page already written, the auditor got
+   200. Above twelve written pages both now get the pages that actually bear on
+   this one. Below it, the complete list is still better than any ranking of it.
+   The research half is the larger win: `pageResearch`'s fallback used to be
+   "the first four findings of every pillar", which ignores what the page is
+   about.
+3. **Schema validation.** `publication.json` is checked on read and before every
+   write. The line took two tries to find — see the file's own comment. Both
+   earlier attempts refused a real issue in the workspace, so what is required
+   is now the spine only: an id, a list of sections, a list of pages, and a page
+   number that is a number.
+4. **Atomic writes.** `save()` writes a sibling and renames over the target.
+   A crash or a full disk can no longer leave half a JSON file where the issue
+   was.
+
+### D17 — Recall has never fed a live model run — **VERIFY**
+*Created: Phase 7.*
+The index was built against both real issues in the workspace and returns the
+right things: for the film issue's timeline page it recalls the Brownie, the
+Polaroid and Ektachrome, which is exactly what that page is about. But that was
+a query, not a run. No page has yet been *written* or *audited* with recalled
+context in the prompt, so what is proven is that recall retrieves well, not that
+the pages come out better for it.
+
+**Cost:** the claim "publications have memory" is currently true of the storage
+and false of the writing.
+**To close:** write or audit one page of a >12-page issue and read the prompt
+that went out.
+
+### D18 — One audit POST fired that nothing explains — **OPEN**
+*Created: Phase 7.*
+While the detail page was open, a `POST /publications/:id/audit` appears in the
+network log that no click produced. It failed (the server was stopping) and has
+not recurred across three page loads since.
+
+**Cost:** if it is real and not a browser artefact, a page load can start a paid
+model run.
+**To close:** watch for a second one. If it recurs, the audit button or an
+effect in `PublicationDetail.tsx` is firing without a click.
+
+### D19 — Older research has no citations to check against — **OPEN**
+*Created: Phase 7.*
+Both issues in the workspace store research the old way: `{origin: [{fact, who,
+when, why_it_matters}]}`, with no URLs. The index reads that shape now (it read
+only the current one at first, which would have left the only real data with no
+research at all), but it can only offer *who* and *when* as the source. Audit
+dimensions 6, 7 and 9 are checking attribution against a name and a date rather
+than a citation.
+
+**Cost:** on old issues, "is this claim sourced?" is a weaker question than the
+dimension intends.
+**To close:** nothing automatic. A re-research would fix one issue at the cost
+of rewriting it.
+
+---
+
 ## Not started
-
-### D10 — Phase 7: memory, state parity, schema validation — **OPEN**
-Four items, none begun:
-1. `memory.db` is book-scoped; publications get no memory, so every page is
-   written cold with no recall of what earlier pages established.
-2. No retrieval into publication context.
-3. `publication.json` has **no schema validation**. Definitions are validated;
-   issues are not. Tools now mutate issues on several paths, and a malformed
-   write is caught by nothing.
-4. Writes are not atomic. `save()` is a plain `writeFile`; a crash mid-write
-   truncates the issue.
-
-**Cost:** (3) and (4) are the sharp ones — an interrupted `build` or a bad tool
-write can destroy an issue with no recovery.
 
 ### D11 — Phase 8: the full end-to-end suite has never been run — **OPEN**
 Six scenarios in the plan (full run with zero manual steps; gate denied at
@@ -240,13 +295,13 @@ generic" is a design intent, not a demonstrated fact.
 
 ## Environment (not ours, but they hide real failures)
 
-### D12 — Two core tests fail on Windows without admin — **OPEN**
-`src/__tests__/skill-agent-tool.test.ts` calls `symlink()`, which needs elevated
-privileges on Windows. Both failures are `EPERM`, not logic.
-**Cost:** a green run is 1932/1934, so a real new failure is easy to miss in the
-noise. **To close:** skip the symlink tests when `symlink()` throws EPERM.
+### D12 — Two core tests failed on Windows without admin — **CLOSED**
+*Closed: Phase 7.* `symlink()` needs elevated privileges on Windows and both
+tests are about what the registry does with a symlink, not about whether the OS
+will make one. They now skip on `EPERM`. The core suite is 1948/1948 — the first
+run with nothing red in it, which is the point: two permanent failures teach
+everyone to read a red run as green.
 
-### D13 — One studio test asserts the pre-rebrand name — **OPEN**
-`src/api/server.test.ts` expects `"InkOS 内部流程错误"`; the code now says
-`"Quire 内部流程错误"`. Predates this work.
-**To close:** update the assertion.
+### D13 — One studio test asserted the pre-rebrand name — **CLOSED**
+*Closed: Phase 7.* `src/api/server.test.ts` expected `"InkOS 内部流程错误"`; the
+code says `"Quire"`. Assertion updated. Studio is 590/590.

@@ -244,22 +244,67 @@ click-tested, not unit-tested — DEBT.md D4.
 
 ---
 
-## Phase 7 — Memory and state parity
+## Phase 7 — Memory and state parity — **DONE**
 
-### Database: no server needed
+**What was wrong.** Four things, and only two of them were about memory.
 
-**SQLite. Local file. Zero server, zero cost, already in the app.**
+Books have had memory since the beginning: `memory-retrieval.ts` picks the
+summaries, hooks and facts a chapter needs and hands the writer a slice.
+Publications had nothing, and the two places that needed recall were faking it
+by truncation — the writer got 140 characters of every page already written,
+the auditor got 200. At forty pages both are a wall of fragments, and the
+research fallback was worse: "the first four findings of every pillar",
+regardless of what the page was about.
 
-`memory.db` already exists at `join(bookDir, "story", "memory.db")` (`state/memory-db.ts:76`) and six chapter-pipeline modules use it. Quire is a desktop app — the database belongs on disk next to the work, not behind a network. No hosting decision, no free tier to pick, no account, works offline, backs up by copying a file.
+The other two were durability. `publication.json` had no validation at all
+while definitions had plenty, and by Phase 5 there were tools mutating an issue
+from outside the run that created it. `save()` was a plain `writeFile`, so a
+crash mid-write left half a JSON file where the issue used to be.
 
-If cross-device sync is ever wanted, the SQLite-compatible option is Turso (free tier); Postgres alternatives are Neon and Supabase (both free tier). **Not recommended now** — each adds an account, a network dependency, and a failure mode, to solve a problem a single-machine desktop app does not have. Revisit only if Quire actually runs on two machines.
+**What was built.**
 
-**Steps.**
+- `publication-memory.ts` — an index per issue, over `LocalSearchIndex`, which
+  is the same BM25 kernel book memory already retrieves through. Pages and
+  research findings, rebuilt from `publication.json` on every query, so it is a
+  projection and deleting it costs nothing.
+- Recall wired into both places that were truncating. Above twelve written
+  pages the writer and the auditor get the pages that bear on this one; below
+  it the complete list is still better than any ranking of it.
+- `publication-schema.ts` — checked on read and before every write.
+- `save()` writes a sibling and renames over the target.
+- One predicate for "written", replacing the two that disagreed on screen.
 
-1. Rescope `memory.db` from book-scoped to work-unit-scoped, so any publication type gets one. Same schema, different root.
-2. Retrieval into publication context. Today every page is written cold — no memory of what earlier pages established.
-3. Zod schema for `publication.json`. Hand-rolled validation covers *definitions* only; issues are unvalidated. Non-negotiable once tools mutate issues.
-4. Atomic writes on every tool path. Tools mutate more often than fixed stages did.
+**Publications are another work unit, so they got what books have** — with one
+deliberate exception. `MemoryDB`'s temporal layer tracks a fact's validity
+across chapters because a character's state changes over a book. Page 13 does
+not invalidate what page 12 established, so publications get the retrieval half
+and not the temporal half. The part that transfers is the part underneath both.
+
+**Verified.** Core 1948/1948, studio 590/590 — the first fully green run, after
+closing the two Windows symlink failures and the pre-rebrand assertion that had
+been hiding real failures in the noise. Both issues in the workspace load,
+index, and open in the app; the detail page and the sidebar both read 16/16.
+Recall against the film issue's timeline page returns the Brownie, the Polaroid
+and Ektachrome, which is what that page is about.
+
+**Found by running it against real data, not by testing it.** Three times the
+first version was wrong about the user's own back catalogue:
+
+- The schema required what `PublicationIssue` declares. A real issue, made
+  before `type`, a section's `question` and a page's `premise` existed, would
+  not load. Loosened, it failed again on `density: null` and furniture stored as
+  bare strings. It now requires the spine and nothing else.
+- The index read only the current research shape. Both real issues store the
+  old one — `{origin: [{fact, who, when}]}`, no wrapper, no URLs — so indexing
+  only the new shape would have given the only real data no research at all.
+- `openIssueContext` refused any issue with no `type`, which is a 500 on the
+  detail page. One of the two issues in the workspace had never opened. The
+  definition whose directory holds the file is the answer, and `findIssue`
+  already knew it.
+
+**Not verified.** No page has been *written* or *audited* with recalled context
+in the prompt. Recall retrieves well; whether the pages come out better for it
+is D17.
 
 ---
 
