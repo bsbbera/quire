@@ -9,8 +9,9 @@
 // absolutely sure nothing survives the window closing.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::fs::{create_dir_all, File};
 use std::net::TcpStream;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 use std::time::Duration;
@@ -100,11 +101,24 @@ fn clean_env(cmd: &mut Command) {
     }
 }
 
-fn spawn_child(mut cmd: Command) -> Option<Child> {
+/// Where a child's stdout/stderr is kept. Truncated per launch: this is for
+/// diagnosing the run that just failed, not an archive.
+fn child_log(dir: Option<&Path>, name: &str) -> Option<(Stdio, Stdio)> {
+    let dir = dir?;
+    create_dir_all(dir).ok()?;
+    let path = dir.join(format!("{name}.log"));
+    let out = File::create(&path).ok()?;
+    let err = out.try_clone().ok()?;
+    Some((Stdio::from(out), Stdio::from(err)))
+}
+
+fn spawn_child(mut cmd: Command, log_dir: Option<&Path>, name: &str) -> Option<Child> {
     clean_env(&mut cmd);
-    cmd.stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
+    // Discarding child output meant that when the shim died mid-run, the only
+    // symptom was Studio reporting "cannot reach the API service" and there was
+    // nothing anywhere to say why. Keep the output.
+    let (out, err) = child_log(log_dir, name).unwrap_or((Stdio::null(), Stdio::null()));
+    cmd.stdin(Stdio::null()).stdout(out).stderr(err);
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
@@ -116,6 +130,12 @@ fn spawn_child(mut cmd: Command) -> Option<Child> {
 #[tauri::command]
 fn boot(app: tauri::AppHandle, children: State<Children>) -> Boot {
     let mut notes = Vec::new();
+
+    let log_dir = app.path().app_log_dir().ok();
+    match log_dir.as_deref() {
+        Some(dir) => notes.push(format!("child logs: {}", dir.display())),
+        None => notes.push("no writable log directory — child output is discarded".into()),
+    }
 
     // The shim ships inside the bundle; in `tauri dev` it sits next to the repo.
     let shim: PathBuf = app
@@ -133,7 +153,7 @@ fn boot(app: tauri::AppHandle, children: State<Children>) -> Boot {
         c.arg(&shim)
             .env("SHIM_PORT", SHIM_PORT.to_string())
             .env("STUDIO_PORT", STUDIO_PORT.to_string());
-        match spawn_child(c) {
+        match spawn_child(c, log_dir.as_deref(), "shim") {
             Some(ch) => children.0.lock().unwrap().push(ch),
             None => notes.push("could not start the model shim — is Node installed?".into()),
         }
@@ -169,7 +189,7 @@ fn boot(app: tauri::AppHandle, children: State<Children>) -> Boot {
         if let Ok(home) = app.path().home_dir() {
             c.env("INKOS_SKILL_DIRS", home.join(".claude").join("skills"));
         }
-        match spawn_child(c) {
+        match spawn_child(c, log_dir.as_deref(), "studio") {
             Some(ch) => children.0.lock().unwrap().push(ch),
             None => notes.push("could not start Quire Studio — is `inkos` installed?".into()),
         }

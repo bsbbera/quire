@@ -38,7 +38,18 @@ if (!existsSync(join(built, "cli-shim", "inkos", "studio", "dist", "api", "index
   console.error("cli-shim/inkos is missing from the build output");
   process.exit(1);
 }
-rmSync(join(dest, "cli-shim"), { recursive: true, force: true });
+// A running Quire-Dev holds cli-shim open and rmSync fails with a raw EBUSY
+// stack. Say what to do instead of dumping the stack.
+try {
+  rmSync(join(dest, "cli-shim"), { recursive: true, force: true });
+} catch (err) {
+  if (err.code === "EBUSY") {
+    console.error(`cannot replace ${join(dest, "cli-shim")} — Quire-Dev is still running.`);
+    console.error("Close it (or: Get-Process quire | Stop-Process -Force) and re-run.");
+    process.exit(1);
+  }
+  throw err;
+}
 mkdirSync(dest, { recursive: true });
 cpSync(join(built, "quire.exe"), join(dest, "quire.exe"));
 cpSync(join(built, "cli-shim"), join(dest, "cli-shim"), { recursive: true });
