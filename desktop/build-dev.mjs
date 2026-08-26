@@ -53,4 +53,26 @@ try {
 mkdirSync(dest, { recursive: true });
 cpSync(join(built, "quire.exe"), join(dest, "quire.exe"));
 cpSync(join(built, "cli-shim"), join(dest, "cli-shim"), { recursive: true });
+// --no-bundle skips the NSIS installer, so nothing registers Quire-Dev with
+// Windows: no Start Menu entry, no desktop icon, no way to launch it without
+// knowing this path. Write the two shortcuts the installer would have.
+const shortcuts = [
+  join(homedir(), "OneDrive", "Desktop", "Quire-Dev.lnk"),
+  join(homedir(), "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs", "Quire-Dev.lnk"),
+];
+if (process.platform === "win32") {
+  const exe = join(dest, "quire.exe");
+  const ps = shortcuts
+    .filter((p) => existsSync(dirname(p)))
+    .map((p) => `$s=$w.CreateShortcut('${p}');$s.TargetPath='${exe}';`
+      + `$s.WorkingDirectory='${dest}';`
+      + `$s.Description='Quire-Dev (development build, ports 8788/4568)';$s.Save();`)
+    .join("");
+  try {
+    execFileSync("powershell", ["-NoProfile", "-Command", `$w=New-Object -ComObject WScript.Shell;${ps}`], { stdio: "ignore" });
+    console.log(`shortcuts: ${shortcuts.join(", ")}`);
+  } catch {
+    console.warn("could not create Quire-Dev shortcuts");
+  }
+}
 console.log(`deployed to ${dest}`);
