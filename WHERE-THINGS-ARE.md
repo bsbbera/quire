@@ -68,9 +68,28 @@ machine. Both have an `inkos.json`, both have `Magazine/` and books.
 | Second issue | — | `indian-culture-everyday-rituals` |
 | Books | 8 projects | 1 (`the-cartographer-of-vanishing-`) |
 
-**The app runs against `InkDesk`.** `IDEAVERSE/Magazine` is the state the
-magazine was in before the format migration (`cli-shim/migrate-magazine.mjs`);
-the live copy has moved on by three days of audit and revise work.
+**The app runs against `InkDesk`, and it can never run against this repo.**
+The workspace is not the working directory — every entry point resolves it the
+same way (`cli-shim/studio.mjs:25`, and the same four lines in `server.mjs`,
+`workflows.mjs`, `mcp-server.mjs`, `migrate-magazine.mjs`):
+
+```js
+process.env.QUIRE_WORKSPACE
+  || [join(homedir(), "Quire"), join(homedir(), "InkDesk")].find(existsSync)
+  || join(homedir(), "Quire")
+```
+
+`~/Quire` does not exist, so `~/InkDesk` wins. `IDEAVERSE/inkos.json` is never
+read by anything — it is a leftover of when this directory *was* the workspace.
+
+**The trap in those four lines:** anything that creates `~/Quire` — including a
+first run on a machine where `~/InkDesk` is missing — silently moves the app to
+an empty workspace, and every book and issue appears to have vanished. Set
+`QUIRE_WORKSPACE` if you ever want to be sure which one you are on.
+
+`IDEAVERSE/Magazine` is the state the magazine was in before the format
+migration (`cli-shim/migrate-magazine.mjs`); the live copy has moved on by three
+days of audit and revise work.
 
 `IDEAVERSE/Books` is the opposite case — eight projects the live workspace does
 **not** have. That is real work, not a stale copy.
