@@ -20,8 +20,8 @@ The only one this repository actually versions.
 | `vendor/inkos` | The InkOS fork, as a git submodule. **Source of truth for the engine.** |
 | `cli-shim/inkos/` | Build output — `vendor/inkos` staged for the app. Ignored, regenerated. |
 | `quire.mjs` | Launcher: starts the shim, then Studio |
-| `QUIRE-PLAN.md` | The plan being worked. Phases 1-7 done, 8 open. |
-| `DEBT.md` | Everything skipped, stubbed or unverified |
+| `docs/QUIRE-PLAN.md` | The plan being worked. Phases 1-7 done, 8 open. |
+| `docs/DEBT.md` | Everything skipped, stubbed or unverified |
 | `README.md` | What Quire is, how to run it, the licence question |
 
 **The one rule that catches everyone:** editing `vendor/inkos` changes nothing
@@ -36,8 +36,8 @@ the rest.
 | Path | What |
 |---|---|
 | `ideaverse-skills/` | **Its own git repository**, own GitHub remote. Not versioned here. |
-| `specs/*-spec.md` | The specs the skills were written from |
-| `specs/skills-plan.md` | Its plan. All five phases shipped. Was `PLAN.md` at the root. |
+| `docs/specs/*-spec.md` | The specs the skills were written from |
+| `docs/specs/skills-plan.md` | Its plan. All five phases shipped. Was `PLAN.md` at the root. |
 | `~/.claude/skills/` | Where they are actually installed and run from |
 
 `sbinkos` is installed but **not in the repository** — it exists only in
@@ -173,6 +173,6 @@ not written yet.
 
 - `.agents/skills` and `.claude/skills` hold the same `social-media-carousel`,
   byte for byte. Both ignored.
-- `specs/archive/quire-plan-v1.md` is the superseded first Quire plan. It used
-  to be `specs/quire-plan.md` — two files called "quire plan" with different
+- `docs/specs/archive/quire-plan-v1.md` is the superseded first Quire plan. It used
+  to be `docs/specs/quire-plan.md` — two files called "quire plan" with different
   phase numbering, which is how a plan stops being a plan.

@@ -2,7 +2,7 @@
 >
 > This is the plan for the Ideaverse *skills* — ebook-weaver, blog-spark and the
 > carousel brief. All five of its phases shipped: the skills live in
-> [`ideaverse-skills/`](../ideaverse-skills), which is its own repository with
+> [`ideaverse-skills/`](../../ideaverse-skills), which is its own repository with
 > its own GitHub remote, and they are installed globally. The line below saying
 > "everything in IDEAVERSE is plan-only" was true when it was written and has
 > not been for months.
@@ -12,7 +12,7 @@
 
 # IDEAVERSE — Ebook + Blog + Carousel Skill System
 
-Master plan. Detailed specs live in [specs/](specs/).
+Master plan. Detailed specs live in [this directory](.).
 
 ## Goal
 
@@ -34,11 +34,11 @@ All skills globally installed, distributed from one GitHub monorepo, installable
 
 | Skill | Status | Purpose | Spec |
 |---|---|---|---|
-| **ebook-weaver** | to build | topic → researched, cited, storytelling ebook in vault | [ebook-weaver-spec.md](specs/ebook-weaver-spec.md) |
-| **blog-spark** | to build | topic/book → SEO blog whose only job is driving readers to the ebook | [blog-spark-spec.md](specs/blog-spark-spec.md) |
-| **carousel-gen** | future | render Instagram carousel slides; interim = brief for `inferen-sh` skill | [carousel-brief-spec.md](specs/carousel-brief-spec.md) |
+| **ebook-weaver** | to build | topic → researched, cited, storytelling ebook in vault | [ebook-weaver-spec.md](ebook-weaver-spec.md) |
+| **blog-spark** | to build | topic/book → SEO blog whose only job is driving readers to the ebook | [blog-spark-spec.md](blog-spark-spec.md) |
+| **carousel-gen** | future | render Instagram carousel slides; interim = brief for `inferen-sh` skill | [carousel-brief-spec.md](carousel-brief-spec.md) |
 
-Distribution + install: [distribution-spec.md](specs/distribution-spec.md).
+Distribution + install: [distribution-spec.md](distribution-spec.md).
 
 ## The editorial formula (fixed, every topic)
 

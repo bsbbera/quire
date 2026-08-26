@@ -67,6 +67,15 @@ Released builds update themselves. Quire checks on launch, silently; installing
 waits for you unless you tick **Automatic** in Settings, because it owns two
 child processes and relaunching mid-write is how a half-written chapter happens.
 
+## The rest of the docs
+
+| | |
+|---|---|
+| [`docs/WHERE-THINGS-ARE.md`](docs/WHERE-THINGS-ARE.md) | What belongs to which project, the six work types, and which folders the app actually reads |
+| [`docs/QUIRE-PLAN.md`](docs/QUIRE-PLAN.md) | The plan. Phases 1-7 done, 8 open. |
+| [`docs/DEBT.md`](docs/DEBT.md) | Everything skipped, stubbed or unverified, and what closing it takes |
+| [`docs/specs/`](docs/specs) | Specs for the authoring skills, and the superseded first plan |
+
 ## Licence
 
 Not yet chosen, so the default applies: all rights reserved by the author.
