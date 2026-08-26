@@ -48,10 +48,28 @@ the rest.
 | Path | What |
 |---|---|
 | `PRODUCT.md` | Product context for the store landing page. Read by the `impeccable` skill, which expects it at the repo root — leave it there. |
-| `Books/website/` | The landing page and its design tokens |
-| `Books/` (rest) | Eight book projects |
-| `UI-Vault/` | Design references — prompts, shapeshifter, book UI, design systems |
+| `site/` | The landing page, whole. Was `Books/website/`. Moved as a unit rather than split, because `index.html` links `design-system/tokens.css` and taking that apart breaks the page. |
+| `design/` | Everything reference-and-method, gathered from the six places it used to be |
 | `.impeccable/` | That skill's cache, shots and surface briefs. Ignored. |
+
+`design/` replaced `UI-Vault/`, `Books/_design/`, `Books/Template ref/` and
+`Magazine/Reference Image/`:
+
+| Path | What |
+|---|---|
+| `design/systems/` | Seven design systems — Corsair Codex, Grimoire, Pirate Codex, mywiki, old-archive, digital-archaeology |
+| `design/references/` | `book-ui/`, `shapeshifter/` (623 files), `layout-templates/`, `magazine-refs/`, `book-images/` |
+| `design/prompts/` | bookvault, grantha, mywiki, theme-landing |
+| `design/method/` | `LAYOUT-PLAN.md`, `affinity-toolkit.js`, `reference-layouts.md` |
+
+**`Books/` is gone from this repository.** It held eight projects and 473 MB;
+six of those were books, and they were deleted on 2026-08-26 at the owner's
+instruction — 258 files, 420 MB, including four hand-composed Affinity
+documents. What survived is `design/references/book-images/`: 64 images, 42.6
+MB, filed under the book each came from. Nothing else of them exists anywhere.
+
+Books now live only in the workspace, at `~/InkDesk/books/`, which is where the
+app looks for them.
 
 ---
 
@@ -106,18 +124,48 @@ The name is the only thing confusing about it.
 |---:|---|---|
 | 3.0 GB | `desktop/src-tauri/target` | Yes — Rust build cache. Deleting costs one long rebuild. |
 | 498 MB | `vendor/` | Yes — submodule plus its `node_modules` |
-| 473 MB | `Books/` | **No.** Eight projects, mostly images. |
-| 448 MB | `Magazine/` | Superseded by InkDesk, but see below |
+| 448 MB | `Magazine/` | Superseded by InkDesk. Still to decide. |
 | 198 MB | `.window-profile/` | Yes — a Chromium profile the agent tooling made |
+| 103 MB | `design/` | **No.** References, systems, prompts, method. |
 | 102 MB | `cli-shim/inkos/` | Yes — one `vendor-inkos.mjs` away |
-| 60 MB | `UI-Vault/` | **No.** Design references. |
+| 52 MB | `site/` | **No.** The store landing page. |
 | 34 MB | `.git` | — |
 | 586 KB | `_backups/20260823-163914` | Yes — a snapshot of `cli-shim` that git already holds |
 
-`Magazine/` is not purely stale. Alongside the superseded issue it holds
-`EDITORIAL-METHOD.md`, `Reference Image/`, `_archive/` and `magazines/film/`
-with a packaged zip — none of which exist in InkDesk. Those are worth keeping
-whatever happens to the rest.
+`Magazine/` is not purely stale: `EDITORIAL-METHOD.md` and `_archive/` exist
+nowhere else. Its `Reference Image/` has already moved to
+`design/references/magazine-refs/`.
+
+---
+
+## The six work types
+
+Quire is not one pipeline. Each work type has its own folder in the workspace
+and its own runner, and only one of them is definition-driven.
+
+| Folder | What | Runner |
+|---|---|---|
+| `books/` | Novels and serials — `book.json`, `chapters/`, `story/` | `pipeline/runner.ts`, 3,882 lines |
+| `shorts/` | Short fiction — `outline/`, `drafts/`, `reviews/`, `final/` | `short-fiction-runner.ts`, 1,216 |
+| `Magazine/` | Publications — `issues/<id>/publication.json` | `publication-runner.ts`, 1,464 |
+| `interactive-films/` | Interactive film, story tree, storyboard | `script-storyboard-runner.ts`, 765 |
+| `worlds/` | Open-world play — `runs/`, state, projections | `play_start` / `step` / `edit` / `revise` |
+| `covers/`, `prompt/` | Supporting output | — |
+
+**Only `Magazine` is definition-driven.** Its type is a JSON file in
+`publications/`, so a new publication type is a file you drop in a folder
+rather than a release. The other four are hand-written runners.
+
+That distinction decides where new work belongs. A short illustrated book — a
+cover, six to nine chapters of 600-900 words, an image per chapter — is not
+what `runner.ts` is for: `BookConfigSchema` defaults to 200 chapters and
+`chapterWordCount` has `min(1000)`, so it would reject a 900-word chapter
+outright. The publication vocabulary (archetypes, densities, extent, furniture)
+fits that shape exactly. `publications/book.json` is the missing piece, and is
+not written yet.
+
+`~/InkDesk` now has all six folders; `interactive-films/`, `covers/` and
+`publications/` were created on 2026-08-26.
 
 ---
 

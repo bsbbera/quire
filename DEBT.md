@@ -283,6 +283,34 @@ of rewriting it.
 
 ---
 
+## Housekeeping
+
+### D20 — Six books were deleted and nothing else has them — **CLOSED**
+*2026-08-26, at the owner's instruction, after being shown what was in them.*
+258 files, 420 MB. Six books' chapters and research, and four hand-composed
+Affinity documents including two finished layouts (`ghost-in-the-engine.afpub`,
+`leonardo-layout.afpub`). Those were made by hand in Affinity; the pipeline
+cannot regenerate one. 64 images (42.6 MB) were pulled out first and kept in
+`design/references/book-images/`, filed under the book each came from. That is
+the whole of what survives.
+
+### D21 — `publications/book.json` is not written — **OPEN**
+*Created: 2026-08-26.*
+The books this workspace produced were short illustrated volumes — a cover, six
+to nine chapters of 600-900 words, an image per chapter. No runner fits that.
+`runner.ts` is for serials: `BookConfigSchema` defaults to 200 chapters and
+`chapterWordCount` carries `min(1000)`, so it rejects a 900-word chapter. The
+publication loop has exactly the right vocabulary — archetypes, densities,
+extent, furniture, image briefs — and adding a type is a JSON file, not a
+release.
+
+**Cost:** short books are made by the `/ebook-weaver` skill writing markdown
+outside the app, so they get no research gate, no audit, no design stage and no
+build. **To close:** write `publications/book.json`. It is also Phase 8.6 —
+the proof that the loop is generic.
+
+---
+
 ## Not started
 
 ### D11 — Phase 8: the full end-to-end suite has never been run — **OPEN**
