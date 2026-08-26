@@ -20,14 +20,19 @@ Quire is a Tauri shell around three things that already work well separately:
 ## The workbench
 
 The editor you see is **[InkOS Studio](https://github.com/Narcooo/inkos)**
-(`@actalk/inkos`), licensed **AGPL-3.0**. Quire does not include it — it starts
-the copy installed on your machine and patches its page at runtime to add
-resizable panels, English for strings outside its i18n table, a progress panel
-and a Magazine section.
+(`@actalk/inkos`), licensed **AGPL-3.0**. Quire runs a **fork** of it, kept in
+`vendor/inkos` and staged into `cli-shim/inkos` by `desktop/vendor-inkos.mjs`.
+Publication types, the audit and revise loop, and the publication routes are
+changes to that source, not decoration added to a running copy of someone
+else's.
 
-Quire is a separate work that runs alongside it. InkOS Studio remains the
-property of its authors under its own licence, and its notice stays visible in
-the sidebar. If you use Quire, you are also using InkOS Studio.
+It did not start that way. Until the fork, Quire started whatever InkOS was
+installed on the machine and patched its page at runtime; `cli-shim/studio-patch`
+is what remains of that, and it is being retired rather than extended.
+
+InkOS Studio remains the property of its authors under its own licence, and its
+notice stays visible in the sidebar. If you use Quire, you are also using InkOS
+Studio.
 
 ## Layers
 
@@ -45,13 +50,16 @@ as the `/affinity` skill; the taste layers are `/mag-content` and `/mag-design`.
 ## Running it
 
 ```bash
-npm i -g @actalk/inkos
-cd desktop && npm install && npm run dev
+node desktop/vendor-inkos.mjs   # build vendor/inkos, stage it into cli-shim/inkos
+node quire.mjs                  # shim + Studio on http://localhost:4567
 ```
 
-`cli-shim/deploy.ps1` pushes a changed shim into an installed build and restarts
-it — the packaged app runs its own copy, so editing this tree alone changes
-nothing until you deploy.
+**Editing `vendor/inkos` changes nothing until it is staged.** The app runs
+`cli-shim/inkos`, which is a build output, so `vendor-inkos.mjs` is not optional
+after a source change. Stop the app before staging — Windows will not overwrite
+files it still holds open.
+
+`cli-shim/deploy.ps1` does the same for an already-installed build.
 
 ## Updates
 
@@ -63,9 +71,8 @@ child processes and relaunching mid-write is how a half-written chapter happens.
 
 Not yet chosen, so the default applies: all rights reserved by the author.
 
-Worth deciding deliberately rather than by habit. Quire runs InkOS Studio as a
-separate process and patches its page at runtime; whether that makes the pair a
-combined work under AGPL-3.0 is a real question, and the answer decides whether
-a permissive licence here is available at all. Publishing this source is what
-the AGPL asks of a distributed combined work, so the public repo is the safe
-side of that question either way.
+Worth deciding deliberately rather than by habit — and the fork settles the
+part that used to be arguable. Quire no longer merely runs InkOS Studio beside
+itself; it ships a modified copy, which is a derivative work under AGPL-3.0 on
+any reading. Publishing this source is what the licence asks, so the public
+repo is not a precaution any more, it is the term being met.

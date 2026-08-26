@@ -1,3 +1,15 @@
+> **Done, and about a different project from Quire.**
+>
+> This is the plan for the Ideaverse *skills* — ebook-weaver, blog-spark and the
+> carousel brief. All five of its phases shipped: the skills live in
+> [`ideaverse-skills/`](../ideaverse-skills), which is its own repository with
+> its own GitHub remote, and they are installed globally. The line below saying
+> "everything in IDEAVERSE is plan-only" was true when it was written and has
+> not been for months.
+>
+> It sat at the repo root as `PLAN.md`, next to Quire's plan, which is why it
+> read as Quire's. Its specs were already in this directory; now so is it.
+
 # IDEAVERSE — Ebook + Blog + Carousel Skill System
 
 Master plan. Detailed specs live in [specs/](specs/).

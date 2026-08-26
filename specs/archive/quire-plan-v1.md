@@ -1,3 +1,13 @@
+> **Superseded. Kept for the record, not for following.**
+>
+> This was the first Quire plan, written before the fork. Its Phase 4 is a
+> different Phase 4 from the current one, and it stops at 5.5 — the last phase
+> it saw built. Two files called `quire-plan` with different phase numbering is
+> how a plan stops being a plan, so this one moved here and lost the name.
+>
+> The plan being worked is [`QUIRE-PLAN.md`](../../QUIRE-PLAN.md) at the repo
+> root, with [`DEBT.md`](../../DEBT.md) beside it.
+
 # Quire — Integration Plan
 
 The living plan for turning the patched InkOS wrapper into one integrated app.
