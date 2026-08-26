@@ -2,7 +2,7 @@
 //
 // Owns two child processes for the lifetime of the window:
 //   * the model shim   (node <resource>/cli-shim/server.mjs)  — port 8787
-//   * InkOS Studio     (node <resource>/cli-shim/studio.mjs)  — port 4567
+//   * Quire Studio     (node <resource>/cli-shim/studio.mjs)  — port 4567
 //
 // Everything the UI needs is served by the shim over HTTP, so this file stays
 // small on purpose: spawn, wait for the ports, hand the window a URL, and make
@@ -161,7 +161,7 @@ fn boot(app: tauri::AppHandle, children: State<Children>) -> Boot {
             // it, and a dev build beside the release one would otherwise send
             // every CLI request to the other app's shim.
             .env("SHIM_PORT", SHIM_PORT.to_string());
-        // InkOS already scans ~/.openclaw/skills, ~/.agents/skills and the
+        // Quire already scans ~/.openclaw/skills, ~/.agents/skills and the
         // workspace, but not ~/.claude/skills, which is where Claude Code
         // keeps them — so skills the user already wrote were invisible here.
         // A directory that does not exist is reported as a diagnostic, not an
@@ -171,7 +171,7 @@ fn boot(app: tauri::AppHandle, children: State<Children>) -> Boot {
         }
         match spawn_child(c) {
             Some(ch) => children.0.lock().unwrap().push(ch),
-            None => notes.push("could not start InkOS Studio — is `inkos` installed?".into()),
+            None => notes.push("could not start Quire Studio — is `inkos` installed?".into()),
         }
     } else {
         notes.push(format!("studio launcher not found at {}", studio_launcher.display()));

@@ -53,7 +53,7 @@ jobs:
       # cli-shim/inkos, which Tauri ships as a resource. Doing it here
       # rather than inside `npm run tauri build` keeps the failure
       # visible as its own step.
-      - name: Build and stage InkOS
+      - name: Build and stage Quire
         working-directory: desktop
         run: node vendor-inkos.mjs
 

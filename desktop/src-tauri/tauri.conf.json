@@ -43,8 +43,8 @@
         "installMode": "currentUser"
       }
     },
-    "shortDescription": "InkOS with local agent-CLI model providers",
-    "longDescription": "Quire runs InkOS Studio against the agent CLIs installed on your machine (Claude Code, Codex, Devin, Antigravity), exposing every model they offer through one local OpenAI-compatible endpoint.",
+    "shortDescription": "Story creation with local agent-CLI model providers",
+    "longDescription": "Quire runs a Studio workbench against the agent CLIs installed on your machine (Claude Code, Codex, Devin, Antigravity), exposing every model they offer through one local OpenAI-compatible endpoint.",
     "createUpdaterArtifacts": true
   },
   "plugins": {

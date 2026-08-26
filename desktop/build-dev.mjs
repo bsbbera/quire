@@ -28,7 +28,7 @@ for (const step of [
 }
 
 const built = join(HERE, "src-tauri", "target", "release");
-const dest = join(homedir(), "AppData", "Local", "Quire Dev");
+const dest = join(homedir(), "AppData", "Local", "Quire-Dev");
 if (!existsSync(join(built, "quire.exe"))) {
   console.error("build produced no quire.exe");
   process.exit(1);

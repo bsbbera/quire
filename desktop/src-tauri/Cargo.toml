@@ -1,7 +1,7 @@
 [package]
 name = "quire"
 version = "0.1.16"
-description = "Quire — InkOS with local agent-CLI model providers"
+description = "Quire — story creation with local agent-CLI model providers"
 authors = ["Subhadip"]
 edition = "2021"
 rust-version = "1.77"
