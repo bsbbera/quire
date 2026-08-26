@@ -1,14 +1,16 @@
 // Minimal MCP client — discovery + stdio JSON-RPC, no SDK.
 //
 // Every MCP server on this machine is already configured for some other agent
-// (Claude Desktop extensions, Claude Code, Codex). Re-declaring them here
-// would mean two copies to keep in sync, so the configs are read where they
-// already live and merged; ~/.inkos/mcp.json only adds or overrides.
+// (Claude Desktop extensions, Claude Code, Codex). Asking the user to declare
+// them a second time is pointless, so on first run those configs are read
+// where they live and copied into ~/.inkos/mcp.json — credentials included, so
+// nothing needs reconnecting. From then on that file is the only source and
+// Quire owns its own tool list.
 //
 // The wire protocol is newline-delimited JSON-RPC 2.0 over stdio. That is the
 // whole of it for initialize/tools/list/tools/call, so the SDK buys nothing.
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -166,10 +168,14 @@ function builtinServers() {
   return out;
 }
 
-export function servers() {
+/**
+ * Every MCP server the other agents on this machine have configured.
+ *
+ * Read once, at first run, and then never again — see servers().
+ */
+function discovered() {
   const claude = readJson(join(HOME, ".claude.json"))?.mcpServers || {};
-  const merged = {
-    ...builtinServers(),
+  return {
     ...extensionServers(),
     ...jsonConfigServers(DESKTOP, "claude-desktop"),
     ...jsonConfigServers(DEVIN, "devin"),
@@ -177,12 +183,56 @@ export function servers() {
       // Codex's own sandbox helper is not a tool server anyone here should call.
       .filter(([k]) => k !== "node_repl")),
     ...Object.fromEntries(Object.entries(claude).map(([k, v]) => [k, { ...v, source: "claude-code" }])),
-    ...(readJson(OVERRIDES)?.mcpServers || {}),
   };
-  // A server the source app switched off stays off here, but the override file
-  // can turn it back on — otherwise a Devin-disabled server would be
-  // unreachable from Quire with no way to say otherwise.
+}
+
+/**
+ * Copy what the other agents have configured into Quire's own file, once.
+ *
+ * Discovery used to run on every call, which meant Quire's tool list was
+ * really Claude Desktop's: edit that app's config and Quire's capabilities
+ * changed underneath it, with nothing in Quire recording what it was supposed
+ * to have. So the discovered entries — command, args, cwd and env, API keys
+ * included, so nothing needs reconnecting — are written to ~/.inkos/mcp.json
+ * the first time and read from there forever after. After this Quire spawns
+ * its servers from its own configuration and another app's settings are that
+ * app's business.
+ *
+ * The written file holds live credentials. It sits under the user's home, not
+ * the repo, and .inkos/ is gitignored; mcp-config.test.mjs fails if it is ever
+ * tracked.
+ *
+ * Provenance is kept on each entry's `source` — where it originally came from
+ * is worth knowing — with `imported: true` marking that it is Quire's copy
+ * now. A server whose program lives inside another app's install directory
+ * still breaks if that app is removed: the configuration survives, the files
+ * it points at are not ours to keep.
+ */
+function importDiscovered() {
+  const found = Object.fromEntries(
+    Object.entries(discovered()).map(([k, v]) => [k, { ...v, imported: true }]),
+  );
+  const cfg = readJson(OVERRIDES) || {};
+  cfg.mcpServers = found;
+  try {
+    mkdirSync(dirname(OVERRIDES), { recursive: true });
+    writeFileSync(OVERRIDES, JSON.stringify(cfg, null, 2));
+  } catch {
+    // An unwritable home means importing every call, which is what discovery
+    // did anyway. Degraded, not broken.
+  }
+  return found;
+}
+
+export function servers() {
   const ov = readJson(OVERRIDES) || {};
+  // `mcpServers` present — even empty — means the import already happened and
+  // the user's own file is the only source. Absent means first run.
+  const own = ov.mcpServers ?? importDiscovered();
+  const merged = { ...builtinServers(), ...own };
+  // A server that was disabled where it came from stays off here, but the
+  // enabled list can turn it back on — otherwise a server imported in a
+  // disabled state would be unreachable with no way to say otherwise.
   const disabled = new Set(ov.disabled || []);
   const enabled = new Set(ov.enabled || []);
   for (const [k, v] of Object.entries(merged)) {
