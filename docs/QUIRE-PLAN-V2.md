@@ -1,192 +1,194 @@
 # Quire Plan v2
 
-Supersedes the phase list in QUIRE-PLAN.md, which drifted out of date. Written
-against the source, not against the old plan. Each item states what exists
-today, what is missing, and what "done" means as something checkable.
+Supersedes the phase list in QUIRE-PLAN.md, which had drifted out of date —
+several phases it left unmarked were in fact built. Written against the source.
+Each item states what was there, what was missing, and what "done" means as
+something checkable.
+
+Status is recorded per item. Where the plan turned out to be wrong about what
+existed, that is recorded too, rather than quietly dropped.
 
 ---
 
-## P1 — Quire's MCP is Quire's own
+## P1 — Quire's MCP is Quire's own — **done**
 
-**Today.** `cli-shim/mcp.mjs` scans `AppData\Roaming\Claude\Claude Extensions`
-and `claude_desktop_config.json` at runtime and lists what it finds, tagged
-`source: "claude-extension"`. Quire's own config, `.inkos/mcp.json`, is empty.
-Every non-bundled server the app uses is therefore borrowed live from Claude
-Desktop: if that app changes its config, Quire's tools change under it.
+**Was.** `cli-shim/mcp.mjs` scanned `Claude Extensions` and
+`claude_desktop_config.json` at runtime and listed what it found. Quire's own
+config, `~/.inkos/mcp.json`, was empty. Every non-bundled server was borrowed
+live from another app: edit that app's config and Quire's capabilities changed
+underneath it, with nothing in Quire recording what it was supposed to have.
 
-**Missing.** Ownership. Quire reads another program's configuration every boot
-instead of holding its own.
+**Now.** Discovery runs once, at first run, and copies what it finds into
+`~/.inkos/mcp.json` — command, args, cwd and env, API keys included, so nothing
+needs reconnecting. After that the file is the only source and Quire spawns its
+servers from its own configuration. The MCP page tags each server `bundled` or
+`imported`; `source` still records where it originally came from, as history
+rather than as a live dependency.
 
-**Do.** One-time import, then independence.
+**Key safety.** The file holds live credentials. It sits under the user's home,
+`.inkos/` is gitignored, and `cli-shim/mcp-config.test.mjs` fails if it is ever
+tracked. That test also proves the import happens once: it removes the
+discovered config and checks the server is still there.
 
-1. On first run, if `.inkos/mcp.json` has no servers, copy the discovered
-   entries into it verbatim — `command`, `args`, `env` including API keys — so
-   nothing needs reconnecting.
-2. After that import, stop scanning. `.inkos/mcp.json` is the only source.
-   Quire spawns its own server processes from its own config.
-3. The MCP page shows two groups: `bundled` (ships with Quire) and `imported`
-   (copied once from Claude Desktop, now yours, editable in place).
+**Verified in the app.** 13 servers imported, 3 carrying credentials, `quire`
+still bundled.
 
-**Key safety, non-negotiable.** `.inkos/` holds live API keys after this
-change. Confirm it is gitignored, and add a test that fails if
-`.inkos/mcp.json` is ever tracked. Keys are copied on disk, never committed.
-
-**Done when.** Claude Desktop can be uninstalled and every Quire MCP tool still
-works.
+**Known consequence, not yet addressed.** Importing everything means importing
+*everything* — the chat tool table now runs to roughly 200 tools, most of them
+Blender and PowerPoint. They are Quire's own entries now, so they can be
+switched off from the MCP page, which is the point of the change. Whether they
+should be imported disabled by default is a separate decision.
 
 ---
 
-## P2 — The rule stack reaches every pipeline
+## P2 — The rule stack reaches every pipeline — **done**
 
-**Today.** `buildWritingMethodologySection()` is imported by exactly two files:
-`pipeline/runner.ts` and `state/manager.ts`. Both are the long-book path.
-`short-fiction-runner.ts` injects no methodology, no craft card, no deslop
-guidance. The publication pipeline injects none either — `publication-voice.ts`
-extracts craft-named headings out of a voice skill and nothing more.
+**Was.** `buildWritingMethodologySection()` was imported by exactly two files,
+both on the long-book path. `short-fiction-runner.ts` injected no methodology
+at all — it had a hand-maintained craft list of its own in
+`prompts/short-fiction.ts`. The publication pipeline had nothing:
+`publication-voice.ts` scraped craft-named headings out of a voice skill and
+that was all. The 25 universal rules were not universal; they applied to books.
 
-So the 25 universal rules are not universal. They apply to books.
+**Now.** The methodology is split into the two things it was holding. The
+anti-AI material is about prose — emotion carried by action, transitions that
+do not read as connective tissue, factual consistency, borrowed vocabulary —
+and is as true of a two-page explainer as of a novel chapter. The rest is
+narrative craft.
 
-**Missing.** One rule stack, assembled once, consumed by all four producers.
-
-**Do.** Extract `buildRuleStack({ kind, genre, projectRoot, language })`
-returning the layers in order:
+`utils/rule-stack.ts` assembles the layers and is the only thing composing
+them:
 
 | Layer | Source | Applies to |
 |---|---|---|
-| Universal | `writing-methodology.ts` | every kind |
-| Genre | genre rule files | story kinds; publication uses subject rules |
-| Project | `book_rules.md`, `story_bible.md`, `author_intent.md` | books |
-| Series | **new** `series_rules.md`, `house_style.md` | publications |
-| Focus | `current_focus.md` | all |
+| Universal | `writing-methodology.ts` prose half | every kind |
+| Story | `writing-methodology.ts` narrative half | book, short, script, storyboard |
+| Genre | resolved by the caller | story kinds |
+| Own | rule files on disk, per kind | all |
 
-Then inject it in `short-fiction-runner.ts`, the publication write stage, and
-the script/storyboard runners.
+A magazine takes the universal layer and not six-step character psychology,
+which has nothing to say about monsoon farming.
 
-**What the magazine takes and what it does not.** A magazine is not a novel and
-should not pretend to be. It takes the universal layer that is about prose
-quality regardless of form — de-AI-ification, emotion externalised through
-action, logical consistency, language constraints. It does not take the
-story-structure layer: six-step character psychology does not apply to a
-two-page explainer on monsoon farming.
+**Publications gained the canon they were missing.** A book carries
+`book_rules.md` and `story_bible.md` across chapters; a series had nowhere to
+put the equivalent, so house prohibitions and register were re-derived each
+issue. `series_rules.md` and `house_style.md` now live beside the issues and
+are read the same way. `current_focus.md` is read last everywhere, so near-term
+steering beats standing law.
 
-The publication's own persistent canon is the missing half. A book carries
-`book_rules.md` and `story_bible.md` across chapters; a magazine series
-currently carries nothing across issues. `series_rules.md` (house prohibitions,
-reading level, numerical caps) and `house_style.md` (voice, palette, typographic
-register) give a series the same memory a book has.
+The factual-consistency and language-constraint rules the universal layer was
+described as having, and did not, were written.
 
-**Done when.** A deslop rule added to the universal layer changes the next
-magazine page and the next short chapter, provably by diff, with no per-pipeline
-edit.
+**Done.** A rule added to the universal layer reaches the next magazine page
+and the next short chapter with no per-pipeline edit. `rule-stack.test.ts`
+pins it.
 
 ---
 
-## P3 — Audit and de-AI reachable from the UI, for everything
+## P3 — Audit and de-AI reachable for everything — **done**
 
-**Today, publications.** Both passes exist and both are wired:
-`publication_audit` and `publication_deslop` (agent-tools.ts:2479, 2498),
-backed by `publication-audit.ts` and `publication-review.ts`. The UI exists
-too — `PublicationDetail.tsx` renders an "Audit & revise" button, a "De-AI pass"
-button, findings, and a six-stage bar with `stopAt`. It is unreachable: the
-only reference to the component is `App.tsx:357`, and nothing links there.
+**Publications: the plan was wrong.** Both passes existed and were wired, and
+`PublicationDetail.tsx` already renders "Audit & revise" and "De-AI pass" over
+a six-stage bar. The sidebar routes to it. What made it unreachable was that
+the sidebar section is hidden when there are no publications — and this
+workspace has none, because the magazine runs went through a personal
+`mag-content` skill instead of `publication_create`, so nothing was ever
+written to the store. The section now renders when empty and says so. The
+routing problem behind it is separate and still open.
 
-**Today, stories.** No audit tool and no deslop tool exist for short fiction,
-scripts, or storyboards. `skills/inkos-story-deslop/SKILL.md` is guidance folded
-into writing, not a pass you can run afterwards. There is nothing to surface.
+**Stories: genuinely missing.** No audit tool and no deslop tool existed for
+short fiction, scripts or storyboards. The short-fiction runner reviews its own
+draft once, mid-run, and after that the file was final.
 
-**Do.**
+**Now.** `pipeline/story-audit.ts` adds the story-side equivalents: 30
+dimensions answerable from the text, plus the rule pass already shared with the
+publication audit. Both work on a file rather than a project, so they reach
+anything the pipelines wrote, including work written before they existed. The
+audit rewrites what it faults and re-checks, bounded at two rounds, keeping the
+text as it stood beside the file. `story_deslop` is the same loop with only the
+machine-made findings acted on — a plot hole is reported and left alone.
 
-1. Give publications an entry point. Not in My Works — that stays exactly as
-   it is. A Publications list of its own, reachable from the sidebar, each row
-   opening the detail page that already works.
-2. Add `story_audit` and `story_deslop` as real tools over the short/script/
-   storyboard artifacts, running the story dimensions and the deslop skill as
-   a post-hoc pass.
-3. Put the same two buttons on the story artifact view.
-4. Both passes run against finished output and never re-run the pipeline that
-   produced it.
+Available in every session kind that produces an artifact, and deliberately not
+behind a confirmed intent: an audit is what you ask for *after* a run.
 
-**On the two different 37s.** The publication audit is 31 model-judged
-dimensions plus 6 rule-based. The story pipeline's 37 are different dimensions,
-because they are story dimensions. Keep them separate and label them separately
-in the UI — one number covering two unrelated things is how this got confusing.
+**On the three different dimension counts.** The publication audit is 31
+model-judged plus 6 rule-based. The chapter pipeline's are continuity
+dimensions needing book state. The story audit's 30 are the ones answerable
+from a finished file. Three sets, three jobs — they should stay separate and
+be labelled separately.
 
-**Done when.** Content is generated, then audited, then de-AI-ed, by clicking,
-from the app, for a magazine and for a short story.
-
----
-
-## P4 — View, edit, save on every artifact type
-
-**Today.** `ToolExecutionSteps.tsx` has `getGeneratedArtifactDetails()`
-recognising five kinds — `short_fiction_created`, `cover_generated`,
-`script_created`, `storyboard_created`, `interactive_film_created` — but
-`ScriptStoryboardResultPreview`, the component that actually draws clickable
-rows, early-returns unless the tool is one of `script_create`,
-`storyboard_create`, `interactive_film_create`. Short fiction and every
-publication kind produce files and offer no way to open them.
-
-**Do.** Delete the whitelist. Drive the rows off the artifact kind that
-`getGeneratedArtifactDetails()` already returns, so every kind renders. Each
-row opens a viewer with edit and save writing back to the file on disk.
-
-**Done when.** Every produced artifact — short, cover, script, storyboard,
-film, magazine page — opens, edits, and saves from the run that made it.
+**Verified in the app.** `story_audit` and `story_deslop` are in the live tool
+table.
 
 ---
 
-## P5 — ComfyUI and Affinity: finish what is already standing
+## P4 — View, edit, save on every artifact type — **done**
 
-Correcting the record: this is not unbuilt. `comfy_generate` exists and is
-wired to the shim. `publication_art`, `publication_layout`, `publication_render`
-and `publication_build` exist. The shim answers `/affinity/build`,
-`/affinity/page` and `/affinity/render`. Per-page resume exists —
-`publication-runner.ts:1117`, "a stopped run resumes exactly where it left off",
-with `from`, `stopAt` and `redo`. What is missing is narrower than the old plan
-implies.
+**Was.** `ToolExecutionSteps.tsx` recognised five artifact kinds and drew rows
+for three. Short fiction, covers and every publication wrote files the chat
+named and offered no way to open.
 
-**5a — Reach.** `comfy_generate` is available in `chat` and `publication`
-sessions only. A `short` or `storyboard` session cannot generate a cover or a
-shot frame without leaving the session. Wire the image tool into those kinds
-behind the same confirm gate.
-
-**5b — Preflight, ComfyUI.** `GET /comfy/status` currently reports
-`up: false, installed: true` and nothing acts on it, so an art stage discovers
-the renderer is down after the run has already spent its writing. Check status
-before the art stage; offer `/comfy/start`; show the state in the UI before the
-user commits.
-
-**5c — Preflight, Affinity.** No `/affinity/status` exists at all. Add one,
-same treatment.
-
-**5d — Scoped mutation.** `publication_layout` already does one page without
-rebuilding the issue — that is `update` at page scope, and it works. Missing:
-element-level addresses (`page:16/section:1`) and a `delete` verb. Add both, so
-a change to one section touches one section.
-
-**5e — Feedback loop.** `publication_render` returns a picture of a spread and
-that picture does not re-enter the conversation. Feed it back as a turn so the
-model sees what Affinity actually produced and can revise against it, rather
-than designing blind and one-shot.
-
-**5f — Approval before art.** Short fiction now stops at the cover prompt and
-waits for `generate_cover`. The publication art stage still runs without asking.
-Same gate: audit, then approval, then pixels.
-
-**Done when.** Feedback on one section changes that section's files and nothing
-else, provably by diff; and a stopped art run resumes instead of regenerating
-finished images.
+**Now.** Rows come off the result's own `kind` rather than a second list of
+tool names — a list that was already out of step, which is why publications
+rendered nothing. Short fiction gains rows for the story, the synopsis and
+selling points, and the cover prompt. Publications gain one row per written
+page; `publication-runner` derives page paths rather than storing them, so this
+works for issues written before it existed. The drawer they open already reads,
+edits and saves.
 
 ---
 
-## Order
+## P5 — ComfyUI and Affinity — **done, with one item resolved differently**
 
-1. **P1** — small, self-contained, and it stops Quire depending on another
-   app's config while everything else is being changed.
-2. **P5b/5c** — preflight, so nothing below wastes a run discovering a dead
-   renderer.
-3. **P2** — the rule stack, because audit and deslop are worth more once every
-   pipeline is held to the same rules.
-4. **P3** — audit and de-AI surfaced.
-5. **P4** — view/edit/save everywhere.
-6. **P5a/5d/5e/5f** — reach, scoped verbs, feedback loop, art gate.
+**The plan was wrong about how much was missing.** `comfy_generate` existed and
+was wired to the shim. `publication_art`, `publication_layout`,
+`publication_render` and `publication_build` existed. The shim answered
+`/affinity/build`, `/affinity/page`, `/affinity/render` and `/affinity/status`.
+Per-page resume existed. The art stage was already gated on approval.
+
+**5a — reach. Resolved differently, on purpose.** The plan said to add
+`comfy_generate` to the short and storyboard sessions. Doing that would have
+put an ungated image tool in reach of the model, against the rule that art asks
+first. The real gap was narrower and worse: a storyboard writes image prompts
+and an `assets.json` modelling every shot, and *nothing ever rendered them*.
+`storyboard_art` does, behind a confirmed intent like `generate_cover`, and
+resumably — a shot already generated is skipped, a failed one is retried, and
+the manifest is saved after every image, so a run that dies at nineteen keeps
+eighteen.
+
+**5b/5c — preflight. Done.** A run reached the art stage and discovered ComfyUI
+was installed but not running, which surfaced as `art p1: fetch failed` after
+the research, planning, writing and audit had been spent. It is the one failure
+the app can fix by itself and it was reported as if page one were at fault.
+`utils/renderer-preflight.ts` asks the shim, starts ComfyUI if it is only
+asleep, and says plainly what is wrong if it is not. Affinity gets the same
+check before build, layout and render; it cannot be started for the user, but
+refusing before staging assets beats producing a document with holes in it.
+
+**5d — scoped mutation. Done.** A page was the smallest thing anything could
+touch, so a note about one sidebar put the whole page through the revise pass
+and came back with a different body too. `publication_element` takes an address
+(`page:16/furniture:2`, `page:16/deck`, `page:16/brief`) and a verb, `update`
+or `delete`. Addresses are a page number and an element name because those
+survive a rewrite, which an offset would not. Body and title refuse deletion.
+
+**5e — feedback loop. Done.** `publication_render` returned a path, which made
+it a tool that proved a file existed; the model then designed the next revision
+against its own idea of the page rather than against the page. Tool results
+carry images, so it now returns the image.
+
+**5f — art gate. Was already there.** `requireApproval(issue, "art")`.
+
+---
+
+## Still open
+
+- **Magazine routing.** Runs go through the personal `mag-content` skill rather
+  than `publication_create`, so nothing lands in the publication store — which
+  is what made the audit UI unreachable. Root cause not yet isolated.
+- **Imported MCP volume.** ~200 tools in the chat table after the import. They
+  can be switched off per server now; whether they should arrive disabled is
+  undecided.
+- **`comfy_generate` in chat is ungated.** It has always been, and it is not
+  what the short and storyboard art paths use. Worth revisiting alongside any
+  general tool-confirmation gate.
