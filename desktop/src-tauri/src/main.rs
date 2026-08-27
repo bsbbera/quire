@@ -58,6 +58,121 @@ fn port_open(port: u16) -> bool {
     .is_ok()
 }
 
+/// The build stamped onto every child we launch, so a later launch can tell
+/// its own servers from ones an older install left behind on the ports.
+const BUILD: &str = env!("CARGO_PKG_VERSION");
+
+/// One-shot HTTP GET on loopback. Two calls at boot do not justify pulling a
+/// whole HTTP client into the build.
+fn http_get(port: u16, path: &str) -> Option<String> {
+    use std::io::{Read, Write};
+    let addr = format!("127.0.0.1:{port}").parse().ok()?;
+    let mut sock = TcpStream::connect_timeout(&addr, Duration::from_millis(600)).ok()?;
+    sock.set_read_timeout(Some(Duration::from_millis(2000))).ok()?;
+    // HTTP/1.0 + close so the server ends the body by ending the connection.
+    write!(sock, "GET {path} HTTP/1.0\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n").ok()?;
+    let mut raw = String::new();
+    sock.read_to_string(&mut raw).ok()?;
+    Some(raw)
+}
+
+/// `(build, pid)` of whoever answers `path` on `port`. `None` covers every
+/// "not one of ours": no route (an older build), a non-200, anything unparsable.
+fn server_identity(port: u16, path: &str) -> Option<(String, u32)> {
+    let raw = http_get(port, path)?;
+    let (head, body) = raw.split_once("\r\n\r\n")?;
+    if !head.starts_with("HTTP/1.1 200") && !head.starts_with("HTTP/1.0 200") {
+        return None;
+    }
+    let json: serde_json::Value = serde_json::from_str(body.trim()).ok()?;
+    let build = json.get("build")?.as_str()?.to_string();
+    let pid = json.get("pid")?.as_u64()? as u32;
+    Some((build, pid))
+}
+
+/// The PID listening on `port`, and only when it is a Node process. Both ports
+/// belong to our own Node servers; nothing else on the machine gets killed to
+/// take one back.
+fn node_pid_on_port(port: u16) -> Option<u32> {
+    #[cfg(windows)]
+    {
+        let out = Command::new("netstat").args(["-ano", "-p", "TCP"]).output().ok()?;
+        let text = String::from_utf8_lossy(&out.stdout).into_owned();
+        let suffix = format!(":{port}");
+        let pid: u32 = text
+            .lines()
+            .filter(|line| line.contains("LISTENING"))
+            .find(|line| {
+                line.split_whitespace().nth(1).is_some_and(|a| a.ends_with(&suffix))
+            })
+            .and_then(|line| line.split_whitespace().last())
+            .and_then(|pid| pid.parse().ok())?;
+        let listed = Command::new("tasklist")
+            .args(["/FI", &format!("PID eq {pid}"), "/NH", "/FO", "CSV"])
+            .output()
+            .ok()?;
+        let name = String::from_utf8_lossy(&listed.stdout).to_lowercase();
+        if name.contains("node.exe") { Some(pid) } else { None }
+    }
+    #[cfg(not(windows))]
+    {
+        let out = Command::new("lsof")
+            .args([&format!("-iTCP:{port}"), "-sTCP:LISTEN", "-t", "-nP"])
+            .output()
+            .ok()?;
+        let pid: u32 = String::from_utf8_lossy(&out.stdout).trim().lines().next()?.parse().ok()?;
+        let comm = Command::new("ps").args(["-p", &pid.to_string(), "-o", "comm="]).output().ok()?;
+        if String::from_utf8_lossy(&comm.stdout).contains("node") { Some(pid) } else { None }
+    }
+}
+
+fn kill_pid(pid: u32) {
+    #[cfg(windows)]
+    let mut cmd = Command::new("taskkill");
+    #[cfg(windows)]
+    cmd.args(["/PID", &pid.to_string(), "/T", "/F"]);
+    #[cfg(not(windows))]
+    let mut cmd = Command::new("kill");
+    #[cfg(not(windows))]
+    cmd.args(["-9", &pid.to_string()]);
+    let _ = cmd.stdout(Stdio::null()).stderr(Stdio::null()).status();
+}
+
+/// Whether the server already on `port` is this build's, and so may be reused.
+///
+/// This used to be a bare `port_open` check. A Studio left running by an older
+/// install holds the same port, so an updated app reused the previous version's
+/// server: the binary was replaced, the code being served was not, and
+/// reinstalling could not fix it because reinstalling does not kill an orphan.
+/// A foreign server is now killed so our own can have the port.
+fn claim_port(port: u16, ident: &str, label: &str, notes: &mut Vec<String>) -> bool {
+    if !port_open(port) { return false; }
+
+    let found = server_identity(port, ident);
+    if let Some((build, _)) = &found {
+        if build == BUILD {
+            notes.push(format!("{label} already running on port {port} — reusing it"));
+            return true;
+        }
+    }
+
+    let was = found.as_ref().map_or("an unknown build".to_string(), |(b, _)| format!("build {b}"));
+    let pid = found.map(|(_, pid)| pid).or_else(|| node_pid_on_port(port));
+    let Some(pid) = pid else {
+        notes.push(format!("port {port} held by {was} that will not identify itself — reusing it"));
+        return true;
+    };
+
+    notes.push(format!("port {port} held by {label} from {was} — replacing it"));
+    kill_pid(pid);
+    for _ in 0..20 {
+        if !port_open(port) { return false; }
+        std::thread::sleep(Duration::from_millis(250));
+    }
+    notes.push(format!("port {port} did not free up — reusing what is on it"));
+    true
+}
+
 
 /// Windows will not spawn a `.cmd` shim (npm installs `inkos.cmd`) directly, so
 /// those must go through `cmd /C`. A real `.exe` must not, or quoting breaks.
@@ -146,11 +261,12 @@ fn boot(app: tauri::AppHandle, children: State<Children>) -> Boot {
         .filter(|p| p.exists())
         .unwrap_or_else(|| PathBuf::from("../../cli-shim/server.mjs"));
 
-    if port_open(SHIM_PORT) {
-        notes.push(format!("port {SHIM_PORT} already in use — reusing it"));
+    if claim_port(SHIM_PORT, "/build", "the model shim", &mut notes) {
+        // Nothing to start: what is on the port is this build's own shim.
     } else if shim.exists() {
         let mut c = command_for("node", &[]);
         c.arg(&shim)
+            .env("QUIRE_BUILD", BUILD)
             .env("SHIM_PORT", SHIM_PORT.to_string())
             .env("STUDIO_PORT", STUDIO_PORT.to_string());
         match spawn_child(c, log_dir.as_deref(), "shim") {
@@ -171,11 +287,12 @@ fn boot(app: tauri::AppHandle, children: State<Children>) -> Boot {
         .filter(|p| p.exists())
         .unwrap_or_else(|| PathBuf::from("../../cli-shim/studio.mjs"));
 
-    if port_open(STUDIO_PORT) {
-        notes.push(format!("port {STUDIO_PORT} already in use — reusing it"));
+    if claim_port(STUDIO_PORT, "/api/v1/build", "Quire Studio", &mut notes) {
+        // Nothing to start: what is on the port is this build's own Studio.
     } else if studio_launcher.exists() {
         let mut c = command_for("node", &[]);
         c.arg(&studio_launcher)
+            .env("QUIRE_BUILD", BUILD)
             .env("STUDIO_PORT", STUDIO_PORT.to_string())
             // Studio needs it too: the CLI providers build their base URL from
             // it, and a dev build beside the release one would otherwise send

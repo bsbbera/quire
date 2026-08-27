@@ -581,6 +581,13 @@ createServer((req, res) => {
     } catch (e) { return json(res, 500, { error: e.message }); }
   }
 
+  // Who is answering on this port. The desktop shell asks before deciding to
+  // reuse a running shim: one left behind by an older install holds the same
+  // port, and reusing it silently runs the old code after an update.
+  if (path === "/build") {
+    return json(res, 200, { build: process.env.QUIRE_BUILD ?? null, pid: process.pid });
+  }
+
   // Provider logos, addressed by agent id so the UI never hardcodes filenames.
   if (path.startsWith("/assets/")) {
     const id = path.slice("/assets/".length).replace(/[^a-z0-9-]/gi, "");
