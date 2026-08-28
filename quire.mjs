@@ -174,7 +174,7 @@ function openAppWindow(url, { width = 1280, height = 860 } = {}) {
     // publication system at all, so the Magazine page answered 404 and the
     // whole fork — publications, CLI providers, MCP — was absent from the
     // running app while sitting built on disk. studio.mjs prefers the staged
-    // fork in cli-shim/inkos and falls back to the global package only when
+    // fork in cli-shim/studio and falls back to the global package only when
     // the fork has not been staged yet.
     supervise("studio", process.execPath, [join(HERE, "cli-shim", "studio.mjs")],
       { cwd: CWD });

@@ -12,7 +12,7 @@ import { join } from "node:path";
 /**
  * Where build-dev.mjs deploys. This is the checkout and the running dev app,
  * one folder, which is what was asked for and what the desktop shortcut points
- * at. `cli-shim/` is already the staged runtime here - vendor-inkos.mjs writes
+ * at. `cli-shim/` is already the staged runtime here - vendor-studio.mjs writes
  * it - so a build only has to drop `quire.exe` beside it.
  *
  * It may never move under %LOCALAPPDATA%. The agent that runs these scripts is

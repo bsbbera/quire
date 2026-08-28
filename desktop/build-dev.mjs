@@ -15,7 +15,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const env = { ...process.env, QUIRE_SHIM_PORT: "8788", QUIRE_STUDIO_PORT: "4568" };
 
 for (const step of [
-  ["node", ["vendor-inkos.mjs"]],
+  ["node", ["vendor-studio.mjs"]],
   ["node", ["clean-resources.mjs"]],
   // --no-bundle: the dev copy is deployed by copying the build output, not by
   // running an installer. Tauri's NSIS installer silently declines to replace
@@ -41,12 +41,12 @@ if (!existsSync(join(built, "quire.exe"))) {
   process.exit(1);
 }
 // The staged runtime must be present, or the app starts and Studio never does.
-if (!existsSync(join(built, "cli-shim", "inkos", "studio", "dist", "api", "index.js"))) {
-  console.error("cli-shim/inkos is missing from the build output");
+if (!existsSync(join(built, "cli-shim", "engine", "studio", "dist", "api", "index.js"))) {
+  console.error("cli-shim/studio is missing from the build output");
   process.exit(1);
 }
 // The install is the checkout, so `dest/cli-shim` is the source tree with the
-// runtime already staged into it by vendor-inkos.mjs. It must not be deleted
+// runtime already staged into it by vendor-studio.mjs. It must not be deleted
 // and re-copied from the build output: this used to rmSync it, which against
 // this folder would take the source with it, and the copy back is the same
 // bytes travelling in a circle. Only the binary moves.

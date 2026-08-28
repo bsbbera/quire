@@ -15,8 +15,8 @@ use std::path::Path;
 /// disk". It is also stable: an unchanged bundle produces an unchanged id, so
 /// this does not force a rebuild on every invocation the way a timestamp would.
 fn ui_fingerprint() -> String {
-    let index = Path::new("../../cli-shim/inkos/studio/dist/index.html");
-    println!("cargo:rerun-if-changed=../../cli-shim/inkos/studio/dist/index.html");
+    let index = Path::new("../../cli-shim/engine/studio/dist/index.html");
+    println!("cargo:rerun-if-changed=../../cli-shim/engine/studio/dist/index.html");
 
     let Ok(bytes) = std::fs::read(index) else {
         // A checkout that has not staged the runtime yet still has to compile.

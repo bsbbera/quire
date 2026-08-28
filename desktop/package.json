@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "node clean-resources.mjs && tauri dev",
-    "build": "node vendor-inkos.mjs && node clean-resources.mjs && tauri build",
+    "build": "node vendor-studio.mjs && node clean-resources.mjs && tauri build",
     "build:dev": "node build-dev.mjs",
     "icons": "tauri icon assets/icon.png",
-    "vendor": "node vendor-inkos.mjs",
+    "vendor": "node vendor-studio.mjs",
     "tauri": "node clean-resources.mjs && tauri"
   },
   "devDependencies": {

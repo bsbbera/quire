@@ -8,7 +8,7 @@
  *
  * Resizable panels, the progress panel and the Quire palette used to live here
  * too, hacked onto the rendered DOM because Studio shipped as a minified
- * bundle. It does not any more — the fork builds from source in vendor/inkos —
+ * bundle. It does not any more — the fork builds from source in vendor/studio —
  * so those three are components and a stylesheet in packages/studio now:
  * hooks/use-resizable.ts, components/ProgressPanel.tsx, src/index.css.
  *

@@ -28,12 +28,12 @@ const ROOT = process.env.QUIRE_WORKSPACE
 
 /**
  * Locate the InkOS runtime. Quire ships its own build of the fork in
- * ./inkos (staged by desktop/vendor-inkos.mjs, and carried into the
+ * ./engine (staged by desktop/vendor-studio.mjs, and carried into the
  * installer because Tauri bundles all of cli-shim as a resource), so that is
  * preferred. The global npm package stays as a fallback for a dev tree where
  * the fork has not been staged yet.
  */
-const BUNDLED = join(dirname(fileURLToPath(import.meta.url)), "inkos");
+const BUNDLED = join(dirname(fileURLToPath(import.meta.url)), "engine");
 const isBundled = () => existsSync(join(BUNDLED, "studio", "dist", "api", "index.js"));
 
 function inkosRoot() {
@@ -55,7 +55,7 @@ function inkosRoot() {
 
 const pkg = inkosRoot();
 if (!pkg) {
-  console.error("inkos runtime not found — run: node desktop/vendor-inkos.mjs");
+  console.error("engine runtime not found — run: node desktop/vendor-studio.mjs");
   process.exit(1);
 }
 
