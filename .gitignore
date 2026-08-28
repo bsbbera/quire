@@ -42,3 +42,7 @@ ideaverse-skills/
 # Build output: the InkOS fork staged for the installer by
 # desktop/vendor-inkos.mjs. ~100 MB, regenerated from vendor/inkos.
 cli-shim/inkos/
+
+# The dev install lives in the checkout: build-dev.mjs drops the binary here.
+/quire.exe
+/.env

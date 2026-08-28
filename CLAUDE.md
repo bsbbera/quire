@@ -4,11 +4,21 @@ Three stages, three places. `desktop/stages.mjs` is the one file that names them
 
 | Stage | Where | Written by |
 |---|---|---|
-| dev | `%LOCALAPPDATA%\Quire-Dev` | `desktop/build-dev.mjs` |
+| dev | `~\IDEAVERSE\Quire-Dev` | `desktop/build-dev.mjs` |
 | backup | `~\IDEAVERSE\Quire-Backup` | `desktop/backup-build.mjs` |
 | prod | `~\IDEAVERSE\Quire-Prod` | the NSIS installer / in-app updater |
 
-`~\IDEAVERSE\Quire-Dev` is the git checkout, not an install.
+`~\IDEAVERSE\Quire-Dev` is the checkout and the running dev app, one folder.
+`cli-shim/` there is already the staged runtime, so a build only drops
+`quire.exe` beside it - it must never delete and re-copy that directory, which
+would take the source with it.
+
+**No install may sit under `%LOCALAPPDATA%`.** The agent running these scripts
+is packaged, so its writes under AppData are redirected into a per-package
+shadow: the build prints that it deployed, the folder the shortcut points at is
+untouched, the app keeps launching an older build, and every check made from
+inside that sandbox reads the shadow and passes. An entire session was reported
+as verified against a copy the user could not open.
 
 All new work happens on branch `dev`, built and tested as `Quire-Dev`.
 Testing is done over the HTTP API, never a browser view or a screenshot —

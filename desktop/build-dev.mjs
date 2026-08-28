@@ -5,9 +5,9 @@
 // main.rs bakes them in at compile time (option_env!). They must stay in sync
 // with the CSP in tauri.dev.conf.json, which names the same two ports.
 import { execFileSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DEV_INSTALL } from "./stages.mjs";
 
@@ -45,21 +45,22 @@ if (!existsSync(join(built, "cli-shim", "inkos", "studio", "dist", "api", "index
   console.error("cli-shim/inkos is missing from the build output");
   process.exit(1);
 }
-// A running Quire-Dev holds cli-shim open and rmSync fails with a raw EBUSY
-// stack. Say what to do instead of dumping the stack.
+// The install is the checkout, so `dest/cli-shim` is the source tree with the
+// runtime already staged into it by vendor-inkos.mjs. It must not be deleted
+// and re-copied from the build output: this used to rmSync it, which against
+// this folder would take the source with it, and the copy back is the same
+// bytes travelling in a circle. Only the binary moves.
+mkdirSync(dest, { recursive: true });
 try {
-  rmSync(join(dest, "cli-shim"), { recursive: true, force: true });
+  cpSync(join(built, "quire.exe"), join(dest, "quire.exe"));
 } catch (err) {
-  if (err.code === "EBUSY") {
-    console.error(`cannot replace ${join(dest, "cli-shim")} — Quire-Dev is still running.`);
+  if (err.code === "EBUSY" || err.code === "EPERM") {
+    console.error(`cannot replace ${join(dest, "quire.exe")} — Quire-Dev is still running.`);
     console.error("Close it (or: Get-Process quire | Stop-Process -Force) and re-run.");
     process.exit(1);
   }
   throw err;
 }
-mkdirSync(dest, { recursive: true });
-cpSync(join(built, "quire.exe"), join(dest, "quire.exe"));
-cpSync(join(built, "cli-shim"), join(dest, "cli-shim"), { recursive: true });
 
 // cli-shim/studio.mjs reads a .env one level above itself, which in the repo
 // is Quire-Dev/.env and in the install is this directory. Nothing put one
@@ -68,7 +69,7 @@ cpSync(join(built, "cli-shim"), join(dest, "cli-shim"), { recursive: true });
 // Gitignored at the source and the install is not a repo, so the key stays
 // out of version control either way.
 const envFile = join(HERE, "..", ".env");
-if (existsSync(envFile)) {
+if (existsSync(envFile) && resolve(envFile) !== resolve(join(dest, ".env"))) {
   cpSync(envFile, join(dest, ".env"));
   console.log("copied .env (search and machine-local keys)");
 }

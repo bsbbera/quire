@@ -9,8 +9,20 @@ import { execFileSync } from "node:child_process";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-/** Where build-dev.mjs deploys. Not a repo checkout: this is an install. */
-export const DEV_INSTALL = join(homedir(), "AppData", "Local", "Quire-Dev");
+/**
+ * Where build-dev.mjs deploys. This is the checkout and the running dev app,
+ * one folder, which is what was asked for and what the desktop shortcut points
+ * at. `cli-shim/` is already the staged runtime here - vendor-inkos.mjs writes
+ * it - so a build only has to drop `quire.exe` beside it.
+ *
+ * It may never move under %LOCALAPPDATA%. The agent that runs these scripts is
+ * packaged, so its writes under AppData are redirected into a per-package
+ * shadow: the build prints that it deployed, the folder the shortcut points at
+ * is untouched, the app keeps launching an older build, and every check made
+ * from inside that sandbox reads the shadow and passes. A whole session was
+ * verified against a copy the user could not open.
+ */
+export const DEV_INSTALL = join(homedir(), "IDEAVERSE", "Quire-Dev");
 
 /** The approved dev build, kept so a bad release can be rolled back. */
 export const BACKUP_DIR = join(homedir(), "IDEAVERSE", "Quire-Backup");
