@@ -145,7 +145,12 @@ body.quire-resizing {
 /* --- progress panel --- */
 .quire-progress {
   position: fixed;
-  inset-block-end: 1rem;
+  /*
+    Clear of the corner. At 1rem this sat directly under the floating control
+    in the bottom-right and the two overlapped, so the panel reporting a
+    minutes-long pass was half-covered by a button.
+  */
+  inset-block-end: 5.5rem;
   inset-inline-end: 1rem;
   z-index: 9999;
   width: min(300px, calc(100vw - 2rem));

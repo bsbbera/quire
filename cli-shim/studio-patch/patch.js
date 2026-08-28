@@ -587,31 +587,17 @@
     on("write:start", () => { showStages(STAGES, "Writing chapter"); startClock("starting…"); });
 
     /*
-     * The audit and de-AI passes. These are the longest waits in the app and
-     * the panel showed nothing at all during them: it listened for
-     * `audit:start`, which nothing sends, while the audit routes broadcast
-     * `audit:run` with a state, plus a running `audit:progress` commentary.
+     * The audit and de-AI passes are not handled here any more.
+     *
+     * They were, because nothing else reported them. The audit screen now
+     * carries its own live row — the same elapsed clock, plus the Stop button
+     * this panel could never offer, in the column the person is already
+     * reading. Leaving both meant the same pass reported twice, once in the
+     * page and once in a floating card over the corner of it.
+     *
+     * The panel keeps every run that still has no other reporter.
      */
-    on("audit:run", (d) => {
-      const name = String(d.path || "").split("/").pop() || "file";
-      if (d.state === "start") {
-        showStages(["audit"], "Checking " + name);
-        setStage("audit", "run");
-        startClock("starting…");
-        return;
-      }
-      if (d.state === "done") {
-        setStage("audit", "done");
-        finish("finished " + name);
-        return;
-      }
-      setStage("audit", "fail");
-      finish(d.message || "the check failed", true);
-    });
 
-    // Each rewritten section reports the whole document so far; the count is
-    // the only honest progress signal a pass of unknown length can give.
-    on("audit:progress", (d) => { if (d.message) startClockText(String(d.message)); });
     on("book:creating", () => showStages(["create", "foundation"], "Creating book"));
     on("book:created", () => { setStage("foundation", "done"); finish("book ready"); });
 
