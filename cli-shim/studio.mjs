@@ -83,9 +83,8 @@ installStudioPatch(launch.studioEntry);
 
 /**
  * Copy the Quire patch into Studio's own dist and reference it from its
- * index.html. Studio ships minified with ~415 Chinese strings outside its i18n
- * table, a hardcoded sidebar width and no progress display; this is the only
- * seam to fix those without its source. Re-run on every launch so an
+ * index.html. All that is left in it is English for the ~415 Chinese strings
+ * Studio hardcodes outside its i18n table. Re-run on every launch so an
  * `inkos update` that replaces the bundle gets re-patched instead of quietly
  * reverting.
  */
@@ -99,7 +98,10 @@ function installStudioPatch(entry) {
     // Only /assets/* is served statically — anything else falls through to the
     // SPA and comes back as index.html.
     const src = join(dirname(fileURLToPath(import.meta.url)), "studio-patch");
-    const files = ["patch.css", "patch.js", "geist.woff2"];
+    // Only patch.js is left. The Quire palette and the Geist face are compiled
+    // into Studio's own bundle now, and the panels and progress card are
+    // components, so there is nothing else to inject.
+    const files = ["patch.js"];
     const hash = createHash("sha1");
     for (const f of files) {
       const body = readFileSync(join(src, f));
@@ -114,7 +116,7 @@ function installStudioPatch(entry) {
     const v = hash.digest("hex").slice(0, 8);
 
     let html = readFileSync(indexHtml, "utf8");
-    if (html.includes(`quire-patch.js?v=${v}`)) return; // already wired, same content
+    if (html.includes(`quire-patch.js?v=${v}`) && !html.includes("quire-patch.css")) return;
     // Strip EVERY previously injected tag before adding the current set, under
     // either name. The product was renamed from InkDesk to Quire, so a Studio
     // bundle patched before the rename still carries inkdesk-* tags; leaving
@@ -124,12 +126,11 @@ function installStudioPatch(entry) {
     html = html.replace(/^.*\/assets\/(inkdesk|quire)-(patch|mag)\.(css|js).*\r?\n/gm, "");
 
     html = html.replace("</head>", [
-      `    <link rel="stylesheet" href="/assets/quire-patch.css?v=${v}">`,
       `    <script src="/assets/quire-patch.js?v=${v}" defer></script>`,
       "  </head>",
     ].join("\n"));
     writeFileSync(indexHtml, html);
-    console.log("studio patch installed (panels, English, progress)");
+    console.log("studio patch installed (English)");
   } catch (e) {
     // A failed patch must never stop Studio from starting.
     console.warn("studio patch skipped: " + e.message);
