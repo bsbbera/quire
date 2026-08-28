@@ -7,7 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-for (const profile of ["debug", "release"]) {
+for (const profile of ["debug", "release", "dev-build"]) {
   const p = join(HERE, "src-tauri", "target", profile, "cli-shim");
   if (!existsSync(p) && !safeLstat(p)) continue;
   try {

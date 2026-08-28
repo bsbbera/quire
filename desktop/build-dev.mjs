@@ -23,12 +23,18 @@ for (const step of [
   // 0) while the old binary stayed in place — and everything "verified"
   // afterwards was really the previous build. Copying cannot fail that way,
   // and it skips a minute of packaging per iteration.
-  ["npx", ["tauri", "build", "--no-bundle", "--config", "src-tauri/tauri.dev.conf.json"]],
+  // --profile dev-build: the release profile is fat LTO in one codegen unit,
+  // and any build that changes which files ship as Tauri resources invalidates
+  // the cache and pays for all of it. One such build took 53 minutes for a CSS
+  // change. See [profile.dev-build] in src-tauri/Cargo.toml. Releases are
+  // still built by CI under the release profile.
+  ["npx", ["tauri", "build", "--no-bundle", "--config", "src-tauri/tauri.dev.conf.json", "--", "--profile", "dev-build"]],
 ]) {
   execFileSync(step[0], step[1], { cwd: HERE, stdio: "inherit", env, shell: process.platform === "win32" });
 }
 
-const built = join(HERE, "src-tauri", "target", "release");
+// Cargo names the output directory after the profile, not after "release".
+const built = join(HERE, "src-tauri", "target", "dev-build");
 const dest = DEV_INSTALL;
 if (!existsSync(join(built, "quire.exe"))) {
   console.error("build produced no quire.exe");
