@@ -487,8 +487,12 @@
      3. Progress panel
      ===================================================================== */
 
-  const STAGES = ["plan", "compose", "draft", "audit", "revise"];
+  // Only stages the server actually emits. This list used to open with "plan"
+  // and "compose", which are in no event the server sends, so two of five dots
+  // sat permanently dim through every run that did work.
+  const STAGES = ["draft", "audit", "revise"];
   let panel, stagesBox, metaBox, titleBox, hideTimer;
+  let startedAt = 0, tickTimer = 0, metaText = "";
 
   function buildPanel() {
     panel = document.createElement("div");
@@ -505,6 +509,36 @@
     metaBox = panel.querySelector(".ip-meta");
     titleBox = panel.querySelector(".ip-title");
     panel.querySelector(".ip-x").onclick = () => { panel.hidden = true; };
+  }
+
+  /** How long the current run has been going, in a shape a person reads. */
+  function elapsed() {
+    const secs = Math.round((Date.now() - startedAt) / 1000);
+    if (secs < 60) return secs + "s";
+    return Math.floor(secs / 60) + "m " + String(secs % 60).padStart(2, "0") + "s";
+  }
+
+  function paintMeta() {
+    metaBox.textContent = startedAt ? metaText + " · " + elapsed() : metaText;
+  }
+
+  /**
+   * A run here takes minutes, not moments — a de-AI pass on one chapter took
+   * 139 seconds. Without a clock the panel is indistinguishable from a hang,
+   * which is the single complaint this panel exists to answer.
+   */
+  /** Change what the meta line says without restarting the run's clock. */
+  function startClockText(text) {
+    metaText = text;
+    paintMeta();
+  }
+
+  function startClock(text) {
+    metaText = text;
+    startedAt = Date.now();
+    clearInterval(tickTimer);
+    paintMeta();
+    tickTimer = setInterval(paintMeta, 1000);
   }
 
   function showStages(list, title) {
@@ -531,9 +565,15 @@
 
   function finish(text, bad) {
     panel.classList.remove("running");
-    metaBox.textContent = text;
+    clearInterval(tickTimer);
+    const took = startedAt ? " · took " + elapsed() : "";
+    startedAt = 0;
+    metaBox.textContent = text + took;
     if (bad) panel.classList.add("bad"); else panel.classList.remove("bad");
-    hideTimer = setTimeout(() => { panel.hidden = true; }, 6000);
+    // A failure is the thing a person most needs to read, and six seconds is
+    // not long enough to notice one that arrived while they were elsewhere.
+    // Success still clears itself; a failure waits to be dismissed.
+    if (!bad) hideTimer = setTimeout(() => { panel.hidden = true; }, 8000);
   }
 
   function connectEvents() {
@@ -544,7 +584,34 @@
       fn(d);
     });
 
-    on("write:start", () => showStages(STAGES, "Writing chapter"));
+    on("write:start", () => { showStages(STAGES, "Writing chapter"); startClock("starting…"); });
+
+    /*
+     * The audit and de-AI passes. These are the longest waits in the app and
+     * the panel showed nothing at all during them: it listened for
+     * `audit:start`, which nothing sends, while the audit routes broadcast
+     * `audit:run` with a state, plus a running `audit:progress` commentary.
+     */
+    on("audit:run", (d) => {
+      const name = String(d.path || "").split("/").pop() || "file";
+      if (d.state === "start") {
+        showStages(["audit"], "Checking " + name);
+        setStage("audit", "run");
+        startClock("starting…");
+        return;
+      }
+      if (d.state === "done") {
+        setStage("audit", "done");
+        finish("finished " + name);
+        return;
+      }
+      setStage("audit", "fail");
+      finish(d.message || "the check failed", true);
+    });
+
+    // Each rewritten section reports the whole document so far; the count is
+    // the only honest progress signal a pass of unknown length can give.
+    on("audit:progress", (d) => { if (d.message) startClockText(String(d.message)); });
     on("book:creating", () => showStages(["create", "foundation"], "Creating book"));
     on("book:created", () => { setStage("foundation", "done"); finish("book ready"); });
 
