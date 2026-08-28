@@ -9,6 +9,7 @@ import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { DEV_INSTALL } from "./stages.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const env = { ...process.env, QUIRE_SHIM_PORT: "8788", QUIRE_STUDIO_PORT: "4568" };
@@ -28,7 +29,7 @@ for (const step of [
 }
 
 const built = join(HERE, "src-tauri", "target", "release");
-const dest = join(homedir(), "AppData", "Local", "Quire-Dev");
+const dest = DEV_INSTALL;
 if (!existsSync(join(built, "quire.exe"))) {
   console.error("build produced no quire.exe");
   process.exit(1);

@@ -2807,7 +2807,7 @@ dependencies = [
 
 [[package]]
 name = "quire"
-version = "0.1.21"
+version = "0.1.22"
 dependencies = [
  "serde",
  "serde_json",
