@@ -277,12 +277,22 @@ function progress(done, total) {
 const AUTO_KEY = "quire-auto-update";
 const LAST_CHECK = "quire-last-check";
 let appVersion = "";
+/**
+ * The dev build shares this shell, this updater key and this endpoint with the
+ * release build, and carries whatever version the branch happens to be on. So
+ * every launch of Quire-Dev found the released Quire newer than itself, ran the
+ * release installer, and found it newer again next launch: a forced install
+ * every single time, that could never make the dev build any newer. The dev
+ * copy is deployed by `build-dev.mjs`, not by the updater.
+ */
+let isDevBuild = false;
 
 // getVersion is core API, not a plugin, so withGlobalTauri really does expose
 // it - unlike the updater, which is why that one goes through invoke.
 async function showVersion() {
   try {
     appVersion = await window.__TAURI__.app.getVersion();
+    isDevBuild = (await window.__TAURI__.app.getName()) === "Quire-Dev";
   } catch { return; }
   const v = "Quire " + appVersion;
   const line = $("#verLine"); if (line) line.textContent = v;
@@ -304,6 +314,11 @@ async function checkUpdate({ silent } = {}) {
   const row = $("#updateRow"), msg = $("#updateMsg"), btn = $("#updateBtn");
   if (!row) return null;
   if (!invoke) { msg.textContent = "Updates unavailable outside the app"; return null; }
+  if (isDevBuild) {
+    msg.textContent = "Development build — updates come from a rebuild";
+    btn.hidden = true;
+    return null;
+  }
   row.classList.add("busy");
   msg.textContent = "Checking for updates…";
   try {
