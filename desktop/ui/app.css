@@ -4,18 +4,14 @@
    Layout is auto-fit/clamp throughout, so it reflows from a 320px strip to a
    wide window without breakpoints to maintain.
 --------------------------------------------------------------------------- */
-/* Tokens mirrored verbatim from cli-shim/studio-patch/patch.css. Studio is the
-   larger surface and owns the design system; the shell matches it literal for
-   literal so the chrome and the workbench are the same product. Change one,
-   change both. */
-@font-face {
-  font-family:"Geist Variable"; font-style:normal; font-weight:100 900;
-  font-display:swap; src:url("geist.woff2") format("woff2");
-}
-/* Aurora. Tokens mirrored literal-for-literal from
-   cli-shim/studio-patch/patch.css - the workbench is the larger surface and
-   owns the design system; the shell matches it so the window is one product.
-   Change one, change both. */
+/* Aurora. Tokens mirrored literal-for-literal from the workbench's
+   packages/studio/src/index.css - it is the larger surface and owns the design
+   system; the shell matches it so the window reads as one product rather than
+   two. Change one, change both.
+
+   The shell cannot import the workbench's stylesheet: Studio runs in a
+   cross-origin iframe inside this document, so the two never share a stylesheet
+   or a storage area. Mirroring is the seam. */
 @font-face {
   font-family:"Geist Variable"; font-style:normal; font-weight:100 900;
   font-display:swap; src:url("geist.woff2") format("woff2");
@@ -25,9 +21,9 @@
   --ink:oklch(22% .02 250); --muted:oklch(47% .015 240); --line:oklch(90% .012 230);
   --accent:oklch(52% .11 205); --accent-ink:oklch(99% .01 205);
   --ok:oklch(55% .11 160); --warn:oklch(58% .16 45);
-  --aurora:radial-gradient(70rem 34rem at 12% -8%, oklch(72% .13 195 / .16) 0%, transparent 62%),
-    radial-gradient(58rem 30rem at 88% -4%, oklch(66% .13 295 / .13) 0%, transparent 60%),
-    radial-gradient(46rem 26rem at 52% 108%, oklch(70% .14 155 / .10) 0%, transparent 64%);
+  --aurora:radial-gradient(52rem 30rem at 8% -6%, oklch(72% .13 195 / .40) 0%, transparent 66%),
+    radial-gradient(44rem 26rem at 92% -4%, oklch(66% .13 295 / .34) 0%, transparent 64%),
+    radial-gradient(40rem 24rem at 50% 106%, oklch(70% .14 155 / .20) 0%, transparent 66%);
   --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px -12px rgba(0,0,0,.18);
   --radius:12px; --radius-sm:8px; --gap:clamp(.6rem,1.6vw,1.1rem);
   --pad:clamp(.85rem,2.4vw,1.5rem);
@@ -46,9 +42,9 @@
   --ink:oklch(95% .008 230); --muted:oklch(73% .014 235); --line:oklch(31% .028 265);
   --accent:oklch(82% .13 195); --accent-ink:oklch(19% .03 220);
   --ok:oklch(72% .11 160); --warn:oklch(74% .13 45);
-  --aurora:radial-gradient(72rem 36rem at 10% -10%, oklch(72% .13 195 / .20) 0%, transparent 60%),
-    radial-gradient(60rem 32rem at 90% -6%, oklch(66% .13 295 / .17) 0%, transparent 58%),
-    radial-gradient(48rem 28rem at 50% 110%, oklch(70% .14 155 / .12) 0%, transparent 62%);
+  --aurora:radial-gradient(52rem 30rem at 8% -8%, oklch(72% .13 195 / .28) 0%, transparent 66%),
+    radial-gradient(44rem 26rem at 92% -6%, oklch(66% .13 295 / .24) 0%, transparent 64%),
+    radial-gradient(40rem 24rem at 50% 108%, oklch(70% .14 155 / .16) 0%, transparent 66%);
   --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.8);
   }
 }
@@ -57,9 +53,9 @@
   --ink:oklch(95% .008 230); --muted:oklch(73% .014 235); --line:oklch(31% .028 265);
   --accent:oklch(82% .13 195); --accent-ink:oklch(19% .03 220);
   --ok:oklch(72% .11 160); --warn:oklch(74% .13 45);
-  --aurora:radial-gradient(72rem 36rem at 10% -10%, oklch(72% .13 195 / .20) 0%, transparent 60%),
-    radial-gradient(60rem 32rem at 90% -6%, oklch(66% .13 295 / .17) 0%, transparent 58%),
-    radial-gradient(48rem 28rem at 50% 110%, oklch(70% .14 155 / .12) 0%, transparent 62%);
+  --aurora:radial-gradient(52rem 30rem at 8% -8%, oklch(72% .13 195 / .28) 0%, transparent 66%),
+    radial-gradient(44rem 26rem at 92% -6%, oklch(66% .13 295 / .24) 0%, transparent 64%),
+    radial-gradient(40rem 24rem at 50% 108%, oklch(70% .14 155 / .16) 0%, transparent 66%);
   --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.8);
 }
 /* The aurora wash sits behind the boot cover and the drawer, matching the one

@@ -5,15 +5,32 @@ const invoke = window.__TAURI__?.core?.invoke;
 const $ = (s) => document.querySelector(s);
 const state = { shim: "http://127.0.0.1:8787", studio: "", models: [], cli: null, model: null };
 
+/*
+ * Theme follows the workbench.
+ *
+ * The shell used to own a second preference and a second toggle, in its own
+ * storage key, which is how the settings drawer could sit dark over a light
+ * workbench. Studio is the surface a person actually looks at, so it owns the
+ * choice and this listens; the toggle here is gone rather than duplicated.
+ *
+ * The stored value is still read on boot: the cover paints before Studio has
+ * loaded and has to be the right colour immediately, and the message arrives
+ * only once the workbench mounts.
+ */
 const savedTheme = localStorage.getItem("quire-theme");
-if (savedTheme) document.documentElement.dataset.theme = savedTheme;
-$("#theme").onclick = () => {
-  const cur = document.documentElement.dataset.theme
-    || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-  const next = cur === "dark" ? "light" : "dark";
-  document.documentElement.dataset.theme = next;
-  localStorage.setItem("quire-theme", next);
-};
+if (savedTheme === "dark" || savedTheme === "light") {
+  document.documentElement.dataset.theme = savedTheme;
+}
+
+addEventListener("message", (e) => {
+  // Only the workbench in our own iframe may set this. Anything else on the
+  // page - an embedded preview, an extension - is not the workbench.
+  if (e.source !== $("#frame")?.contentWindow) return;
+  const theme = e.data?.type === "quire:theme" ? e.data.theme : null;
+  if (theme !== "dark" && theme !== "light") return;
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem("quire-theme", theme);
+});
 
 let toastTimer;
 function toast(msg) {

@@ -60,7 +60,18 @@ fn port_open(port: u16) -> bool {
 
 /// The build stamped onto every child we launch, so a later launch can tell
 /// its own servers from ones an older install left behind on the ports.
-const BUILD: &str = env!("CARGO_PKG_VERSION");
+///
+/// The version alone was not enough to tell two builds apart. It changes once
+/// per release; the UI changes every build. So a dev build that was
+/// force-killed left a server holding the port, the next launch compared
+/// 0.1.22 against 0.1.22, concluded its own server was already running, and
+/// reused it - serving the previous build's UI from a binary that had just
+/// been replaced. Nothing looked wrong, which is the worst part: it makes
+/// every test result a claim about whichever build happened to boot first.
+///
+/// The suffix is a hash of Studio's index.html, whose asset names are content
+/// hashes, so it moves when and only when the served UI moves. See build.rs.
+const BUILD: &str = concat!(env!("CARGO_PKG_VERSION"), "+", env!("QUIRE_UI_BUILD"));
 
 /// One-shot HTTP GET on loopback. Two calls at boot do not justify pulling a
 /// whole HTTP client into the build.
