@@ -52,6 +52,34 @@
   </header>
 
   <div class="drawer-body">
+    <!-- Where the work lives. First in the drawer because it is the ground
+         everything else sits on, and because until now the only way to change
+         it was an environment variable set before launch. -->
+    <section id="locationSection">
+      <div class="section-head">
+        <h2>Location</h2>
+        <p>The folder Quire keeps your books, worlds and magazines in.</p>
+      </div>
+      <div class="active">
+        <span class="pill" id="locPill">&mdash;</span>
+        <span class="meta grow" id="locPath">reading&hellip;</span>
+      </div>
+      <p class="tiny" id="locNote"></p>
+      <div class="row">
+        <button class="btn" id="locBrowse">Change folder&hellip;</button>
+      </div>
+      <div class="picker" id="locConfirm" hidden>
+        <div class="active" id="locNext"></div>
+        <p class="tiny" id="locNextNote"></p>
+        <p class="tiny">Nothing is moved or deleted. The books in the current
+          folder stay where they are; Quire simply stops looking there.</p>
+        <div class="row">
+          <button class="btn primary" id="locApply">Use this folder and restart</button>
+          <button class="btn" id="locCancel">Keep the current one</button>
+        </div>
+      </div>
+    </section>
+
     <section>
       <div class="section-head">
         <h2>Provider</h2>

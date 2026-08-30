@@ -19,12 +19,10 @@ const ENV_FILE = join(dirname(fileURLToPath(import.meta.url)), "..", ".env");
 if (existsSync(ENV_FILE)) process.loadEnvFile(ENV_FILE);
 
 const PORT = process.env.STUDIO_PORT || "4567";
-// The product was renamed from InkDesk to Quire, but the workspace holds real
-// books and worlds - so an existing ~/InkDesk keeps being used rather than
-// silently starting empty under the new name.
-const ROOT = process.env.QUIRE_WORKSPACE
-  || [join(homedir(), "Quire"), join(homedir(), "InkDesk")].find(existsSync)
-  || join(homedir(), "Quire");
+// One owner for the answer, so a folder picked in Settings is the same folder
+// the workbench opens. See workspace.mjs for the precedence.
+const { root } = await import("./workspace.mjs");
+const ROOT = root();
 
 /**
  * Locate the InkOS runtime. Quire ships its own build of the fork in

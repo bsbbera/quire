@@ -45,7 +45,7 @@ function openDrawer(open) {
   $("#drawer").hidden = !open;
   $("#scrim").hidden = !open;
 }
-$("#openSettings").onclick = () => { openDrawer(true); loadComfy?.(); };
+$("#openSettings").onclick = () => { openDrawer(true); loadComfy?.(); loadWorkspace?.(); };
 $("#closeSettings").onclick = () => openDrawer(false);
 $("#scrim").onclick = () => openDrawer(false);
 addEventListener("keydown", (e) => { if (e.key === "Escape") openDrawer(false); });
@@ -256,6 +256,99 @@ function wireComfy() {
     loadComfy();
   };
 }
+
+/* ----------------------------------------------------------------- location
+ * The workspace root is an argument to the Studio server process, not
+ * something it re-reads, so changing it needs a restart. The shim owns the
+ * value and runs the native folder chooser - a webview cannot turn a picked
+ * folder into a real filesystem path. This only asks, explains and confirms.
+ */
+let pendingWorkspace = null;
+
+/** What this folder is, in the words the user needs before committing to it. */
+function describe(w) {
+  if (!w.exists) {
+    return w.parentExists
+      ? "New folder. Quire will create it and set it up on the next launch."
+      : "The folder above it does not exist.";
+  }
+  if (!w.isDir) return "That is a file, not a folder.";
+  if (!w.writable) return "Quire cannot write there.";
+  if (w.initialized) return "An existing Quire folder. Quire will open the work already in it.";
+  return "Not a Quire folder yet. It will be set up on the next launch; anything already in it is left alone.";
+}
+
+const usable = (w) => (w.exists ? w.isDir && w.writable : w.parentExists === true);
+
+async function loadWorkspace() {
+  let w;
+  try {
+    w = await fetch(`${state.shim}/workspace`).then((r) => r.json());
+  } catch {
+    $("#locPath").textContent = "unavailable until the shim is running";
+    return null;
+  }
+  $("#locPath").textContent = w.path;
+  $("#locPill").textContent = w.initialized ? "in use" : "new";
+  $("#locPill").classList.toggle("on", w.initialized);
+  // Naming the environment variable matters: it is the only reason a folder
+  // picked here would appear not to take, and it is invisible from the app.
+  $("#locNote").textContent = w.source === "environment"
+    ? "Set by the QUIRE_WORKSPACE environment variable. Choosing a folder here overrides it."
+    : describe(w);
+  return w;
+}
+
+$("#locBrowse").onclick = async () => {
+  const btn = $("#locBrowse");
+  btn.disabled = true;
+  btn.textContent = "Choosing\u2026";
+  try {
+    const r = await fetch(`${state.shim}/workspace/pick`, {
+      method: "POST",
+      body: JSON.stringify({ start: $("#locPath").textContent }),
+    }).then((x) => x.json());
+    if (r.ok === false) throw new Error(r.error);
+    if (!r.path) return; // cancelled
+    const w = await fetch(`${state.shim}/workspace?path=${encodeURIComponent(r.path)}`)
+      .then((x) => x.json());
+    pendingWorkspace = w;
+    $("#locNext").textContent = w.path;
+    $("#locNextNote").textContent = describe(w);
+    $("#locApply").disabled = !usable(w);
+    $("#locConfirm").hidden = false;
+  } catch (e) {
+    toast("could not open the folder chooser: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Change folder\u2026";
+  }
+};
+
+$("#locCancel").onclick = () => {
+  pendingWorkspace = null;
+  $("#locConfirm").hidden = true;
+};
+
+$("#locApply").onclick = async () => {
+  if (!pendingWorkspace) return;
+  const btn = $("#locApply");
+  btn.disabled = true;
+  try {
+    const r = await fetch(`${state.shim}/workspace`, {
+      method: "POST",
+      body: JSON.stringify({ path: pendingWorkspace.path }),
+    }).then((x) => x.json());
+    if (r.ok === false) throw new Error(r.error);
+    // Saved. From here the old root is still live in two running child
+    // processes, so the restart is the change taking effect, not a courtesy.
+    toast("Folder saved. Restarting\u2026");
+    setTimeout(() => invoke("plugin:process|restart"), 600);
+  } catch (e) {
+    btn.disabled = false;
+    toast("could not save: " + e.message);
+  }
+};
 
 /** One boot step: waiting, running, done or failed, plus an optional note. */
 function step(el, state, note) {
