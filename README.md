@@ -21,7 +21,7 @@ Quire is a Tauri shell around three things that already work well separately:
 
 The editor you see is **[InkOS Studio](https://github.com/Narcooo/inkos)**
 (`@actalk/inkos`), licensed **AGPL-3.0**. Quire runs a **fork** of it, kept in
-`vendor/inkos` and staged into `cli-shim/inkos` by `desktop/vendor-inkos.mjs`.
+`vendor/studio` and staged into `cli-shim/studio` by `desktop/vendor-studio.mjs`.
 Publication types, the audit and revise loop, and the publication routes are
 changes to that source, not decoration added to a running copy of someone
 else's.
@@ -50,12 +50,12 @@ as the `/affinity` skill; the taste layers are `/mag-content` and `/mag-design`.
 ## Running it
 
 ```bash
-node desktop/vendor-inkos.mjs   # build vendor/inkos, stage it into cli-shim/inkos
+node desktop/vendor-studio.mjs   # build vendor/studio, stage it into cli-shim/studio
 node quire.mjs                  # shim + Studio on http://localhost:4567
 ```
 
-**Editing `vendor/inkos` changes nothing until it is staged.** The app runs
-`cli-shim/inkos`, which is a build output, so `vendor-inkos.mjs` is not optional
+**Editing `vendor/studio` changes nothing until it is staged.** The app runs
+`cli-shim/studio`, which is a build output, so `vendor-studio.mjs` is not optional
 after a source change. Stop the app before staging — Windows will not overwrite
 files it still holds open.
 

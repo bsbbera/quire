@@ -13,14 +13,14 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { homedir } from "node:os";
+import { root } from "./workspace.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BUILTIN_DIR = join(HERE, "workflows");
 
-export const WORKSPACE = process.env.QUIRE_WORKSPACE
-  || [join(homedir(), "Quire"), join(homedir(), "InkDesk")].find(existsSync)
-  || join(homedir(), "Quire");
+// One owner for the answer — the same folder Settings picks and the workbench
+// opens, rather than a third independent copy of the same expression.
+export const WORKSPACE = root();
 
 const USER_DIR = join(WORKSPACE, "workflows");
 const CONFIG = join(WORKSPACE, ".quire", "comfy.json");

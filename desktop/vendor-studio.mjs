@@ -1,5 +1,5 @@
-// Builds the InkOS fork in vendor/inkos and stages a *runtime-only* copy into
-// cli-shim/inkos, which Tauri already ships as a resource. Quire no longer
+// Builds the Quire fork of InkOS in vendor/studio and stages a *runtime-only* copy into
+// cli-shim/studio, which Tauri already ships as a resource. Quire no longer
 // needs `npm i -g @actalk/inkos` on the user's machine.
 //
 // Why not `pnpm deploy --prod`: Studio lists its client build tooling
@@ -14,16 +14,25 @@ import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, "..");
-const SRC = join(REPO, "vendor", "inkos");
-const OUT = join(REPO, "cli-shim", "inkos");
+const SRC = join(REPO, "vendor", "studio");
+const OUT = join(REPO, "cli-shim", "engine");
 
 if (!existsSync(join(SRC, "package.json"))) {
-  console.error("vendor/inkos is missing — run: git submodule update --init --recursive");
+  console.error("vendor/studio is missing — run: git submodule update --init --recursive");
   process.exit(1);
 }
 
+// CI=true so pnpm may purge a node_modules that no longer matches its path
+// without asking. Moving the checkout - vendor/inkos to vendor/studio, say -
+// invalidates the store links inside it, and pnpm then refuses to continue
+// because there is no TTY to confirm the removal on.
 const sh = (cmd, args, cwd) =>
-  execFileSync(cmd, args, { cwd, stdio: "inherit", shell: process.platform === "win32" });
+  execFileSync(cmd, args, {
+    cwd,
+    stdio: "inherit",
+    shell: process.platform === "win32",
+    env: { ...process.env, CI: "true" },
+  });
 
 const skipBuild = process.argv.includes("--no-build");
 if (!skipBuild) {
@@ -65,12 +74,12 @@ function removeTree(dir, what) {
 }
 
 // Staged beside the target and swapped in at the end. A failure halfway used
-// to leave cli-shim/inkos partly deleted, which the shim will still happily
+// to leave cli-shim/studio partly deleted, which the shim will still happily
 // launch: the app then runs a mix of two builds and looks like a code bug
 // rather than a staging one.
 const STAGE = OUT + ".staging";
 
-console.log("staging runtime into cli-shim/inkos…");
+console.log("staging runtime into cli-shim/studio…");
 removeTree(STAGE, "the previous staging directory");
 mkdirSync(STAGE, { recursive: true });
 
@@ -138,7 +147,7 @@ writeFileSync(join(coreOut, "package.json"), JSON.stringify({
 /**
  * Move the staged tree into place without moving the tree.
  *
- * Neither deleting nor renaming cli-shim/inkos is reliable on Windows: any
+ * Neither deleting nor renaming cli-shim/studio is reliable on Windows: any
  * shell whose working directory sits inside it, and any handle not yet
  * released by an exited process, makes both fail — and a failed delete used to
  * leave the app with half a runtime, which then looks like a code bug. Copying
@@ -189,4 +198,4 @@ const size = (dir) => {
   walk(dir);
   return bytes;
 };
-console.log(`staged ${(size(OUT) / 1048576).toFixed(1)} MB into cli-shim/inkos`);
+console.log(`staged ${(size(OUT) / 1048576).toFixed(1)} MB into cli-shim/engine`);

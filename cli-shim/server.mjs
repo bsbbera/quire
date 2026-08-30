@@ -19,14 +19,6 @@ const LANG = process.env.SHIM_LANG || "English";
 const HOME = homedir();
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-// Where publications live now: the workspace, under each definition's own
-// outDir. The old magazine engine kept its own store and told everything else
-// where it was; the runner in core owns that, so this is only what the
-// ComfyUI installer and the doctor need in order to look in the right place.
-const WORKSPACE = process.env.QUIRE_WORKSPACE
-  || [join(HOME, "Quire"), join(HOME, "InkDesk")].find(existsSync)
-  || join(HOME, "Quire");
-const PUBLICATION_ROOT = join(WORKSPACE, "Magazine");
 const STUDIO_URL = process.env.STUDIO_URL || `http://localhost:${process.env.STUDIO_PORT || 4567}`;
 
 // Integrations. Loaded eagerly: a broken module should fail at boot with a
@@ -37,6 +29,15 @@ const affinity = await import("./affinity.mjs");
 const preflight = await import("./preflight.mjs");
 const comfyInstall = await import("./comfy-install.mjs");
 const workflows = await import("./workflows.mjs");
+const workspace = await import("./workspace.mjs");
+const agentState = await import("./agents.mjs");
+
+// Where publications live now: the workspace, under each definition's own
+// outDir. The old magazine engine kept its own store and told everything else
+// where it was; the runner in core owns that, so this is only what the
+// ComfyUI installer and the doctor need in order to look in the right place.
+const WORKSPACE = workspace.root();
+const PUBLICATION_ROOT = join(WORKSPACE, "Magazine");
 
 // ------------------------------------------------------------- persisted model
 // The chosen model lives in Studio's own project config, because each CLI is
@@ -89,6 +90,15 @@ const run = (bin, args, ms = 15000) => {
     return execFileSync(bin, args, { encoding: "utf8", timeout: ms, windowsHide: true,
       env: childEnv, stdio: ["ignore", "pipe", "ignore"], maxBuffer: 64 << 20 });
   } catch { return ""; }
+};
+// Same shape as run(), but the answer is the exit code rather than the output
+// — for CLIs that report on stderr, which run() deliberately discards.
+const okExit = (bin, args, ms = 15000) => {
+  try {
+    execFileSync(bin, args, { timeout: ms, windowsHide: true, env: childEnv,
+      stdio: ["ignore", "ignore", "ignore"] });
+    return true;
+  } catch { return false; }
 };
 const which = (n) => run(process.platform === "win32" ? "where" : "which", [n], 5000)
   .split(/\r?\n/)[0].trim() || null;
@@ -221,9 +231,16 @@ const DEVIN_ACP_ARGS = ["--permission-mode", "dangerous", "--respect-workspace-t
 // ------------------------------------------------------------------- adapters
 const AGENTS = [
   {
-    id: "claude", bins: ["claude", "openclaude"],
+    id: "claude", bins: ["claude", "openclaude"], label: "Claude Code",
+    // Signed in, asked of the CLI itself rather than guessed from a config
+    // file. `claude auth status` answers as JSON on stdout.
+    auth: (bin) => { try { return JSON.parse(run(bin, ["auth", "status"], 12000)).loggedIn === true; } catch { return null; } },
     // `claude` has no list-models subcommand; the aliases already track latest.
     models: () => ["default", "opus", "sonnet", "haiku"],
+    // Same four, kept as the fallback too: they are aliases Anthropic keeps
+    // pointing at the current model, so unlike a pinned id they cannot go
+    // stale. Without this a failed probe left the picker offering "default".
+    fallback: ["default", "opus", "sonnet", "haiku"],
     args: (m) => ["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
       ...(m && m !== "default" ? ["--model", m] : []), "--permission-mode", "bypassPermissions",
       // --strict-mcp-config so the user's own configured servers do not load
@@ -234,7 +251,10 @@ const AGENTS = [
     stream: "claude-json",
   },
   {
-    id: "codex", bins: ["codex", join(process.env.LOCALAPPDATA || "", "OpenAI/Codex/bin/*/codex.exe")],
+    id: "codex", bins: ["codex", join(process.env.LOCALAPPDATA || "", "OpenAI/Codex/bin/*/codex.exe")], label: "Codex",
+    // codex prints "Logged in using ChatGPT" on STDERR, which run() discards,
+    // so this one is read from the exit code instead of the output.
+    auth: (bin) => okExit(bin, ["login", "status"], 12000),
     models: (bin) => {
       try {
         return (JSON.parse(run(bin, ["debug", "models"], 25000)).models || [])
@@ -255,7 +275,8 @@ const AGENTS = [
     stream: "codex-json",
   },
   {
-    id: "devin", bins: ["devin", join(HOME, "AppData/Local/devin/cli/bin/devin.exe")],
+    id: "devin", bins: ["devin", join(HOME, "AppData/Local/devin/cli/bin/devin.exe")], label: "Devin",
+    auth: (bin) => /logged in/i.test(run(bin, ["auth", "status"], 12000)),
     // Devin's full catalog only exists over ACP: initialize -> session/new -> result.models
     models: async (bin) => {
       try {
@@ -267,7 +288,10 @@ const AGENTS = [
     stream: "acp",
   },
   {
-    id: "antigravity", bins: ["agy", join(HOME, "AppData/Local/agy/bin/agy.exe")],
+    id: "antigravity", bins: ["agy", join(HOME, "AppData/Local/agy/bin/agy.exe")], label: "Antigravity",
+    // agy has no auth subcommand at all. Rather than invent a probe, this one
+    // reports unknown and is judged by whether `agy models` answers.
+    auth: null,
     // `agy models` prints "<slug>\tLabel" lines. Open Design mirrors this list
     // statically because it hangs on an stdin pipe that never closes — but with
     // stdin ignored (as run() does) it returns fine, so fetch it live and let
@@ -320,7 +344,12 @@ const detect = () => { // 30s cache: install / uninstall / update picked up with
 
 // Cache key is every detected CLI's version, so a `claude update` / `codex
 // update` invalidates the catalog by itself — no restart, no manual refresh.
-const fingerprint = (agents) => agents.map((a) => `${a.id}@${a.version}`).sort().join("|");
+// The enabled flag is part of the key, not just the version: without it,
+// switching a CLI off left its models in the catalogue for up to five minutes
+// and the change looked like it had not worked.
+const fingerprint = (agents) => agents
+  .map((a) => `${a.id}@${a.version}@${agentState.isEnabled(a.id) ? "on" : "off"}`)
+  .sort().join("|");
 
 let modelCache = { at: 0, key: null, data: null };
 async function listModels() {
@@ -331,6 +360,10 @@ async function listModels() {
   }
   const out = [];
   for (const a of agents) {
+    // Switched off in Settings means gone, not hidden: the catalogue is what
+    // every other part of the stack reads, so filtering here is the whole
+    // enforcement. A disabled CLI cannot be selected because it is not there.
+    if (!agentState.isEnabled(a.id)) continue;
     let ids = [];
     try { ids = await a.models(a.bin); } catch {}
     if (!ids.length) ids = a.fallback || ["default"];
@@ -660,6 +693,64 @@ createServer((req, res) => {
   const handle = (p) => p.then((v) => json(res, 200, v === undefined ? { ok: true } : v))
     .catch((e) => json(res, 400, { ok: false, error: e.message }));
 
+  // ---------------------------------------------------------------- agents
+  // The CLIs on this machine, and whether Quire may use them. Detection is a
+  // fact; permission is the user's, so the two are reported separately and
+  // only the second is writable.
+  if (path === "/agents" && req.method === "GET") {
+    return handle(Promise.resolve().then(() => ({
+      agents: detect().map((a) => ({
+        id: a.id,
+        label: a.label || a.id,
+        bin: a.bin,
+        version: a.version,
+        // null where the CLI offers no way to ask — reported as unknown
+        // rather than guessed at.
+        authed: a.auth ? a.auth(a.bin) : null,
+        enabled: agentState.isEnabled(a.id),
+        // What to offer if the live probe fails. Deliberately aliases the CLI
+        // keeps stable across releases — "opus", "sonnet", "adaptive" — never
+        // pinned version ids, which rot on the next `devin update` and then
+        // name models the CLI no longer has. Served from here because the shim
+        // is the only place that should hold a model list at all.
+        fallback: (a.fallback || ["default"]).map((id) => `${a.id}/${id}`),
+      })),
+    })));
+  }
+  {
+    const m = /^\/agents\/([a-z0-9-]+)$/.exec(path);
+    if (m && req.method === "POST") {
+      return handle(bodyOf().then((b) => {
+        if (!detect().some((a) => a.id === m[1])) throw new Error("not installed: " + m[1]);
+        agentState.setEnabled(m[1], b.enabled !== false);
+        // The catalogue is cached for five minutes; the user is looking at the
+        // switch now, so drop it rather than make them wait for it to expire.
+        modelCache.key = null;
+        return { id: m[1], enabled: b.enabled !== false };
+      }));
+    }
+  }
+
+  // ------------------------------------------------------------- workspace
+  // Where the books live. Changing it needs a restart — the root is an
+  // argument to the Studio server process, not something it re-reads — so the
+  // shell asks before calling POST and restarts the app after.
+  if (path === "/workspace" && req.method === "GET") {
+    const want = new URL(req.url, "http://x").searchParams.get("path");
+    return handle(Promise.resolve(workspace.inspect(want || undefined)));
+  }
+  if (path === "/workspace" && req.method === "POST") {
+    return handle(bodyOf().then((b) => workspace.set(b.path)));
+  }
+  // The native folder chooser runs here rather than in the shell, because the
+  // webview has no way to turn a picked folder into a real filesystem path.
+  if (path === "/workspace/pick" && req.method === "POST") {
+    return handle(bodyOf().then(async (b) => {
+      const picked = await workspace.pick(b.start || undefined);
+      return { path: picked, cancelled: picked === null };
+    }));
+  }
+
   if (path === "/mcp/servers") {
     return handle(Promise.resolve({ servers: mcp.servers() }));
   }
@@ -831,6 +922,13 @@ createServer((req, res) => {
       else json(res, 502, { error: { message: e.message } });
     }
   });
-}).listen(PORT, "127.0.0.1", () =>
+}).listen(PORT, "127.0.0.1", () => {
   console.log("shim http://127.0.0.1:" + PORT + "/v1  lang=" + LANG
-    + "  detected: " + (detect().map((a) => a.id).join(", ") || "none")));
+    + "  detected: " + (detect().map((a) => a.id).join(", ") || "none"));
+  // Warm the catalogue in the background. Building it means starting each CLI
+  // and asking it — devin over an ACP handshake, codex via `debug models` —
+  // which is slow enough cold that the first caller used to time out and get
+  // the static seed instead. Nothing waits on this; it just means the first
+  // person to open a model picker is not the one who pays for it.
+  listModels().catch(() => {});
+});

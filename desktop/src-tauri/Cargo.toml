@@ -1,6 +1,6 @@
 [package]
 name = "quire"
-version = "0.1.21"
+version = "0.1.23"
 description = "Quire — story creation with local agent-CLI model providers"
 authors = ["Subhadip"]
 edition = "2021"
@@ -25,3 +25,23 @@ lto = true
 opt-level = "s"
 panic = "abort"
 strip = true
+
+# What `desktop/build-dev.mjs` builds with.
+#
+# The release profile is fat LTO over the whole dependency graph, Tauri and wry
+# included, in a single codegen unit. Cargo caches that, so a dev build that
+# changes only frontend files relinks in about a minute and the cost is
+# invisible - right up until a build changes which files ship as Tauri
+# resources, because the resource set is compiled into the crate. Then the
+# cache misses and a one-line CSS change costs a full fat-LTO rebuild. One took
+# 53 minutes.
+#
+# Inherits the release profile so the dev build is the same code with the same
+# panic behaviour; it just does not pay for a size optimisation nobody
+# downloads. Releases still go out under [profile.release] via CI, untouched.
+[profile.dev-build]
+inherits = "release"
+lto = false
+codegen-units = 16
+opt-level = 1
+strip = false

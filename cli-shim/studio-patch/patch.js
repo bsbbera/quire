@@ -1,14 +1,16 @@
-/* Quire patch for InkOS Studio.
+/* Quire patch for InkOS Studio — translation only.
  *
- * Studio ships as a minified SPA, so this runs against the rendered DOM rather
- * than the source. It adds three things Studio does not have:
+ * Studio hardcodes ~415 Chinese strings outside its own i18n table, so no
+ * language switch can reach them. This walks the rendered DOM and replaces
+ * them. It is a stopgap: the fix is `tr("中文", "English")` at each call site,
+ * the idiom the rest of the codebase already uses, and every string moved
+ * there can be deleted from the table below.
  *
- *   1. resizable side panels (Studio hardcodes `w-[260px]`)
- *   2. English for the ~415 Chinese strings that live outside Studio's own
- *      i18n table — its 332 translated keys all work, these were never wired
- *      to the EN toggle, so no language switch can reach them
- *   3. a live progress panel driven by /api/v1/events, which already
- *      broadcasts every pipeline stage
+ * Resizable panels, the progress panel and the Quire palette used to live here
+ * too, hacked onto the rendered DOM because Studio shipped as a minified
+ * bundle. It does not any more — the fork builds from source in vendor/studio —
+ * so those three are components and a stylesheet in packages/studio now:
+ * hooks/use-resizable.ts, components/ProgressPanel.tsx, src/index.css.
  *
  * studio.mjs re-injects this on every launch, so an `inkos update` that
  * replaces the bundle does not silently drop the patch.
@@ -406,235 +408,11 @@
   }
 
   /* =======================================================================
-     2. Resizable side panels
-     ===================================================================== */
-
-  const LS_SIDEBAR = "quire-studio-sidebar";
-  const LS_INSPECTOR = "quire-studio-inspector";
-
-  /**
-   * Make one <aside> draggable.
-   *
-   * `side` is the edge the grip sits on. The left sidebar grows as the pointer
-   * moves right; the inspector on the right grows as it moves LEFT, so its
-   * delta is inverted — getting that backwards makes the panel run away from
-   * the cursor, which is why the two cases are spelled out rather than shared.
-   */
-  function makeResizable(aside, { side, key, reset, min }) {
-    if (!aside || aside.dataset.quireResizable) return;
-    aside.dataset.quireResizable = "1";
-
-    const saved = localStorage.getItem(key);
-    if (saved) aside.style.width = saved;
-    // Tailwind's shrink-0 leaves the width to content, so it must be pinned
-    // before a drag can mean anything.
-    aside.style.flex = "0 0 auto";
-
-    const grip = document.createElement("div");
-    grip.className = "quire-grip" + (side === "start" ? " at-start" : "");
-    grip.setAttribute("role", "separator");
-    grip.setAttribute("aria-label", side === "start" ? "Resize panel" : "Resize sidebar");
-    aside.style.position = aside.style.position || "relative";
-    aside.appendChild(grip);
-
-    grip.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
-      const startX = e.clientX;
-      const startW = aside.getBoundingClientRect().width;
-      grip.setPointerCapture(e.pointerId);
-      document.body.classList.add("quire-resizing");
-
-      const move = (ev) => {
-        const delta = side === "start" ? startX - ev.clientX : ev.clientX - startX;
-        // Clamp against the window so a panel can never bury the content.
-        const w = Math.max(min, Math.min(window.innerWidth - 360, startW + delta));
-        aside.style.width = w + "px";
-      };
-      const up = () => {
-        grip.removeEventListener("pointermove", move);
-        document.body.classList.remove("quire-resizing");
-        localStorage.setItem(key, aside.style.width);
-      };
-      grip.addEventListener("pointermove", move);
-      grip.addEventListener("pointerup", up, { once: true });
-      grip.addEventListener("pointercancel", up, { once: true });
-    });
-
-    grip.addEventListener("dblclick", () => {
-      aside.style.width = reset;
-      localStorage.setItem(key, reset);
-    });
-  }
-
-  function addResizer() {
-    // Studio renders two asides: the nav on the left and the chapters /
-    // characters / core-files inspector on the right. Only the first was ever
-    // wired, so the inspector was stuck at whatever width its content gave it.
-    const asides = [...document.querySelectorAll("aside")];
-    if (!asides.length) return;
-    const mid = window.innerWidth / 2;
-    for (const a of asides) {
-      const r = a.getBoundingClientRect();
-      if (!r.width) continue;                       // hidden at this breakpoint
-      const onRight = r.left > mid;
-      makeResizable(a, onRight
-        ? { side: "start", key: LS_INSPECTOR, reset: "320px", min: 220 }
-        : { side: "end",   key: LS_SIDEBAR,   reset: "260px", min: 180 });
-    }
-  }
-
-  /* =======================================================================
-     3. Progress panel
-     ===================================================================== */
-
-  // Only stages the server actually emits. This list used to open with "plan"
-  // and "compose", which are in no event the server sends, so two of five dots
-  // sat permanently dim through every run that did work.
-  const STAGES = ["draft", "audit", "revise"];
-  let panel, stagesBox, metaBox, titleBox, hideTimer;
-  let startedAt = 0, tickTimer = 0, metaText = "";
-
-  function buildPanel() {
-    panel = document.createElement("div");
-    panel.className = "quire-progress";
-    panel.hidden = true;
-    panel.innerHTML =
-      '<div class="ip-head"><b class="ip-title">Working</b>'
-      + '<button class="ip-x" aria-label="Hide">✕</button></div>'
-      + '<div class="ip-stages"></div>'
-      + '<div class="ip-bar"><i></i></div>'
-      + '<div class="ip-meta">starting…</div>';
-    document.body.appendChild(panel);
-    stagesBox = panel.querySelector(".ip-stages");
-    metaBox = panel.querySelector(".ip-meta");
-    titleBox = panel.querySelector(".ip-title");
-    panel.querySelector(".ip-x").onclick = () => { panel.hidden = true; };
-  }
-
-  /** How long the current run has been going, in a shape a person reads. */
-  function elapsed() {
-    const secs = Math.round((Date.now() - startedAt) / 1000);
-    if (secs < 60) return secs + "s";
-    return Math.floor(secs / 60) + "m " + String(secs % 60).padStart(2, "0") + "s";
-  }
-
-  function paintMeta() {
-    metaBox.textContent = startedAt ? metaText + " · " + elapsed() : metaText;
-  }
-
-  /**
-   * A run here takes minutes, not moments — a de-AI pass on one chapter took
-   * 139 seconds. Without a clock the panel is indistinguishable from a hang,
-   * which is the single complaint this panel exists to answer.
-   */
-  /** Change what the meta line says without restarting the run's clock. */
-  function startClockText(text) {
-    metaText = text;
-    paintMeta();
-  }
-
-  function startClock(text) {
-    metaText = text;
-    startedAt = Date.now();
-    clearInterval(tickTimer);
-    paintMeta();
-    tickTimer = setInterval(paintMeta, 1000);
-  }
-
-  function showStages(list, title) {
-    clearTimeout(hideTimer);
-    titleBox.textContent = title;
-    stagesBox.innerHTML = "";
-    for (const s of list) {
-      const el = document.createElement("div");
-      el.className = "ip-stage";
-      el.dataset.stage = s;
-      el.innerHTML = '<span class="ip-dot"></span>' + s;
-      stagesBox.appendChild(el);
-    }
-    panel.hidden = false;
-    panel.classList.add("running");
-  }
-
-  function setStage(name, cls) {
-    const el = stagesBox?.querySelector('[data-stage="' + name + '"]');
-    if (!el) return;
-    el.classList.remove("run", "done", "fail");
-    el.classList.add(cls);
-  }
-
-  function finish(text, bad) {
-    panel.classList.remove("running");
-    clearInterval(tickTimer);
-    const took = startedAt ? " · took " + elapsed() : "";
-    startedAt = 0;
-    metaBox.textContent = text + took;
-    if (bad) panel.classList.add("bad"); else panel.classList.remove("bad");
-    // A failure is the thing a person most needs to read, and six seconds is
-    // not long enough to notice one that arrived while they were elsewhere.
-    // Success still clears itself; a failure waits to be dismissed.
-    if (!bad) hideTimer = setTimeout(() => { panel.hidden = true; }, 8000);
-  }
-
-  function connectEvents() {
-    const es = new EventSource("/api/v1/events");
-    const on = (name, fn) => es.addEventListener(name, (ev) => {
-      let d = {};
-      try { d = JSON.parse(ev.data || "{}"); } catch { /* keepalive */ }
-      fn(d);
-    });
-
-    on("write:start", () => { showStages(STAGES, "Writing chapter"); startClock("starting…"); });
-
-    /*
-     * The audit and de-AI passes are not handled here any more.
-     *
-     * They were, because nothing else reported them. The audit screen now
-     * carries its own live row — the same elapsed clock, plus the Stop button
-     * this panel could never offer, in the column the person is already
-     * reading. Leaving both meant the same pass reported twice, once in the
-     * page and once in a floating card over the corner of it.
-     *
-     * The panel keeps every run that still has no other reporter.
-     */
-
-    on("book:creating", () => showStages(["create", "foundation"], "Creating book"));
-    on("book:created", () => { setStage("foundation", "done"); finish("book ready"); });
-
-    for (const s of STAGES) {
-      on(s + ":start", () => { panel.hidden = false; setStage(s, "run"); });
-      on(s + ":complete", () => setStage(s, "done"));
-      on(s + ":error", (d) => { setStage(s, "fail"); finish(d.error || s + " failed", true); });
-    }
-
-    on("write:complete", (d) => {
-      for (const s of STAGES) setStage(s, "done");
-      finish("chapter " + (d.chapterNumber ?? "") + " · " + (d.wordCount ?? "?") + " words");
-    });
-    on("write:error", (d) => finish(d.error || "write failed", true));
-    on("book:error", (d) => finish(d.error || "book failed", true));
-
-    // The engine reports streamed length as it goes — the only real progress
-    // signal there is, since chapter length is not known up front.
-    on("llm:progress", (d) => {
-      const chars = d.chars ?? d.length ?? 0;
-      metaBox.textContent = Number(chars).toLocaleString() + " chars"
-        + (d.seconds ? " · " + d.seconds + "s" : "");
-    });
-    on("log", (d) => {
-      if (!panel.hidden && d.message) metaBox.textContent = String(d.message).slice(0, 120);
-    });
-  }
-
-  /* =======================================================================
      boot
      ===================================================================== */
 
   function start() {
     translateTree(document.body);
-    addResizer();
-    buildPanel();
-    connectEvents();
 
     // Studio is a SPA: everything above has to survive re-renders.
     const mo = new MutationObserver((records) => {
@@ -645,7 +423,6 @@
           if (t !== r.target.textContent) r.target.textContent = t;
         }
       }
-      addResizer();
     });
     mo.observe(document.body, { childList: true, subtree: true, characterData: true });
   }

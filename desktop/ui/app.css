@@ -4,31 +4,27 @@
    Layout is auto-fit/clamp throughout, so it reflows from a 320px strip to a
    wide window without breakpoints to maintain.
 --------------------------------------------------------------------------- */
-/* Tokens mirrored verbatim from cli-shim/studio-patch/patch.css. Studio is the
-   larger surface and owns the design system; the shell matches it literal for
-   literal so the chrome and the workbench are the same product. Change one,
-   change both. */
-@font-face {
-  font-family:"Geist Variable"; font-style:normal; font-weight:100 900;
-  font-display:swap; src:url("geist.woff2") format("woff2");
-}
-/* Aurora. Tokens mirrored literal-for-literal from
-   cli-shim/studio-patch/patch.css - the workbench is the larger surface and
-   owns the design system; the shell matches it so the window is one product.
-   Change one, change both. */
+/* Vermilion. Tokens mirrored literal-for-literal from the workbench's
+   packages/studio/src/index.css - it is the larger surface and owns the design
+   system; the shell matches it so the window reads as one product rather than
+   two. Change one, change both.
+
+   The shell cannot import the workbench's stylesheet: Studio runs in a
+   cross-origin iframe inside this document, so the two never share a stylesheet
+   or a storage area. Mirroring is the seam. */
 @font-face {
   font-family:"Geist Variable"; font-style:normal; font-weight:100 900;
   font-display:swap; src:url("geist.woff2") format("woff2");
 }
 :root {
-  --bg:oklch(98% .006 230); --panel:oklch(100% 0 0); --panel-2:oklch(94% .012 225);
-  --ink:oklch(22% .02 250); --muted:oklch(47% .015 240); --line:oklch(90% .012 230);
-  --accent:oklch(52% .11 205); --accent-ink:oklch(99% .01 205);
-  --ok:oklch(55% .11 160); --warn:oklch(58% .16 45);
-  --aurora:radial-gradient(70rem 34rem at 12% -8%, oklch(72% .13 195 / .16) 0%, transparent 62%),
-    radial-gradient(58rem 30rem at 88% -4%, oklch(66% .13 295 / .13) 0%, transparent 60%),
-    radial-gradient(46rem 26rem at 52% 108%, oklch(70% .14 155 / .10) 0%, transparent 64%);
-  --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px -12px rgba(0,0,0,.18);
+  --bg:#E7DFD7; --panel:#FAF7F3; --panel-2:#DDD3C9;
+  --ink:#23201D; --muted:#665E57; --line:#D2C7BC;
+  --accent:#DE5140; --accent-ink:#FFFFFF;
+  --ok:#4B7A4E; --warn:#8A6220;
+  /* The disc, as a gradient. Only the boot cover and the drawer use it, and
+     only in one corner: this is the geometry, not a wash over everything. */
+  --aurora:radial-gradient(30rem 30rem at 100% 0%, #DE5140 0%, transparent 58%);
+  --shadow:0 1px 2px rgba(35,32,29,.07),0 10px 26px -12px rgba(35,32,29,.30);
   --radius:12px; --radius-sm:8px; --gap:clamp(.6rem,1.6vw,1.1rem);
   --pad:clamp(.85rem,2.4vw,1.5rem);
   --font:"Geist Variable","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
@@ -42,29 +38,26 @@
 }
 :root[data-theme="dark"], :root:not([data-theme="light"]) {
   @media (prefers-color-scheme: dark) {
-  --bg:oklch(17% .022 265); --panel:oklch(21% .024 265); --panel-2:oklch(25% .026 265);
-  --ink:oklch(95% .008 230); --muted:oklch(73% .014 235); --line:oklch(31% .028 265);
-  --accent:oklch(82% .13 195); --accent-ink:oklch(19% .03 220);
-  --ok:oklch(72% .11 160); --warn:oklch(74% .13 45);
-  --aurora:radial-gradient(72rem 36rem at 10% -10%, oklch(72% .13 195 / .20) 0%, transparent 60%),
-    radial-gradient(60rem 32rem at 90% -6%, oklch(66% .13 295 / .17) 0%, transparent 58%),
-    radial-gradient(48rem 28rem at 50% 110%, oklch(70% .14 155 / .12) 0%, transparent 62%);
-  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.8);
+  --bg:#181513; --panel:#221E1B; --panel-2:#2A2522;
+  --ink:#EFE8E1; --muted:#A79D95; --line:#332D29;
+  --accent:#EF6551; --accent-ink:#1A0B08;
+  --ok:#6FA872; --warn:#D2A055;
+  --aurora:radial-gradient(30rem 30rem at 100% 0%, #EF6551 0%, transparent 58%);
+  --shadow:0 1px 2px rgba(0,0,0,.55),0 10px 26px -12px rgba(0,0,0,.7);
   }
 }
 :root[data-theme="dark"] {
-  --bg:oklch(17% .022 265); --panel:oklch(21% .024 265); --panel-2:oklch(25% .026 265);
-  --ink:oklch(95% .008 230); --muted:oklch(73% .014 235); --line:oklch(31% .028 265);
-  --accent:oklch(82% .13 195); --accent-ink:oklch(19% .03 220);
-  --ok:oklch(72% .11 160); --warn:oklch(74% .13 45);
-  --aurora:radial-gradient(72rem 36rem at 10% -10%, oklch(72% .13 195 / .20) 0%, transparent 60%),
-    radial-gradient(60rem 32rem at 90% -6%, oklch(66% .13 295 / .17) 0%, transparent 58%),
-    radial-gradient(48rem 28rem at 50% 110%, oklch(70% .14 155 / .12) 0%, transparent 62%);
-  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.8);
+  --bg:#181513; --panel:#221E1B; --panel-2:#2A2522;
+  --ink:#EFE8E1; --muted:#A79D95; --line:#332D29;
+  --accent:#EF6551; --accent-ink:#1A0B08;
+  --ok:#6FA872; --warn:#D2A055;
+  --aurora:radial-gradient(30rem 30rem at 100% 0%, #EF6551 0%, transparent 58%);
+  --shadow:0 1px 2px rgba(0,0,0,.55),0 10px 26px -12px rgba(0,0,0,.7);
 }
-/* The aurora wash sits behind the boot cover and the drawer, matching the one
-   painted over the workbench, so the two surfaces read as one window. */
-.cover, .drawer { background-image: var(--aurora); }
+/* One vermilion disc, cropped by the surface it sits on, matching the geometry
+   the workbench uses. Both surfaces clip it so it reads as a shape rather than
+   a glow, and it is kept off the corner where the text sits. */
+.cover, .drawer { background-image: var(--aurora); background-repeat: no-repeat; overflow: hidden; }
 *,*::before,*::after{box-sizing:border-box}
 /* Author `display` on .cover/.drawer/.fab outranks the UA [hidden] rule, so
    toggling the attribute did nothing without this. */
@@ -142,6 +135,11 @@ body{overflow:hidden}
 .picker{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
   padding:var(--pad);display:grid;gap:var(--gap)}
 .field{display:grid;gap:.35rem;flex:1 1 min(320px,100%)}
+/* The confirm block already spaces its own children on a grid, so the shared
+   .row top margin would double it. */
+#locConfirm{margin-block-start:.7rem}
+#locConfirm .row{margin-block-start:0}
+
 .field label{font-size:var(--fs-sm);color:var(--muted)}
 select,input[type=search]{width:100%;padding:.6rem .7rem;border:1px solid var(--line);
   border-radius:var(--radius-sm);background:var(--panel-2)}

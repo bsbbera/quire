@@ -5,15 +5,32 @@ const invoke = window.__TAURI__?.core?.invoke;
 const $ = (s) => document.querySelector(s);
 const state = { shim: "http://127.0.0.1:8787", studio: "", models: [], cli: null, model: null };
 
+/*
+ * Theme follows the workbench.
+ *
+ * The shell used to own a second preference and a second toggle, in its own
+ * storage key, which is how the settings drawer could sit dark over a light
+ * workbench. Studio is the surface a person actually looks at, so it owns the
+ * choice and this listens; the toggle here is gone rather than duplicated.
+ *
+ * The stored value is still read on boot: the cover paints before Studio has
+ * loaded and has to be the right colour immediately, and the message arrives
+ * only once the workbench mounts.
+ */
 const savedTheme = localStorage.getItem("quire-theme");
-if (savedTheme) document.documentElement.dataset.theme = savedTheme;
-$("#theme").onclick = () => {
-  const cur = document.documentElement.dataset.theme
-    || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-  const next = cur === "dark" ? "light" : "dark";
-  document.documentElement.dataset.theme = next;
-  localStorage.setItem("quire-theme", next);
-};
+if (savedTheme === "dark" || savedTheme === "light") {
+  document.documentElement.dataset.theme = savedTheme;
+}
+
+addEventListener("message", (e) => {
+  // Only the workbench in our own iframe may set this. Anything else on the
+  // page - an embedded preview, an extension - is not the workbench.
+  if (e.source !== $("#frame")?.contentWindow) return;
+  const theme = e.data?.type === "quire:theme" ? e.data.theme : null;
+  if (theme !== "dark" && theme !== "light") return;
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem("quire-theme", theme);
+});
 
 let toastTimer;
 function toast(msg) {
@@ -28,7 +45,7 @@ function openDrawer(open) {
   $("#drawer").hidden = !open;
   $("#scrim").hidden = !open;
 }
-$("#openSettings").onclick = () => { openDrawer(true); loadComfy?.(); };
+$("#openSettings").onclick = () => { openDrawer(true); loadComfy?.(); loadWorkspace?.(); };
 $("#closeSettings").onclick = () => openDrawer(false);
 $("#scrim").onclick = () => openDrawer(false);
 addEventListener("keydown", (e) => { if (e.key === "Escape") openDrawer(false); });
@@ -240,6 +257,99 @@ function wireComfy() {
   };
 }
 
+/* ----------------------------------------------------------------- location
+ * The workspace root is an argument to the Studio server process, not
+ * something it re-reads, so changing it needs a restart. The shim owns the
+ * value and runs the native folder chooser - a webview cannot turn a picked
+ * folder into a real filesystem path. This only asks, explains and confirms.
+ */
+let pendingWorkspace = null;
+
+/** What this folder is, in the words the user needs before committing to it. */
+function describe(w) {
+  if (!w.exists) {
+    return w.parentExists
+      ? "New folder. Quire will create it and set it up on the next launch."
+      : "The folder above it does not exist.";
+  }
+  if (!w.isDir) return "That is a file, not a folder.";
+  if (!w.writable) return "Quire cannot write there.";
+  if (w.initialized) return "An existing Quire folder. Quire will open the work already in it.";
+  return "Not a Quire folder yet. It will be set up on the next launch; anything already in it is left alone.";
+}
+
+const usable = (w) => (w.exists ? w.isDir && w.writable : w.parentExists === true);
+
+async function loadWorkspace() {
+  let w;
+  try {
+    w = await fetch(`${state.shim}/workspace`).then((r) => r.json());
+  } catch {
+    $("#locPath").textContent = "unavailable until the shim is running";
+    return null;
+  }
+  $("#locPath").textContent = w.path;
+  $("#locPill").textContent = w.initialized ? "in use" : "new";
+  $("#locPill").classList.toggle("on", w.initialized);
+  // Naming the environment variable matters: it is the only reason a folder
+  // picked here would appear not to take, and it is invisible from the app.
+  $("#locNote").textContent = w.source === "environment"
+    ? "Set by the QUIRE_WORKSPACE environment variable. Choosing a folder here overrides it."
+    : describe(w);
+  return w;
+}
+
+$("#locBrowse").onclick = async () => {
+  const btn = $("#locBrowse");
+  btn.disabled = true;
+  btn.textContent = "Choosing\u2026";
+  try {
+    const r = await fetch(`${state.shim}/workspace/pick`, {
+      method: "POST",
+      body: JSON.stringify({ start: $("#locPath").textContent }),
+    }).then((x) => x.json());
+    if (r.ok === false) throw new Error(r.error);
+    if (!r.path) return; // cancelled
+    const w = await fetch(`${state.shim}/workspace?path=${encodeURIComponent(r.path)}`)
+      .then((x) => x.json());
+    pendingWorkspace = w;
+    $("#locNext").textContent = w.path;
+    $("#locNextNote").textContent = describe(w);
+    $("#locApply").disabled = !usable(w);
+    $("#locConfirm").hidden = false;
+  } catch (e) {
+    toast("could not open the folder chooser: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Change folder\u2026";
+  }
+};
+
+$("#locCancel").onclick = () => {
+  pendingWorkspace = null;
+  $("#locConfirm").hidden = true;
+};
+
+$("#locApply").onclick = async () => {
+  if (!pendingWorkspace) return;
+  const btn = $("#locApply");
+  btn.disabled = true;
+  try {
+    const r = await fetch(`${state.shim}/workspace`, {
+      method: "POST",
+      body: JSON.stringify({ path: pendingWorkspace.path }),
+    }).then((x) => x.json());
+    if (r.ok === false) throw new Error(r.error);
+    // Saved. From here the old root is still live in two running child
+    // processes, so the restart is the change taking effect, not a courtesy.
+    toast("Folder saved. Restarting\u2026");
+    setTimeout(() => invoke("plugin:process|restart"), 600);
+  } catch (e) {
+    btn.disabled = false;
+    toast("could not save: " + e.message);
+  }
+};
+
 /** One boot step: waiting, running, done or failed, plus an optional note. */
 function step(el, state, note) {
   if (!el) return;
@@ -277,12 +387,22 @@ function progress(done, total) {
 const AUTO_KEY = "quire-auto-update";
 const LAST_CHECK = "quire-last-check";
 let appVersion = "";
+/**
+ * The dev build shares this shell, this updater key and this endpoint with the
+ * release build, and carries whatever version the branch happens to be on. So
+ * every launch of Quire-Dev found the released Quire newer than itself, ran the
+ * release installer, and found it newer again next launch: a forced install
+ * every single time, that could never make the dev build any newer. The dev
+ * copy is deployed by `build-dev.mjs`, not by the updater.
+ */
+let isDevBuild = false;
 
 // getVersion is core API, not a plugin, so withGlobalTauri really does expose
 // it - unlike the updater, which is why that one goes through invoke.
 async function showVersion() {
   try {
     appVersion = await window.__TAURI__.app.getVersion();
+    isDevBuild = (await window.__TAURI__.app.getName()) === "Quire-Dev";
   } catch { return; }
   const v = "Quire " + appVersion;
   const line = $("#verLine"); if (line) line.textContent = v;
@@ -304,6 +424,11 @@ async function checkUpdate({ silent } = {}) {
   const row = $("#updateRow"), msg = $("#updateMsg"), btn = $("#updateBtn");
   if (!row) return null;
   if (!invoke) { msg.textContent = "Updates unavailable outside the app"; return null; }
+  if (isDevBuild) {
+    msg.textContent = "Development build — updates come from a rebuild";
+    btn.hidden = true;
+    return null;
+  }
   row.classList.add("busy");
   msg.textContent = "Checking for updates…";
   try {
