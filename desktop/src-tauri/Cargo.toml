@@ -1,6 +1,6 @@
 [package]
 name = "quire"
-version = "0.1.22"
+version = "0.1.23"
 description = "Quire — story creation with local agent-CLI model providers"
 authors = ["Subhadip"]
 edition = "2021"
