@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daemon · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: The daemon is the thing that writes while you are not looking, so
+  the screen is one switch and one window onto what it did. The switch is
+  large, because turning it off in a hurry is the reason anyone comes here —
+  but it is not red. Stopping is reversible and the night's chapters are
+  already on disk; spending the alarm colour here taught the user that red
+  means "the thing you do every evening".
+  OWN-WORLD: A charcoal log against putty, so the running machine reads as a
+  different material from the room it sits in.
+  STORY: A chapter lands overnight; the maker reads back the trail and stops
+  the daemon before the next one starts.
+  FIRST VIEWPORT: Running or not, and the last thing it did.
+  FORM: Inherited world. Grounded in DaemonControl.tsx: running flag, SSE
+  event stream filtered to daemon: and log events, empty-state hint.
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">33</span><b>Daemon</b><span>start &middot; stop &middot; the event log</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="32-mcp.html">&larr; Prev</a><a href="index.html">All screens</a><a href="34-logs.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" aria-current="page" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span>System</span><span class="sep">/</span><h1>Daemon</h1></div>
+        <span class="pill pill-ok">running 6h 12m</span>
+        <span class="pill mono">2 chapters tonight</span>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop panel" style="overflow:hidden">
+            <span class="disc fill" style="width:230px;height:230px;right:-70px;top:-96px;opacity:.1"></span>
+            <span class="disc stroke" style="width:150px;height:150px;right:34px;top:22px;opacity:.28"></span>
+            <div class="panel-body rowflex" style="align-items:center;gap:20px;flex-wrap:wrap">
+              <span class="grow" style="min-width:250px">
+                <h2 class="h-page" style="margin:0">The daemon is running</h2>
+                <p class="muted" style="font-size:14px;margin-top:9px;max-width:52ch">
+                  Six hours, two chapters, no failures. It picks up whatever the plan says
+                  is next and stops at anything that needs you. Stopping is safe and takes
+                  effect after the current chapter &mdash; chapters 7 and 8 are already on disk.
+                </p>
+              </span>
+              <button class="btn btn-line" style="padding:13px 22px;font-size:17.5px">Stop the daemon</button>
+            </div>
+          </section>
+
+          <section class="cols cols-a" style="align-items:start">
+            <div class="panel"><div class="panel-body">
+              <span class="label">Written tonight</span>
+              <div class="numeral">2</div>
+              <p class="dim" style="font-size:11px">chapters 7 and 8 of The Lamp Room, both drafted and settled</p>
+            </div></div>
+            <div class="panel"><div class="panel-body">
+              <span class="label">Waiting on you</span>
+              <div class="numeral">1</div>
+              <p class="dim" style="font-size:11px">chapter 9 failed its audit and the daemon will not pass it</p>
+            </div></div>
+          </section>
+
+          <section class="panel panel-flush dark on-char">
+            <div class="panel-head">
+              <span class="grow"><h3 class="h-panel">Event log</h3><span class="dim" style="font-size:11px">Live, last twenty</span></span>
+              <span class="pill mono">streaming</span>
+            </div>
+            <div class="panel-body scroll-y mono" style="max-height:330px;font-size:11px;line-height:1.85">
+              <div><span class="dim">02:14:07</span> <span style="color:var(--vermilion-ink)">daemon:pick</span> <span class="sep">&rsaquo;</span> The Lamp Room, chapter 7 is next in the plan</div>
+              <div><span class="dim">02:14:09</span> <span style="color:var(--vermilion-ink)">daemon:plan</span> <span class="sep">&rsaquo;</span> read direction.json, people.json, chapter 6</div>
+              <div><span class="dim">02:31:44</span> <span style="color:var(--vermilion-ink)">daemon:write</span> <span class="sep">&rsaquo;</span> chapter 7 drafted, 3,214 words</div>
+              <div><span class="dim">02:33:02</span> <span style="color:var(--vermilion-ink)">daemon:settle</span> <span class="sep">&rsaquo;</span> people.json updated: Marta now knows about the lamp</div>
+              <div><span class="dim">02:33:05</span> <span style="color:var(--ok)">daemon:done</span> <span class="sep">&rsaquo;</span> chapter 7 settled</div>
+              <div><span class="dim">03:02:18</span> <span style="color:var(--vermilion-ink)">daemon:pick</span> <span class="sep">&rsaquo;</span> The Lamp Room, chapter 8</div>
+              <div><span class="dim">03:26:51</span> <span style="color:var(--vermilion-ink)">daemon:write</span> <span class="sep">&rsaquo;</span> chapter 8 drafted, 2,980 words</div>
+              <div><span class="dim">03:28:10</span> <span style="color:var(--ok)">daemon:done</span> <span class="sep">&rsaquo;</span> chapter 8 settled</div>
+              <div><span class="dim">04:01:33</span> <span style="color:var(--vermilion-ink)">daemon:pick</span> <span class="sep">&rsaquo;</span> The Lamp Room, chapter 9</div>
+              <div><span class="dim">04:29:02</span> <span style="color:var(--warn)">daemon:audit</span> <span class="sep">&rsaquo;</span> 3 findings against people.json</div>
+              <div><span class="dim">04:29:02</span> <span style="color:var(--bad)">daemon:hold</span> <span class="sep">&rsaquo;</span> chapter 9 not settled, a person needs to read it</div>
+              <div><span class="dim">04:29:03</span> <span class="dim">daemon:idle</span> <span class="sep">&rsaquo;</span> nothing further can proceed without you</div>
+            </div>
+          </section>
+
+          <div class="gate" data-go="07-review.html">
+            <span class="grow"><span class="what">Chapter 9 has been waiting since 04:29</span><span class="when">The daemon stopped rather than build on something it is not sure about.</span></span>
+            <button class="gatepill">Read it<span class="n">3</span></button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

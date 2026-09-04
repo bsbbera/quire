@@ -34,107 +34,15 @@
   </div>
 </div>
 
-<!-- Settings entry point. It used to show the live model, which made two
-     model selectors on one screen with two different sources of truth: this
-     one read the shim, the workbench's own picker read the project config,
-     and they disagreed. Model selection belongs to the workbench. -->
-<button class="fab" id="openSettings" hidden>
-  <span class="fab-dot"></span><span>Settings</span>
-</button>
-
-<div class="scrim" id="scrim" hidden></div>
-
-<aside class="drawer" id="drawer" hidden aria-label="Settings">
-  <header>
-    <b>Settings</b>
-    <button class="icon-btn" id="refresh" title="Re-scan CLIs" aria-label="Re-scan CLIs"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg></button>
-    <button class="icon-btn" id="closeSettings" title="Close" aria-label="Close"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  </header>
-
-  <div class="drawer-body">
-    <!-- Where the work lives. First in the drawer because it is the ground
-         everything else sits on, and because until now the only way to change
-         it was an environment variable set before launch. -->
-    <section id="locationSection">
-      <div class="section-head">
-        <h2>Location</h2>
-        <p>The folder Quire keeps your books, worlds and magazines in.</p>
-      </div>
-      <div class="active">
-        <span class="pill" id="locPill">&mdash;</span>
-        <span class="meta grow" id="locPath">reading&hellip;</span>
-      </div>
-      <p class="tiny" id="locNote"></p>
-      <div class="row">
-        <button class="btn" id="locBrowse">Change folder&hellip;</button>
-      </div>
-      <div class="picker" id="locConfirm" hidden>
-        <div class="active" id="locNext"></div>
-        <p class="tiny" id="locNextNote"></p>
-        <p class="tiny">Nothing is moved or deleted. The books in the current
-          folder stay where they are; Quire simply stops looking there.</p>
-        <div class="row">
-          <button class="btn primary" id="locApply">Use this folder and restart</button>
-          <button class="btn" id="locCancel">Keep the current one</button>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <div class="section-head">
-        <h2>Provider</h2>
-        <p>Detected automatically. Your choice is saved and reused on the next launch.</p>
-      </div>
-      <div class="providers" id="providers"></div>
-    </section>
-
-    <!-- Image generation: the one dependency Quire installs for the user, so
-         the machine half of it lives in the shell, not in the workbench. -->
-    <section id="imagesSection">
-      <div class="section-head">
-        <h2>Images</h2>
-        <p id="comfyLine">Checking ComfyUI…</p>
-      </div>
-      <div class="active"><span class="pill" id="comfyPill">unknown</span><span id="comfyDetail">—</span></div>
-      <div class="bar" id="comfyBar" hidden><i id="comfyFill"></i></div>
-      <p class="tiny" id="comfyStep" hidden></p>
-      <div class="field" id="workflowField" hidden>
-        <label for="workflow">Workflow</label>
-        <select id="workflow"></select>
-      </div>
-      <p class="tiny" id="workflowNote"></p>
-      <div class="row">
-        <button class="btn primary" id="comfyInstall" hidden>Install ComfyUI</button>
-        <button class="btn" id="comfySkip" hidden>Not now</button>
-        <button class="btn" id="comfyStart" hidden>Start</button>
-        <button class="btn" id="comfyBench" hidden>Benchmark</button>
-        <button class="btn" id="workflowDelete" hidden>Delete workflow</button>
-        <button class="btn" id="workflowAdd" hidden>Add workflow…</button>
-      </div>
-      <input type="file" id="workflowFile" accept="application/json,.json" hidden>
-    </section>
-    <section>
-      <div class="section-head">
-        <h2>Integrations</h2>
-        <p>MCP servers and Affinity. Shared by every kind of work, not only magazines.</p>
-      </div>
-      <button class="btn wide" id="openPlugs">Open integrations</button>
-    </section>
-  </div>
-
-  <div class="update-row" id="updateRow">
-    <div class="grow">
-      <div id="updateMsg">Checking for updates…</div>
-      <div class="tiny" id="verLine">Quire</div>
-    </div>
-    <label class="auto-up"><input type="checkbox" id="autoUpdate"> Automatic</label>
-    <button class="btn" id="checkBtn">Check now</button>
-    <button class="btn primary" id="updateBtn" hidden>Install and restart</button>
-  </div>
-
-  <footer><span class="grow" id="foot">—</span><span id="langFoot"></span></footer>
-</aside>
-
+<!-- No settings drawer.
+     The shell used to carry one: a folder picker, a provider list, images,
+     integrations and the updater, floating over the workbench that already had
+     pages for most of them. One machine described in two places, and the half
+     the user could reach was the wrong half. What actually needed the shell was
+     never the panel, only the Tauri calls behind it - restart, and the updater
+     - so those stayed and became messages the workbench can send. Everything
+     visible lives on a page now: Models & setup.
+-->
 <div class="toast" id="toast"></div>
 <script type="module" src="app.js"></script>
 </body>

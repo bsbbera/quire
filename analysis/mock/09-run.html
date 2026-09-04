@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: One thread for every stage the machine has. Draft, audit, research,
+  art brief and destyle all report through the same charcoal transcript, so
+  the surface is learned once and never again. It refuses the log-viewer
+  convention where progress is a wall of timestamped lines nobody reads.
+  OWN-WORLD: Charcoal transcript with avatar rows, tool rows in outline, a
+  vermilion caret on the live line. Beside it a paper column: where the run
+  is, and shaped skeletons standing where the output will land.
+  STORY: The maker glances in mid-run, sees which stage is live and what the
+  model just decided, and leaves it alone.
+  FIRST VIEWPORT: The transcript at reading width with the live line at the
+  bottom; stage dots and the ring on the right.
+  FORM: Inherited world, plan Part III §11. No concept seed.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">09</span><b>Run</b><span>the thread every stage uses</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="08-audit.html">← Prev</a><a href="index.html">All screens</a><a href="10-issue-brief.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">run 4a91 · audit</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" aria-current="page" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><a href="04-book.html">The Lamp Room</a><span class="sep">/</span><h1>Audit run</h1><span class="sep">·</span><span class="mono dim">4a91</span></div>
+        <span class="pill mono">claude · sonnet-4.6</span>
+        <span class="pill mono">18.4k tokens</span>
+        <button class="btn btn-line btn-sm">Stop</button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap cols cols-a" style="align-items:start">
+
+          <!-- ── The transcript ──────────────────────────────────────────── -->
+          <div class="dark crop" style="padding:22px 24px 24px">
+            <span class="disc stroke" style="width:150px;height:150px;right:-62px;top:-68px;opacity:.4"></span>
+
+            <div class="spread" style="margin-bottom:20px;position:relative">
+              <div>
+                <div class="label">Stage 3 of 5 · audit</div>
+                <h3 style="font-size:17.5px;margin-top:7px">Reading chapter 9 against the canon</h3>
+              </div>
+              <span class="pill">6 min 20 s</span>
+            </div>
+
+            <div class="thread" style="position:relative">
+
+              <div class="msg">
+                <span class="who-av human">SB</span>
+                <div class="body">
+                  <div class="tag">You, six minutes ago</div>
+                  <p style="font-size:14px;line-height:1.6">Audit chapter 9 for continuity, voice and anything that argues with direction.json.</p>
+                </div>
+              </div>
+
+              <div class="msg">
+                <span class="who-av model">Q</span>
+                <div class="body">
+                  <div class="tag">Gathering what it needs</div>
+                  <div class="stack" style="gap:7px;margin-top:2px">
+                    <div class="tool"><svg aria-hidden="true" width="14" height="14" class="tick"><use href="#i-check"/></svg>Read <span class="mono">ch09.md</span><span class="grow"></span><span class="mono dim" style="font-size:11px">3,120 words</span></div>
+                    <div class="tool"><svg aria-hidden="true" width="14" height="14" class="tick"><use href="#i-check"/></svg>Read <span class="mono">continuity.json</span><span class="grow"></span><span class="mono dim" style="font-size:11px">14 facts</span></div>
+                    <div class="tool"><svg aria-hidden="true" width="14" height="14" class="tick"><use href="#i-check"/></svg>Read chapters 1&ndash;8<span class="grow"></span><span class="mono dim" style="font-size:11px">24,900 words</span></div>
+                    <div class="tool"><svg aria-hidden="true" class="spin" viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="5.4"/></svg>Cross-checking <span class="mono">people.json</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="msg">
+                <span class="who-av model">Q</span>
+                <div class="body">
+                  <div class="tag">Six findings so far</div>
+                  <p style="font-size:14px;line-height:1.6;color:var(--on-char)">
+                    The keeper&rsquo;s limp is on the left in chapter 3 and on the right here, and
+                    <span class="mono" style="font-size:11px">continuity.json</span> agrees with chapter 3, so this
+                    one blocks. The word &ldquo;particular&rdquo; carries three paragraphs in a row<span class="caret"></span>
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="rowflex" style="margin-top:22px;position:relative">
+              <a class="btn btn-sm" href="08-audit.html" style="text-decoration:none">Go to the findings <svg aria-hidden="true" class="ico" width="14" height="14"><use href="#i-arrR"/></svg></a>
+              <button class="btn btn-quiet btn-sm">Copy the transcript</button>
+            </div>
+          </div>
+
+          <!-- ── Where the run is ────────────────────────────────────────── -->
+          <div class="stack">
+
+            <div class="panel">
+              <div class="spread" style="align-items:flex-start">
+                <div>
+                  <h3 class="h-panel">Where it is</h3>
+                  <p class="hint" style="margin-top:3px">Stages come from this book&rsquo;s runtime.json</p>
+                </div>
+                <div class="rowflex" style="gap:9px">
+                  <svg aria-hidden="true" class="ring" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:24"/></svg>
+                  <span class="pct">80%</span>
+                </div>
+              </div>
+              <div class="rows" style="margin-top:12px">
+                <div class="row" style="padding:9px 4px"><span class="st done" style="gap:9px"><i></i>research</span><span class="grow"></span><span class="meta">40 s</span></div>
+                <div class="row" style="padding:9px 4px"><span class="st done" style="gap:9px"><i></i>draft</span><span class="grow"></span><span class="meta">4 min 10 s</span></div>
+                <div class="row" style="padding:9px 4px"><span class="st now" style="gap:9px"><i></i>audit</span><span class="grow"></span><span class="meta">running</span></div>
+                <div class="row" style="padding:9px 4px"><span class="st" style="gap:9px"><i></i>revise</span><span class="grow"></span><span class="meta">queued</span></div>
+                <div class="row" style="padding:9px 4px"><span class="st" style="gap:9px"><i></i>settle</span><span class="grow"></span><span class="meta">queued</span></div>
+              </div>
+            </div>
+
+            <!-- Skeletons shaped like what replaces them, so the wait says
+                 what is coming rather than only that something is happening. -->
+            <div class="panel">
+              <h3 class="h-panel">Before anything arrives</h3>
+              <p class="hint" style="margin-top:3px;margin-bottom:12px">The findings list, drawn empty.</p>
+              <div class="stack" style="gap:10px">
+                <div class="rowflex" style="gap:9px;flex-wrap:nowrap"><span class="skel" style="width:7px;height:7px;border-radius:50%"></span><span class="grow"><span class="skel skel-line" style="display:block;width:72%"></span><span class="skel skel-line" style="display:block;width:44%;height:8px;margin-top:6px"></span></span></div>
+                <div class="rowflex" style="gap:9px;flex-wrap:nowrap"><span class="skel" style="width:7px;height:7px;border-radius:50%"></span><span class="grow"><span class="skel skel-line" style="display:block;width:58%"></span><span class="skel skel-line" style="display:block;width:38%;height:8px;margin-top:6px"></span></span></div>
+                <div class="rowflex" style="gap:9px;flex-wrap:nowrap"><span class="skel" style="width:7px;height:7px;border-radius:50%"></span><span class="grow"><span class="skel skel-line" style="display:block;width:66%"></span><span class="skel skel-line" style="display:block;width:30%;height:8px;margin-top:6px"></span></span></div>
+              </div>
+            </div>
+
+            <div class="panel crop">
+              <span class="disc stroke-l" style="width:120px;height:120px;right:-52px;bottom:-58px"></span>
+              <h3 class="h-panel">If it stops</h3>
+              <div class="fail" style="margin-top:10px">
+                <svg aria-hidden="true" width="16" height="16" style="color:var(--bad);margin-top:1px"><use href="#i-alert"/></svg>
+                <div>
+                  <b>The provider dropped the connection.</b>
+                  <span class="kept">Three findings are already on disk.</span>
+                  Resuming re-reads only what it had not finished.
+                </div>
+              </div>
+              <button class="btn btn-line btn-sm" style="margin-top:11px"><svg aria-hidden="true" width="14" height="14"><use href="#i-redo"/></svg>Resume</button>
+              <p class="hint" style="margin-top:10px">Drawn here so the failure state can be judged beside the working one. A real run shows one or the other.</p>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="wrap"><p class="mock-note"><b>Synthetic content.</b> The transcript, token count and timings are authored demonstration data.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

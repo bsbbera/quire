@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Books · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: A shelf you read by silhouette. Production type is carried by the
+  disc, not by a label, so the eye sorts novels from magazines from scripts
+  before a single title is read. It refuses the uniform card grid where every
+  item is the same box and the only difference is text.
+  OWN-WORLD: Putty ground, paper tiles, one vermilion. Filled disc = book,
+  halftone = magazine because halftone is print, ring pair = storybook, small
+  fill = short, two rules = script.
+  STORY: The maker scans the shelf, sees which two things want a read, and
+  opens one.
+  FIRST VIEWPORT: Filter pills, then the grid at 212px minimum, with New as a
+  dashed tile in the shelf rather than a floating button.
+  FORM: Inherited world, plan Part III §2. No concept seed.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">03</span><b>Books</b><span>tiles · disc identity · filters</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="02-home.html">← Prev</a><a href="index.html">All screens</a><a href="04-book.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">~/Quire</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" aria-current="page" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><a href="02-home.html">Home</a><span class="sep">/</span><h1>Books</h1></div>
+        <span class="pill mono">claude · sonnet-4.6</span>
+        <span class="pill pill-ok"><svg aria-hidden="true" width="11" height="11"><use href="#i-check"/></svg>shim ready</span>
+        <button class="gatepill" data-go="02-home.html"><span class="n tnum">3</span> waiting on you</button>
+        <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="15" height="15"><use href="#i-search"/></svg><span class="kbd">Ctrl K</span></button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section>
+            <div class="spread" style="margin-bottom:18px;align-items:flex-end">
+              <div>
+                <h2 class="h-page">Five productions, two want a read</h2>
+              </div>
+              <div class="rowflex">
+                <button class="pill" aria-pressed="true">All</button>
+                <button class="pill" aria-pressed="false">Drafting</button>
+                <button class="pill" aria-pressed="false">Waiting</button>
+                <button class="pill" aria-pressed="false">Done</button>
+              </div>
+            </div>
+
+            <div class="tiles">
+
+              <button class="tile crop" data-go="04-book.html">
+                <span class="mark mark-book"><span class="d1"></span><span class="d2"></span></span>
+                <span class="top"><span class="pill pill-warn">needs a read</span></span>
+                <h3>The Lamp Room</h3>
+                <span class="who">Chapter 9 of 22 · 71,400 words</span>
+              </button>
+
+              <button class="tile crop" data-go="04-book.html">
+                <span class="mark mark-book"><span class="d1"></span><span class="d2"></span></span>
+                <span class="top"><span class="pill pill-fill">drafting</span></span>
+                <h3>Winter Assay</h3>
+                <span class="who">Chapter 3 of 18 · 11,900 words</span>
+              </button>
+
+              <button class="tile crop" data-go="04-book.html">
+                <span class="mark mark-story"><span class="d1"></span><span class="d2"></span></span>
+                <span class="top"><span class="pill pill-ok">approved</span></span>
+                <h3>The Ferryman&rsquo;s Ledger</h3>
+                <span class="who">18 spreads · storybook</span>
+              </button>
+
+              <button class="tile crop" data-go="04-book.html">
+                <span class="mark mark-short"><span class="d1"></span></span>
+                <span class="top"><span class="pill pill-ok">approved</span></span>
+                <h3>Small Hours</h3>
+                <span class="who">One sitting · 4,800 words</span>
+              </button>
+
+              <button class="tile crop" data-go="04-book.html">
+                <span class="mark mark-script"><span class="d1"></span><span class="d2"></span></span>
+                <span class="top"><span class="pill">idle</span></span>
+                <h3>Understudy</h3>
+                <span class="who">Act 2, scene 4 · script</span>
+              </button>
+
+              <!-- New belongs in the shelf it adds to, not floating over it. -->
+              <button class="tile tile-new" data-go="28-new.html">
+                <span class="arrow" aria-hidden="true"><svg aria-hidden="true" width="18" height="18"><use href="#i-plus"/></svg></span>
+                <span style="font-size:14px;font-weight:600">Start something</span>
+                <span class="hint">book · storybook · short · script</span>
+              </button>
+
+            </div>
+          </section>
+
+          <section>
+            <div class="head" style="margin-bottom:14px">
+              <h2 style="font-size:17.5px">What the discs mean</h2>
+              <p>The silhouette is the type. It is drawn once here and never labelled again anywhere else in the app.</p>
+            </div>
+            <div class="panel">
+              <table class="spec">
+                <thead><tr><th style="width:120px">Silhouette</th><th style="width:130px">Type</th><th>Why</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="sw" style="background:var(--vermilion);opacity:.5"></span></td><td>Book</td><td>The filled disc. The default, and the heaviest mark, because a novel is the heaviest thing on the shelf.</td></tr>
+                  <tr><td><span class="sw" style="background-image:radial-gradient(currentColor 1.35px, transparent 1.45px);background-size:6px 6px;color:var(--ink-3)"></span></td><td>Magazine</td><td>Halftone. The texture is what ink on paper looks like up close, so it means print without saying so.</td></tr>
+                  <tr><td><span class="sw" style="border:1.5px solid var(--vermilion)"></span></td><td>Storybook</td><td>A pair of rings — two facing pages, which is the unit a storybook is actually written in.</td></tr>
+                  <tr><td><span class="sw" style="background:var(--vermilion);opacity:.28;width:18px;height:18px"></span></td><td>Short</td><td>The same mark, smaller. One sitting.</td></tr>
+                  <tr><td><span style="display:inline-block;width:28px"><span style="display:block;height:1.5px;background:var(--vermilion);opacity:.6"></span><span style="display:block;height:1.5px;background:var(--line);margin-top:5px;width:18px"></span></span></td><td>Script</td><td>Two rules, not a disc. A script is ruled paper and speaker names, and a circle would be a lie about its shape.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <p class="mock-note"><b>Synthetic content.</b> Titles, word counts and chapter positions are authored demonstration data.</p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

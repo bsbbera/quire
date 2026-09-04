@@ -46,3 +46,11 @@ cli-shim/engine/
 # The dev install lives in the checkout: build-dev.mjs drops the binary here.
 /quire.exe
 /.env
+
+# Local tool caches and scratch, not part of the app.
+.codegraph/
+.serena/
+m1.txt
+m2.txt
+mockhome.txt
+desktop/*.ps1

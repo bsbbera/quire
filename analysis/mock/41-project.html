@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project settings · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: The one thing this screen must never do is become a second model
+  picker. Providers and keys live in Model config; this screen only decides
+  which of the already-connected models each agent uses, and it says so at
+  the top and links across rather than duplicating a field. Everything else
+  here is a switch that changes what happens while you are not watching.
+  OWN-WORLD: Paper sections on putty, the agent routing drawn as rows of
+  agent-to-model so the mapping is legible as a sentence.
+  STORY: The maker routes the reviewer to a cheaper model and turns off
+  auto-rewrite after being burned by it once.
+  FIRST VIEWPORT: The default model, and the sentence separating this screen
+  from Model config.
+  FORM: Inherited world. Grounded in ProjectSettings.tsx and its own copy:
+  modelOverrides, notify, detection, chatUi.
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">41</span><b>Project settings</b><span>routing &middot; notifications &middot; detection</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="40-import.html">&larr; Prev</a><a href="index.html">All screens</a><a href="42-book-settings.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" aria-current="page" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span>System</span><span class="sep">/</span><h1>Project settings</h1></div>
+        <span class="pill pill-ok">saved</span>
+        <a class="btn btn-line btn-sm" href="30-providers.html" style="text-decoration:none">Open Model config</a>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop" style="padding-bottom:0">
+            <span class="disc stroke" style="width:188px;height:188px;left:-88px;top:-92px;opacity:.3"></span>
+            <h2 class="h-page">Runtime switches, not connections</h2>
+            <p class="muted" style="font-size:14px;margin-top:8px;max-width:62ch">
+              Which model each agent uses, who gets told when a background job finishes,
+              and what happens when detection fires. Providers, keys and base URLs are
+              not here on purpose &mdash; they are in
+              <span class="xref" data-go="30-providers.html">Model config</span>, and
+              having them in two places is how they last disagreed.
+            </p>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><span class="grow"><h3 class="h-panel">Agent model routing</h3><span class="dim" style="font-size:11px">Route each agent to a model. Drafting can be expensive; reviewing rarely needs to be.</span></span></div>
+            <div class="panel-body stack">
+              <label class="field"><span class="label">Global default</span>
+                <select class="input"><option>anthropic &middot; claude-opus-5</option><option>deepseek &middot; deepseek-chat</option></select>
+                <span class="hint">Used by Chat, book actions and the CLI when nothing more specific is set.</span>
+              </label>
+
+              <div class="rows">
+                <div class="row"><span class="grow"><span class="name mono">writer</span><span class="meta">drafts chapters</span></span><span class="mono dim" style="font-size:11px">anthropic &middot; claude-opus-5</span><span class="act"><button class="btn btn-quiet btn-sm">Change</button></span></div>
+                <div class="row"><span class="grow"><span class="name mono">architect</span><span class="meta">plans structure, writes direction.json</span></span><span class="mono dim" style="font-size:11px">anthropic &middot; claude-opus-5</span><span class="act"><button class="btn btn-quiet btn-sm">Change</button></span></div>
+                <div class="row"><span class="grow"><span class="name mono">reviewer</span><span class="meta">reads chapters against the truth files</span></span><span class="mono dim" style="font-size:11px">deepseek &middot; deepseek-chat</span><span class="act"><button class="btn btn-quiet btn-sm">Change</button></span></div>
+                <div class="row"><span class="grow"><span class="name mono">auditor</span><span class="meta">produces findings</span></span><span class="mono dim" style="font-size:11px">uses the default</span><span class="act"><button class="btn btn-quiet btn-sm">Change</button></span></div>
+              </div>
+              <button class="btn btn-line btn-sm" style="align-self:start"><svg aria-hidden="true" width="14" height="14"><use href="#i-plus"/></svg>Add override</button>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><span class="grow"><h3 class="h-panel">Notification channels</h3><span class="dim" style="font-size:11px">For jobs that finish while the window is closed</span></span></div>
+            <div class="panel-body stack">
+              <div class="rows">
+                <div class="row"><span class="glyph">TG</span><span class="grow"><span class="name">Telegram</span><span class="meta mono" style="font-size:11px">chat 4471&hellip;9c &middot; chapter finished, job failed</span></span><span class="pill pill-ok">on</span><span class="act"><button class="btn btn-quiet btn-sm">Edit</button></span></div>
+                <div class="row"><span class="glyph">WH</span><span class="grow"><span class="name">Webhook</span><span class="meta mono" style="font-size:11px">localhost:9000/quire &middot; everything</span></span><span class="pill">off</span><span class="act"><button class="btn btn-quiet btn-sm">Edit</button></span></div>
+              </div>
+              <button class="btn btn-line btn-sm" style="align-self:start"><svg aria-hidden="true" width="14" height="14"><use href="#i-plus"/></svg>Add channel</button>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <span class="grow"><h3 class="h-panel">AI detection</h3><span class="dim" style="font-size:11px">An external service scores a chapter, and you decide what that means</span></span>
+              <label class="checkline"><input type="checkbox" class="check" checked><span class="sr">Enable detection</span></label>
+            </div>
+            <div class="panel-body stack">
+              <div class="cols cols-a" style="align-items:start">
+                <label class="field"><span class="label">Provider</span><select class="input"><option>Originality.ai</option><option>GPTZero</option><option>Custom endpoint</option></select></label>
+                <label class="field"><span class="label">API key env var</span><input class="input mono" type="text" value="ORIGINALITY_API_KEY"><span class="hint">The name of the variable, never the key itself.</span></label>
+              </div>
+              <div class="cols cols-a" style="align-items:start">
+                <label class="field"><span class="label">Threshold</span>
+                  <div class="rowflex" style="align-items:center;gap:12px"><input class="slider" type="range" min="0" max="100" value="72"><span class="mono tnum" style="width:38px">72%</span></div>
+                  <span class="hint">Above this, the chapter is treated as a hit.</span>
+                </label>
+                <label class="field"><span class="label">Max retries</span><input class="input tnum" type="number" value="2"></label>
+              </div>
+              <label class="checkline"><input type="checkbox" class="check"><span>Rewrite automatically when a chapter is flagged</span></label>
+              <p class="hint" style="margin-top:-4px">Off. An automatic rewrite of prose you have already read is the fastest way to lose a paragraph you liked, and the flag is a guess.</p>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><span class="grow"><h3 class="h-panel">Chat interface</h3><span class="dim" style="font-size:11px">Stored in this browser, not in the project</span></span></div>
+            <div class="panel-body">
+              <label class="checkline"><input type="checkbox" class="check"><span>Expand operation details by default</span></label>
+              <p class="hint" style="margin-top:8px">When off, the &ldquo;view result&rdquo; blocks in chat start collapsed. You can still open them one at a time.</p>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

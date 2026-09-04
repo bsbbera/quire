@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reader · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: Reading takes the room back. The rail drops to icons, the stage
+  loses its padding, and the charcoal runs to the edges of the window, so the
+  only thing at full size is the book. It refuses the reading-mode convention
+  that keeps the whole application chrome and merely widens a column.
+  OWN-WORLD: Charcoal edge to edge, Literata at the reader's own measure and
+  leading, a ghost folio at the bottom right in the same numeral the rest of
+  the app uses for counts, one vermilion hairline of progress.
+  STORY: The maker settles in for forty minutes. Nothing on screen moves, and
+  the only controls are the ones that change how the text sits.
+  FIRST VIEWPORT: Prose. Everything else is at the edges.
+  FORM: Inherited world, plan Part III §12. Read mode, not Operate.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">23</span><b>Reader</b><span>full bleed · the rail steps back</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="22-doctor.html">← Prev</a><a href="index.html">All screens</a><a href="24-beauty.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen rail-thin">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">The Lamp Room · chapter 9</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <!-- The stage loses its padding here. Charcoal goes to the window edge,
+         which is the whole point of the screen. -->
+    <div class="main">
+      <div class="dark crop" style="flex:1;min-height:0;border-radius:0;display:flex;flex-direction:column">
+        <!-- Low and far left: a disc is never allowed under text, and the
+             reading bar runs the full width of this screen. -->
+        <span class="disc dots dots-light" style="width:320px;height:320px;left:-170px;bottom:-160px"></span>
+
+        <h1 class="sr">The Lamp Room, chapter 9</h1>
+        <div class="readbar" style="margin-top:0;border-top:0;padding-left:clamp(20px,4vw,54px);padding-right:clamp(20px,4vw,54px)">
+          <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="15" height="15"><use href="#i-chevL"/></svg>Chapter 8</button>
+          <div class="grow"></div>
+          <div class="ctl">
+            <span>Size</span>
+            <div class="seg" data-seg>
+              <button aria-pressed="false" style="font-size:11px">A</button>
+              <button aria-pressed="true" style="font-size:14px">A</button>
+              <button aria-pressed="false" style="font-size:14px">A</button>
+            </div>
+          </div>
+          <div class="ctl"><label for="rm">Measure</label><input class="slider" id="rm" type="range" min="46" max="86" value="66"></div>
+          <div class="ctl"><label for="rl">Leading</label><input class="slider" id="rl" type="range" min="140" max="210" value="178"></div>
+          <div class="grow"></div>
+          <span class="pill">page 3 of 9</span>
+          <button class="btn btn-quiet btn-sm">Chapter 10<svg aria-hidden="true" width="15" height="15"><use href="#i-chevR"/></svg></button>
+        </div>
+
+        <div class="scroll-y" style="flex:1;min-height:0;padding:clamp(28px,5vh,56px) clamp(20px,4vw,54px) 0;position:relative">
+          <div class="read" style="color:var(--on-char);--rm:66ch;--rl:1.78;margin:0 auto">
+            <p class="lead">Eleven weeks is a long time for a light to keep itself, and the log said nothing about it. Cormack read the last page twice on the boat over, holding it out of the spray, and found only the ordinary entries a keeper makes when there is nothing to make an entry about: wind, visibility, the hour the lamp was lit, the hour it was put out. The hand did not change. The hand did not tire. On the eleventh week it simply stopped, mid-column, as though the man writing it had been called away and meant to come back.</p>
+            <p>The tender put him off at the landing and did not wait. He watched it turn in the sound with the particular haste of a crew that has somewhere else to be, and then he carried his box up the hundred and forty steps cut into the rock, and let himself in through a door that was not locked.</p>
+            <p>Inside, everything was in its place. That was the first thing, and it took him some time to understand why it troubled him. The kitchen was swept. The brass was bright. There were two cups on the shelf above the range and both of them were clean and dry, set mouth-down the way a careful man leaves them. The oil store was full to within an inch of where the record said it should be.</p>
+            <p>He counted it again in the morning, and again on the second evening, and the figure did not move. Somebody had been burning oil at exactly the rate the book required, and writing none of it down, for seventy-seven days.</p>
+            <p>On the third night the wind came round to the north and he went up to the lamp room at half past four to find the wick already trimmed. He stood on the last step with the lamp turning above him and his hand on the rail, and he did not go in for a while.</p>
+            <p>In the morning he wrote in the log for the first time. He put the date, and the wind, and the visibility, and the hour the lamp was lit. Then he sat with the pen over the column for the keeper&rsquo;s name and, after a time, he wrote the name that was already there.</p>
+          </div>
+          <div style="height:80px"></div>
+        </div>
+
+        <!-- The folio, at the size the rest of the app gives a count. It is
+             ghosted because it is a landmark, not a control. -->
+        <div class="numeral ghost" style="position:absolute;right:clamp(20px,4vw,54px);bottom:22px;font-size:68px;pointer-events:none">03</div>
+
+        <!-- One hairline of progress along the bottom edge. -->
+        <div style="height:2px;background:var(--line-char);position:relative">
+          <div style="position:absolute;inset:0 66% 0 0;background:var(--vermilion)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

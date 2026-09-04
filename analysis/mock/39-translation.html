@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Translation · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: Translation is the one place in this app where two texts must be
+  read against each other, so the screen is built as a facing pair and
+  nothing is allowed to break that column. The glossary sits under the pair
+  because a term decision is the unit that keeps a long translation
+  consistent, and the review report is where the machine admits doubt.
+  OWN-WORLD: The two texts on paper, set in the reading face at reading size,
+  with the segment under the cursor marked on both sides at once. Vermilion
+  only marks the segment and the run action.
+  STORY: The translator disagrees with a term, fixes it once in the glossary,
+  and the rest of the book follows.
+  FIRST VIEWPORT: The facing pair, mid-chapter.
+  FORM: Inherited world. Grounded in TranslationManager.tsx: project list,
+  source and target language, segmentMax, run, preview original vs
+  translated, review report.
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">39</span><b>Translation</b><span>source &middot; target &middot; glossary &middot; review</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="38-style.html">&larr; Prev</a><a href="index.html">All screens</a><a href="40-import.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" aria-current="page" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span>Tools</span><span class="sep">/</span><span>Translation</span><span class="sep">/</span><h1>Kokoro &middot; ja &rarr; en</h1></div>
+        <span class="pill pill-warn">4 of 14 chapters</span>
+        <button class="btn btn-sm">Run translation</button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop" style="padding-bottom:0">
+            <span class="disc stroke" style="width:176px;height:176px;left:-82px;top:-86px;opacity:.3"></span>
+            <div class="rowflex" style="align-items:baseline;gap:12px;flex-wrap:wrap">
+              <h2 class="h-page" style="margin:0">Kokoro</h2>
+              <span class="pill mono">natsume s&#333;seki &middot; 1914</span>
+              <span class="pill mono">Japanese &rarr; English</span>
+              <span class="pill mono">1,200 char segments</span>
+            </div>
+            <p class="muted" style="font-size:14px;margin-top:9px;max-width:62ch">
+              Four chapters translated. The glossary below is what keeps chapter fourteen
+              calling things what chapter one called them.
+            </p>
+          </section>
+
+          <section class="panel panel-flush">
+            <div class="panel-head">
+              <span class="grow"><h3 class="h-panel">Chapter 4, segment 11</h3><span class="dim" style="font-size:11px">Original and translation, side by side</span></span>
+              <div class="seg" data-seg><button aria-pressed="true">Facing</button><button aria-pressed="false">Target only</button></div>
+            </div>
+            <div class="panel-body" style="padding:0">
+              <div class="dual" style="display:grid;grid-template-columns:1fr 1fr">
+                <div class="read" style="padding:22px 24px;border-right:1px solid var(--line)">
+                  <span class="label">Original</span>
+                  <p style="margin-top:12px;font-size:17.5px;line-height:1.95">&#31169;&#12399;&#12381;&#12398;&#26178;&#12362;&#12363;&#12375;&#12356;&#12392;&#24605;&#12387;&#12383;&#12364;&#12289;&#20808;&#29983;&#12398;&#39015;&#12434;&#35211;&#12390;&#12356;&#12427;&#12358;&#12385;&#12395;&#12289;&#33258;&#20998;&#12398;&#26041;&#12364;&#38291;&#36949;&#12387;&#12390;&#12356;&#12427;&#12424;&#12358;&#12394;&#27671;&#12364;&#12375;&#12390;&#26469;&#12383;&#12290;</p>
+                  <p class="dim" style="margin-top:14px;font-size:17.5px;line-height:1.95;opacity:.45">&#22827;&#20154;&#12399;&#20309;&#12418;&#35328;&#12431;&#12394;&#12363;&#12387;&#12383;&#12290;</p>
+                </div>
+                <div class="read" style="padding:22px 24px;background:var(--paper)">
+                  <span class="label">Translation</span>
+                  <p style="margin-top:12px;font-size:17.5px;line-height:1.95">I thought it strange at the time, but looking at <mark style="background:color-mix(in oklab, var(--vermilion) 16%, transparent);border-radius:3px;padding:1px 3px">Sensei</mark>&rsquo;s face I began to feel that it was I who was mistaken.</p>
+                  <p class="dim" style="margin-top:14px;font-size:17.5px;line-height:1.95;opacity:.45">His wife said nothing.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="cols cols-a" style="align-items:start">
+
+            <section class="panel panel-flush">
+              <div class="panel-head">
+                <span class="grow"><h3 class="h-panel">Glossary</h3><span class="dim" style="font-size:11px">Decided once, applied everywhere after</span></span>
+                <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="14" height="14"><use href="#i-plus"/></svg>Add</button>
+              </div>
+              <div class="panel-body" style="padding-top:2px;padding-bottom:12px">
+                <div class="rows">
+                  <div class="row"><span class="grow"><span class="name mono">&#20808;&#29983;</span><span class="meta">kept as <b>Sensei</b>, not &ldquo;teacher&rdquo; &middot; 148 uses</span></span><span class="pill pill-fill">locked</span></div>
+                  <div class="row"><span class="grow"><span class="name mono">&#22827;&#20154;</span><span class="meta">rendered <b>his wife</b>, never &ldquo;madam&rdquo; &middot; 41 uses</span></span><span class="pill pill-fill">locked</span></div>
+                  <div class="row"><span class="grow"><span class="name mono">&#37111;&#20489;</span><span class="meta">rendered <b>Kamakura</b> &middot; 12 uses</span></span><span class="pill">auto</span></div>
+                  <div class="row"><span class="grow"><span class="name mono">&#12371;&#12371;&#12429;</span><span class="meta">no fixed term yet &mdash; heart, mind, and the title</span></span><span class="pill pill-warn">undecided</span></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head"><span class="grow"><h3 class="h-panel">Review report</h3><span class="dim" style="font-size:11px">Where the machine is unsure</span></span></div>
+              <div class="panel-body stack">
+                <div class="finding">
+                  <span class="sev sev-warn">term</span>
+                  <span class="grow"><b>&#12371;&#12371;&#12429; is translated four different ways</b>
+                  <span class="meta">heart in ch.1, mind in ch.2, feeling in ch.3, heart in ch.4. Decide it in the glossary and the rest follows.</span></span>
+                </div>
+                <div class="finding">
+                  <span class="sev sev-warn">register</span>
+                  <span class="grow"><b>Sensei&rsquo;s speech drifts formal</b>
+                  <span class="meta">Chapters 1 to 2 keep contractions. Chapters 3 to 4 drop them, which makes him colder than the original.</span></span>
+                </div>
+                <div class="finding">
+                  <span class="sev sev-info">length</span>
+                  <span class="grow"><b>English runs 18% longer</b>
+                  <span class="meta">Normal for this pair. Noted so it is not mistaken for padding.</span></span>
+                </div>
+              </div>
+            </section>
+
+          </div>
+
+          <section class="panel panel-flush">
+            <div class="panel-head"><h3 class="h-panel">Chapters</h3><span class="grow"></span><button class="btn btn-quiet btn-sm">Export</button></div>
+            <div class="panel-body" style="padding-top:2px;padding-bottom:12px">
+              <div class="rows">
+                <div class="row"><span class="num">01</span><span class="grow"><span class="name">Sensei and I</span><span class="meta">36 segments &middot; reviewed</span></span><span class="dot dot-clean"></span></div>
+                <div class="row"><span class="num">02</span><span class="grow"><span class="name">At Kamakura</span><span class="meta">29 segments &middot; reviewed</span></span><span class="dot dot-clean"></span></div>
+                <div class="row"><span class="num">03</span><span class="grow"><span class="name">The grave</span><span class="meta">31 segments &middot; term drift flagged</span></span><span class="dot dot-warn"></span></div>
+                <div class="row" aria-current="true"><span class="num">04</span><span class="grow"><span class="name">His wife</span><span class="meta">34 segments &middot; translating now</span></span><span class="dot dot-warn"></span></div>
+                <div class="row"><span class="num dim">05</span><span class="grow"><span class="name dim">Not translated</span><span class="meta">ten chapters remain</span></span><span class="dot dot-never"></span></div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

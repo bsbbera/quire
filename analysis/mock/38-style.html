@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Style analyzer · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: This screen measures prose and then has to be honest that a
+  measurement is not a voice. So the numbers are given plainly, the patterns
+  are given as the actual phrases found, and the only action is to hand the
+  profile to a specific book &mdash; a style with nowhere to go is a party trick.
+  OWN-WORLD: A paste field on the left large enough to actually paste into,
+  the profile on the right built from four numerals and two chip fields.
+  STORY: The maker pastes two pages of a novel they admire and imports the
+  profile into a new book.
+  FIRST VIEWPORT: The paste field, empty, waiting.
+  FORM: Inherited world. Grounded in StyleManager.tsx: sourceName, textSample,
+  avgSentence, vocabDiversity, avgParagraph, sentenceStdDev, topPatterns,
+  rhetoricalFeatures, importToBook.
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">38</span><b>Style analyzer</b><span>paste &middot; measure &middot; hand to a book</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="37-genres.html">&larr; Prev</a><a href="index.html">All screens</a><a href="39-translation.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" aria-current="page" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span>Tools</span><span class="sep">/</span><h1>Style analyzer</h1></div>
+        <span class="pill mono">3 saved profiles</span>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop" style="padding-bottom:0">
+            <span class="disc stroke" style="width:186px;height:186px;left:-86px;top:-90px;opacity:.3"></span>
+            <span class="disc fill" style="width:52px;height:52px;left:-124px;top:88px;opacity:.12"></span>
+            <h2 class="h-page">Measuring prose you admire</h2>
+            <p class="muted" style="font-size:14px;margin-top:8px;max-width:62ch">
+              Paste a few pages of writing you want a book to sound like. What comes back
+              is a measurement, not a voice &mdash; useful as a constraint, useless as an
+              instruction on its own.
+            </p>
+          </section>
+
+          <div class="cols cols-a" style="align-items:start">
+
+            <section class="panel">
+              <div class="panel-head"><h3 class="h-panel">The sample</h3></div>
+              <div class="panel-body stack">
+                <label class="field"><span class="label">Where it came from</span>
+                  <input class="input" type="text" value="Shirley Jackson &mdash; We Have Always Lived in the Castle">
+                </label>
+                <label class="field"><span class="label">Text</span>
+                  <textarea class="input" rows="11" style="resize:vertical;line-height:1.65">My name is Mary Katherine Blackwood. I am eighteen years old, and I live with my sister Constance. I have often thought that with any luck at all I could have been born a werewolf, because the two middle fingers on both my hands are the same length, but I have had to be content with what I had.</textarea>
+                  <span class="hint">Two thousand words gives a stable reading. Two hundred gives noise.</span>
+                </label>
+                <div class="rowflex" style="gap:9px"><button class="btn">Analyze</button><button class="btn btn-quiet">Clear</button></div>
+              </div>
+            </section>
+
+            <section class="stack">
+              <div class="panel">
+                <div class="panel-head"><span class="grow"><h3 class="h-panel">Analysis results</h3><span class="dim" style="font-size:11px">1,940 words read</span></span></div>
+                <div class="panel-body">
+                  <div class="cols" style="grid-template-columns:1fr 1fr;gap:14px">
+                    <div><span class="label">Avg sentence length</span><div class="numeral tnum" style="font-size:34px">24.1</div><p class="dim" style="font-size:11px">words &middot; long for the genre</p></div>
+                    <div><span class="label">Sentence std dev</span><div class="numeral tnum" style="font-size:34px">18.6</div><p class="dim" style="font-size:11px">very uneven, on purpose</p></div>
+                    <div><span class="label">Vocabulary diversity</span><div class="numeral tnum" style="font-size:34px">0.41</div><p class="dim" style="font-size:11px">narrow, repeats deliberately</p></div>
+                    <div><span class="label">Avg paragraph</span><div class="numeral tnum" style="font-size:34px">3.2</div><p class="dim" style="font-size:11px">sentences</p></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="panel-body stack">
+                  <div class="field">
+                    <span class="label">Top patterns</span>
+                    <div class="rowflex" style="gap:7px;flex-wrap:wrap;margin-top:7px">
+                      <span class="chip">first person, present habit</span>
+                      <span class="chip">list of three<span class="n">11</span></span>
+                      <span class="chip">flat statement then qualifier<span class="n">9</span></span>
+                      <span class="chip">names in full<span class="n">7</span></span>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <span class="label">Rhetorical features</span>
+                    <div class="rowflex" style="gap:7px;flex-wrap:wrap;margin-top:7px">
+                      <span class="chip">understatement</span><span class="chip">refusal to explain</span>
+                      <span class="chip">domestic detail as menace</span><span class="chip">no metaphor</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="gate">
+                <span class="grow"><span class="what">Hand this profile to a book</span><span class="when">It becomes that book&rsquo;s style.json. Nothing changes until a chapter is written against it.</span></span>
+                <select class="input" style="width:170px" aria-label="Book to import the profile into"><option>The Lamp Room</option><option>The Salt House</option><option>Select book&hellip;</option></select>
+                <button class="gatepill">Import</button>
+              </div>
+            </section>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

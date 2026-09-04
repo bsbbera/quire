@@ -85,14 +85,22 @@ body{overflow:hidden}
 .cover-card p{margin:0;color:var(--muted);font-size:var(--fs-sm)}
 
 /* Floating model chip — the way into settings. */
+/* Shut until wanted. This sat in the bottom-right corner as a full-width
+   pill at all times, on top of whatever the workbench had put there — on the
+   audit screen that is the "Revise the page" button, which it covered. The
+   drawer behind it holds a location, a CLI re-scan and a version number, so
+   it does not get to keep a hundred pixels of the manuscript. */
 .fab{position:fixed;inset-block-end:var(--pad);inset-inline-end:var(--pad);z-index:20;
-  display:flex;align-items:center;gap:.5rem;max-width:calc(100% - 2*var(--pad));
-  padding:.5rem .9rem;border-radius:999px;border:1px solid var(--line);
+  display:flex;align-items:center;gap:0;max-width:calc(100% - 2*var(--pad));
+  padding:.5rem;border-radius:999px;border:1px solid var(--line);
   background:var(--panel);box-shadow:var(--shadow);cursor:pointer;
-  font-size:var(--fs-sm);font-family:var(--mono);
-  transition:transform var(--speed),box-shadow var(--speed)}
-.fab:hover{transform:translateY(-1px)}
-.fab span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  font-size:var(--fs-sm);font-family:var(--mono);opacity:.55;
+  transition:transform var(--speed),box-shadow var(--speed),
+             gap var(--speed),padding var(--speed),opacity var(--speed)}
+.fab:hover,.fab:focus-visible{transform:translateY(-1px);opacity:1;gap:.5rem;padding:.5rem .9rem}
+.fab span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  max-width:0;transition:max-width var(--speed)}
+.fab:hover span:last-child,.fab:focus-visible span:last-child{max-width:8rem}
 .fab-dot{width:.5rem;height:.5rem;border-radius:50%;background:var(--ok);flex:none}
 
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40}

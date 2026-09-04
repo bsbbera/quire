@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Section board · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: The issue is planned as columns you can push pages between, with the
+  visual world sitting at the head of each column, because in a magazine the
+  look of a section is part of its plan and not a later decision. It refuses
+  the outline-tree convention that plans a magazine as nested bullet points.
+  OWN-WORLD: Putty ground, paper columns, halftone discs for the print side,
+  one vermilion on locks and the plan gate.
+  STORY: The maker drags two pages out of a bloated section, rerolls one
+  world they dislike, locks the two they want, and approves the board.
+  FIRST VIEWPORT: Six columns across the stage, each headed by its world
+  plate, page chips underneath; the plan gate sits bottom-right where the
+  reading order ends.
+  FORM: Inherited world, plan Part III §6 Sections. No concept seed.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">11</span><b>Section board</b><span>worlds per section · drag · lock</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="10-issue-brief.html">← Prev</a><a href="index.html">All screens</a><a href="12-issue-pages.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">~/Quire/fathom/issue-04</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" aria-current="page" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span>Magazine</span><span class="sep">/</span><a href="10-issue-brief.html">Fathom 4</a><span class="sep">/</span><h1>Sections</h1></div>
+        <span class="pill">6 sections · 64 pages</span>
+        <button class="gatepill" data-go="02-home.html"><span class="n tnum">3</span> waiting on you</button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack">
+
+          <div class="tabs" data-tabs>
+            <a class="tab done" href="10-issue-brief.html" style="text-decoration:none"><i></i>Brief</a>
+            <button class="tab done" aria-selected="true"><i></i>Sections</button>
+            <a class="tab" href="12-issue-pages.html" style="text-decoration:none"><i></i>Pages</a>
+            <a class="tab" href="14-issue-build.html" style="text-decoration:none"><i></i>Build</a>
+          </div>
+
+          <div class="spread" style="margin-top:6px">
+            <div>
+              <h3 style="font-size:17.5px">The board</h3>
+              <p class="hint" style="margin-top:3px">Drag a page to move it between sections. The world at the head of a column is what every page in it will look like.</p>
+            </div>
+            <div class="rowflex">
+              <button class="btn btn-line btn-sm"><svg aria-hidden="true" width="14" height="14"><use href="#i-redo"/></svg>Reroll the unlocked worlds</button>
+            </div>
+          </div>
+
+          <div class="scroll-x" style="padding-bottom:8px">
+            <div class="board" style="min-width:1180px">
+
+              <div class="col-sec">
+                <div class="spread" style="margin-bottom:9px">
+                  <h4>Opening</h4>
+                  <span class="pill">6pp</span>
+                </div>
+                <div class="crop" data-go="19-composer.html" style="aspect-ratio:4/3;border-radius:var(--r-ctl);overflow:hidden;position:relative">
+                  <span class="plate"><span>world · ink wash on grey</span></span>
+                </div>
+                <div class="rowflex" style="margin-top:8px;gap:6px">
+                  <button class="arrow arrow-sm" aria-label="Reroll this world"><svg aria-hidden="true" width="14" height="14"><use href="#i-redo"/></svg></button>
+                  <button class="pill pill-fill" aria-pressed="true"><svg aria-hidden="true" width="11" height="11"><use href="#i-lock"/></svg>locked</button>
+                </div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">01</span>Cover</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">02</span>Contents</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">03</span>How dark is dark</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">04</span>The column of water</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">05</span>Where the light stops</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">06</span>A map with no bottom</div>
+              </div>
+
+              <div class="col-sec">
+                <div class="spread" style="margin-bottom:9px">
+                  <h4>Pressure</h4>
+                  <span class="pill">12pp</span>
+                </div>
+                <div class="crop" data-go="19-composer.html" style="aspect-ratio:4/3;border-radius:var(--r-ctl);overflow:hidden;position:relative">
+                  <span class="plate"><span>world · cyanotype blueprint</span></span>
+                </div>
+                <div class="rowflex" style="margin-top:8px;gap:6px">
+                  <button class="arrow arrow-sm" aria-label="Reroll this world"><svg aria-hidden="true" width="14" height="14"><use href="#i-redo"/></svg></button>
+                  <button class="pill" aria-pressed="false"><svg aria-hidden="true" width="11" height="11"><use href="#i-lock"/></svg>lock</button>
+                </div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">07</span>A ton on every thumbnail</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">08</span>The cup that shrank</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">09</span>Bodies with no air in them</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">10</span>Why nothing pops</div>
+                <div class="chip" data-go="13-issue-page.html" style="opacity:.55"><span class="n">11</span>Diagram spread</div>
+                <div class="chip" data-go="13-issue-page.html" style="opacity:.55"><span class="n">12</span>Diagram spread</div>
+              </div>
+
+              <div class="col-sec">
+                <div class="spread" style="margin-bottom:9px">
+                  <h4>Light</h4>
+                  <span class="pill">14pp</span>
+                </div>
+                <div class="crop" data-go="19-composer.html" style="aspect-ratio:4/3;border-radius:var(--r-ctl);overflow:hidden;position:relative">
+                  <span class="plate"><span>world · phosphor on black</span></span>
+                </div>
+                <div class="rowflex" style="margin-top:8px;gap:6px">
+                  <button class="arrow arrow-sm" aria-label="Reroll this world"><svg aria-hidden="true" width="14" height="14"><use href="#i-redo"/></svg></button>
+                  <button class="pill pill-fill" aria-pressed="true"><svg aria-hidden="true" width="11" height="11"><use href="#i-lock"/></svg>locked</button>
+                </div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">13</span>Making your own light</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">14</span>Who is signalling whom</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">15</span>The lure and the trick</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">16</span>Counting flashes</div>
+              </div>
+
+              <div class="col-sec">
+                <div class="spread" style="margin-bottom:9px">
+                  <h4>Snow</h4>
+                  <span class="pill">10pp</span>
+                </div>
+                <div class="crop" data-go="19-composer.html" style="aspect-ratio:4/3;border-radius:var(--r-ctl);overflow:hidden;position:relative">
+                  <span class="plate"><span>world · paper cut, warm grey</span></span>
+                </div>
+                <div class="rowflex" style="margin-top:8px;gap:6px">
+                  <button class="arrow arrow-sm" aria-label="Reroll this world"><svg aria-hidden="true" width="14" height="14"><use href="#i-redo"/></svg></button>
+                  <button class="pill" aria-pressed="false"><svg aria-hidden="true" width="11" height="11"><use href="#i-lock"/></svg>lock</button>
+                </div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">17</span>It is falling right now</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">18</span>What the snow is made of</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">19</span>Eating on the way down</div>
+              </div>
+
+              <div class="col-sec">
+                <div class="spread" style="margin-bottom:9px">
+                  <h4>Looking</h4>
+                  <span class="pill">16pp</span>
+                </div>
+                <div class="crop" data-go="19-composer.html" style="aspect-ratio:4/3;border-radius:var(--r-ctl);overflow:hidden;position:relative">
+                  <span class="plate"><span>world · sonar plot, two colour</span></span>
+                </div>
+                <div class="rowflex" style="margin-top:8px;gap:6px">
+                  <button class="arrow arrow-sm" aria-label="Reroll this world"><svg aria-hidden="true" width="14" height="14"><use href="#i-redo"/></svg></button>
+                  <button class="pill" aria-pressed="false"><svg aria-hidden="true" width="11" height="11"><use href="#i-lock"/></svg>lock</button>
+                </div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">27</span>Robots that go instead</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">28</span>Listening to a whole ocean</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">29</span>The map we actually have</div>
+              </div>
+
+              <div class="col-sec">
+                <div class="spread" style="margin-bottom:9px">
+                  <h4>Closing</h4>
+                  <span class="pill">6pp</span>
+                </div>
+                <div class="crop" data-go="19-composer.html" style="aspect-ratio:4/3;border-radius:var(--r-ctl);overflow:hidden;position:relative">
+                  <span class="plate"><span>world · ink wash on grey</span></span>
+                </div>
+                <div class="rowflex" style="margin-top:8px;gap:6px">
+                  <button class="arrow arrow-sm" aria-label="Reroll this world"><svg aria-hidden="true" width="14" height="14"><use href="#i-redo"/></svg></button>
+                  <button class="pill" aria-pressed="false"><svg aria-hidden="true" width="11" height="11"><use href="#i-lock"/></svg>lock</button>
+                </div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">61</span>What we still have not seen</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">62</span>Where to look next</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">63</span>Sources</div>
+                <div class="chip" data-go="13-issue-page.html"><span class="n">64</span>Back cover</div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- The plan gate. It is a gate, not a save button: approving it
+               starts sixty-four pages of copy. -->
+          <div class="gate is-open" style="margin-top:4px">
+            <span class="glyph" style="width:32px;height:32px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--vermilion);color:var(--vermilion-ink)"><svg aria-hidden="true" width="15" height="15"><use href="#i-check"/></svg></span>
+            <span class="grow">
+              <span class="what">Approve the board</span>
+              <span class="when">Six sections, four worlds locked. Approving writes the flatplan and starts the copy for all 64 pages.</span>
+            </span>
+            <button class="btn btn-line btn-sm">Reroll everything unlocked</button>
+            <button class="btn" data-toast="Board approved. Copy started for 64 pages.">Approve the board</button>
+          </div>
+
+          <p class="mock-note"><b>Stand-in artwork.</b> The world plates are labelled placeholders, not renders — a mockup ships no assets. In the app each plate is the section&rsquo;s sample spread, cropped by a disc. <b>Synthetic content:</b> sections, page titles and worlds are authored demonstration data.</p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

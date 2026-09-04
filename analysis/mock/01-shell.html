@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shell · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: The app is a desk, not a dashboard. Every screen is the same frame —
+  rail, topbar, stage — and the frame always answers two questions before any
+  content is read: what is the machine doing, and what is it waiting on me
+  for. It refuses the category default of a settings-heavy chrome that goes
+  quiet the moment you look away.
+  OWN-WORLD: Putty ground, one vermilion, charcoal reserved for the work
+  itself. Flat discs cropped by their panel. Geist throughout, Literata only
+  where prose from the pipeline appears, Geist Mono for measurement. Controls
+  6px, cards 18px, the window 22px, pills round. No gradients, no second hue.
+  STORY: The maker returns after an hour away, reads the rail run pill and the
+  waiting count without clicking, and goes straight to the one gate that needs
+  a human.
+  FIRST VIEWPORT: 196px rail left holding the mark, the sections, the live run
+  and the InkOS notice; topbar across the top with breadcrumbs left and the
+  status pills right, the waiting pill loudest; stage fills the rest.
+  FORM: Inherited world (vermilion-mockup.html), applied to a precisely
+  specified screen list — Part III of vermilion-redesign-plan.md. No concept
+  seed: the world is established and the surfaces are specified, which is the
+  case new-work.md routes away from the roll.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id">
+    <span class="n">01</span>
+    <b>Shell</b>
+    <span>rail · topbar · stage · palette</span>
+  </div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="index.html">All screens</a>
+    <a href="02-home.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+
+    <!-- Tauri overlay titlebar. Windows is the only target that ships, so the
+         controls sit where Windows puts them. -->
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span>
+      <span class="dim mono" style="font-size:11px">~/Quire</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <!-- ── Rail ──────────────────────────────────────────────────────────── -->
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <!-- ── Main ──────────────────────────────────────────────────────────── -->
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow">
+          <h1>Home</h1>
+        </div>
+
+        <span class="pill mono">claude · sonnet-4.6</span>
+        <span class="pill pill-ok"><svg aria-hidden="true" width="11" height="11"><use href="#i-check"/></svg>shim ready</span>
+        <button class="gatepill" data-go="02-home.html"><span class="n tnum">3</span> waiting on you</button>
+        <button class="btn btn-quiet btn-sm" aria-label="Search and commands">
+          <svg aria-hidden="true" width="15" height="15"><use href="#i-search"/></svg>
+          <span class="kbd">Ctrl K</span>
+        </button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section>
+            <div class="head">
+              <h2>The frame, and what it always tells you</h2>
+              <p>Nothing on this screen is a page. It is the chrome every other screen sits inside, drawn once so that twenty-five screens cannot drift from each other.</p>
+            </div>
+
+            <div class="cols cols-2">
+              <div class="panel crop">
+                <span class="disc stroke-l" style="width:150px;height:150px;right:-52px;top:-46px"></span>
+                <h3>Rail</h3>
+                <p class="note">196px, putty-2, collapsible to a 64px icon rail with the width remembered. Four production sections, then the machine: Setup, Images, Worlds. The active item grows a 3px vermilion bar from its centre rather than filling a box.</p>
+                <div class="rowflex" style="margin-top:14px">
+                  <span class="pill">wordmark</span>
+                  <span class="pill">sections</span>
+                  <span class="pill">machine</span>
+                  <span class="pill pill-fill">live run</span>
+                  <span class="pill">attribution</span>
+                </div>
+              </div>
+
+              <div class="panel crop">
+                <span class="disc fill" style="width:128px;height:128px;right:-44px;bottom:-52px;opacity:.14"></span>
+                <h3>Topbar</h3>
+                <p class="note">Breadcrumbs left, status right. The model and shim pills are quiet because they are almost always fine. The waiting pill is the one loud object in the chrome, and it is the app heartbeat: the count of gates that need a person.</p>
+                <div class="rowflex" style="margin-top:14px">
+                  <span class="pill mono">claude · sonnet-4.6</span>
+                  <span class="pill pill-ok">shim ready</span>
+                  <button class="gatepill"><span class="n tnum">3</span> waiting</button>
+                  <button class="gatepill quiet"><span class="n tnum">0</span> waiting</button>
+                </div>
+                <p class="hint" style="margin-top:10px">Right: the same pill with nothing to do. It goes quiet rather than disappearing, so its absence is never mistaken for an empty queue.</p>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="head">
+              <h2>Collapsed</h2>
+              <p>Reading takes the room back. The rail drops to icons at 64px and the reader can take the whole window.</p>
+            </div>
+            <div class="panel panel-flush" style="height:260px;overflow:hidden">
+              <div class="screen rail-thin" style="border:0;border-radius:0;box-shadow:none;grid-template-rows:1fr;height:100%">
+                <div class="rail">
+                  <div class="wordmark" style="padding-left:0;padding-right:0;justify-content:center">
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+                    <svg aria-hidden="true" width="22" height="22" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg><b>Quire</b>
+                  </div>
+                  <button class="nav" aria-current="page" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span></button>
+      <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+                  <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span></button>
+      <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+                  <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span></button>
+                  <button class="nav" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+                  <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+                </div>
+                <div class="main">
+                  <div class="stage" style="display:grid;place-items:center">
+                    <p class="dim" style="font-size:14px">Stage, at full width</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="head">
+              <h2>Command palette</h2>
+              <p>Ctrl K. Navigate, switch model, start a run, find a chapter by its first line. Charcoal, because it is a surface you work inside rather than a menu you read.</p>
+            </div>
+
+            <div class="panel panel-flush crop" style="height:330px">
+              <div class="scrim" style="position:relative;height:100%;padding-top:26px">
+                <div class="palette">
+                  <div class="q">
+                    <svg aria-hidden="true" width="17" height="17" style="color:var(--on-char-2)"><use href="#i-search"/></svg>
+                    <input value="lamp" aria-label="Search or run a command">
+                    <span class="kbd">Esc</span>
+                  </div>
+                  <div class="grp">
+                    <div class="label">Go to</div>
+                    <button class="pitem" aria-selected="true">
+                      <svg aria-hidden="true" width="16" height="16"><use href="#i-book"/></svg>
+                      The Lamp Room
+                      <span class="dim" style="margin-left:6px">chapter 9 of 22</span>
+                      <span class="tailk kbd">Enter</span>
+                    </button>
+                    <button class="pitem">
+                      <svg aria-hidden="true" width="16" height="16"><use href="#i-file"/></svg>
+                      &ldquo;The lamp room smelled of paraffin and&hellip;&rdquo;
+                      <span class="dim mono" style="margin-left:6px;font-size:11px">ch09</span>
+                    </button>
+                    <div class="label" style="margin-top:6px">Do</div>
+                    <button class="pitem">
+                      <svg aria-hidden="true" width="16" height="16"><use href="#i-pulse"/></svg>
+                      Audit The Lamp Room, chapter 9
+                    </button>
+                    <button class="pitem">
+                      <svg aria-hidden="true" width="16" height="16"><use href="#i-cpu"/></svg>
+                      Switch model&hellip;
+                      <span class="dim mono" style="margin-left:6px;font-size:11px">claude · sonnet-4.6</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <p class="mock-note">
+            <b>Synthetic content.</b> Every book, issue, chapter and percentage on these screens is authored demonstration data. No claim, number or capability here comes from anywhere but the plan and the code.
+          </p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

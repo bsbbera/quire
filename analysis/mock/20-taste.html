@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Taste · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: The machine watched what you changed and wrote down the rule it
+  thinks it learned. Each rule is shown with the evidence that produced it,
+  and nothing becomes a rule without a yes. It refuses the personalisation
+  convention where a system silently adapts and never tells you what it
+  concluded about you.
+  OWN-WORLD: The audit pattern reused exactly — findings list left, evidence
+  on charcoal right, same keys — because a proposed rule is a finding about
+  you rather than about the text.
+  STORY: The maker reads three rules the machine drafted from last quarter,
+  accepts two, and strikes one that was a coincidence.
+  FIRST VIEWPORT: The count as a numeral, the rules as a queue, the evidence
+  for the first one already on screen.
+  FORM: Inherited world, plan Part III §9 Taste, built on §5. No concept seed.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">20</span><b>Taste</b><span>rules waiting for a yes</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="19-composer.html">← Prev</a><a href="index.html">All screens</a><a href="21-setup.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">~/Quire/worlds/taste</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" aria-current="page" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><a href="18-worlds.html">Worlds</a><span class="sep">/</span><h1>Taste</h1></div>
+        <div class="seg" data-seg>
+          <a class="tab" href="18-worlds.html" style="text-decoration:none;padding:5px 11px;font-size:14px;border-radius:4px;color:var(--ink-2)">Gallery</a>
+          <a class="tab" href="19-composer.html" style="text-decoration:none;padding:5px 11px;font-size:14px;border-radius:4px;color:var(--ink-2)">Composer</a>
+          <button aria-pressed="true">Taste</button>
+        </div>
+        <span class="dim" style="font-size:11px">Move <span class="kbd">J</span> <span class="kbd">K</span> · Accept <span class="kbd">A</span> · Strike <span class="kbd">I</span></span>
+      </div>
+
+      <div class="stage">
+        <div class="wrap">
+
+          <div class="spread" style="margin-bottom:16px;align-items:flex-end">
+            <div class="rowflex" style="gap:16px;align-items:flex-end">
+              <div class="numeral" style="font-size:54px">03</div>
+              <div style="padding-bottom:5px">
+                <div style="font-size:14px;font-weight:600">rules it drafted from what you changed</div>
+                <div class="dim" style="font-size:11px">Watching Fathom 3 and 4 · 61 edits · nothing applied yet</div>
+              </div>
+            </div>
+            <span class="pill">14 rules already in force</span>
+          </div>
+
+          <div class="cols split" style="align-items:start">
+
+            <div class="panel panel-flush">
+              <div class="panel-head">
+                <h3 class="h-panel grow">Proposed</h3>
+                <span class="dim" style="font-size:11px">j / k</span>
+              </div>
+              <div class="panel-body" data-find style="padding:8px">
+
+                <button class="finding" aria-current="true">
+                  <span class="rowflex" style="gap:8px;flex-wrap:nowrap">
+                    <span class="sev sev-bad"></span>
+                    <span class="grow">
+                      <b>Never put a headline over artwork with a drawn line in it</b>
+                      <span class="cat">layout · 9 edits agree · 0 against</span>
+                    </span>
+                  </span>
+                </button>
+
+                <button class="finding">
+                  <span class="rowflex" style="gap:8px;flex-wrap:nowrap">
+                    <span class="sev sev-warn"></span>
+                    <span class="grow">
+                      <b>Opener pages get no body copy at all</b>
+                      <span class="cat">pacing · 6 edits agree · 1 against</span>
+                    </span>
+                  </span>
+                </button>
+
+                <button class="finding">
+                  <span class="rowflex" style="gap:8px;flex-wrap:nowrap">
+                    <span class="sev sev-info"></span>
+                    <span class="grow">
+                      <b>Prefer even folios on the left for diagrams</b>
+                      <span class="cat">layout · 3 edits agree · 2 against</span>
+                    </span>
+                  </span>
+                </button>
+
+              </div>
+              <div class="panel-body" style="border-top:1px solid var(--line);padding:12px 16px">
+                <p class="hint">A rule with edits against it is drawn weaker on purpose. Three agreements out of five is a coincidence, not a preference.</p>
+              </div>
+            </div>
+
+            <div class="dark crop">
+              <span class="disc dots dots-light" style="width:180px;height:180px;right:-74px;bottom:-88px"></span>
+
+              <div style="padding:20px 24px 0">
+                <div class="spread" style="align-items:flex-start">
+                  <div>
+                    <div class="label">Layout · 9 for, 0 against</div>
+                    <h3 style="font-size:17.5px;margin-top:7px;max-width:34ch">Never put a headline over artwork with a drawn line in it</h3>
+                  </div>
+                  <span class="pill">1 of 3</span>
+                </div>
+                <p class="muted" style="font-size:14px;margin-top:10px;max-width:56ch">
+                  Nine times across two issues you moved a headline off engraved or cut-paper
+                  artwork and onto a flat field. You never moved one back.
+                </p>
+              </div>
+
+              <div style="padding:18px 24px 0">
+                <div class="label">What it saw</div>
+                <div class="cands" style="grid-template-columns:repeat(3,1fr);margin-top:10px">
+                  <div class="cand" style="cursor:default">
+                    <span class="plate"><span>f3 p12 · before</span></span>
+                  </div>
+                  <div class="cand" style="cursor:default;border-color:var(--vermilion-ink)">
+                    <span class="plate"><span>f3 p12 · your edit</span></span>
+                  </div>
+                  <div class="cand" style="cursor:default">
+                    <span class="plate"><span>f4 p09 · same move</span></span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="padding:18px 24px 0">
+                <div class="label">If you accept it</div>
+                <p class="muted" style="font-size:14px;margin-top:8px;max-width:56ch">
+                  The design stage stops proposing headlines over engraving, cut paper and
+                  hand lettering. It writes into <span class="mono" style="font-size:11px">taste.json</span>,
+                  which you can edit or strike out later.
+                </p>
+              </div>
+
+              <div class="verdict" style="margin-top:20px">
+                <button class="btn" data-toast="Rule accepted. Written to taste.json."><svg aria-hidden="true" width="16" height="16"><use href="#i-check"/></svg>Make it a rule</button>
+                <button class="btn btn-line" data-toast="Struck. It will not be proposed again.">Strike it out</button>
+                <span class="grow"></span>
+                <span class="kbd">A</span><span class="kbd">I</span>
+              </div>
+            </div>
+
+          </div>
+
+          <p class="mock-note">
+            <b>Same component as the audit.</b> A proposed rule is a finding about you rather than about the text,
+            so it uses the same list, the same charcoal evidence panel and the same two keys.
+            <b>Synthetic content:</b> the rules, counts and evidence are authored demonstration data.
+          </p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

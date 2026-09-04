@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: An MCP server is a stranger you are handing tools to, so the unit
+  on this screen is not the server but the tool it exposes. Each server opens
+  to its actual tool list with a plain-language line for each, because
+  "filesystem access" is a claim and "reads and writes anything under
+  ~/Quire" is a fact.
+  OWN-WORLD: Paper cards, a tool row per capability, one warn colour reserved
+  for anything that can write outside the project.
+  STORY: The maker sees a server asking for shell access and switches it off.
+  FIRST VIEWPORT: Which servers are on, and the count of tools they add.
+  FORM: Inherited world. Grounded in McpPage.tsx.
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">32</span><b>MCP</b><span>servers &middot; tools &middot; scope</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="31-provider.html">&larr; Prev</a><a href="index.html">All screens</a><a href="33-daemon.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" aria-current="page" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span>Tools</span><span class="sep">/</span><h1>MCP</h1></div>
+        <span class="pill pill-ok">4 on</span>
+        <span class="pill mono">27 tools</span>
+        <button class="btn btn-line btn-sm"><svg aria-hidden="true" width="14" height="14"><use href="#i-plus"/></svg>Add a server</button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop" style="padding-bottom:0">
+            <span class="disc stroke" style="width:184px;height:184px;left:-88px;top:-90px;opacity:.3"></span>
+            <h2 class="h-page">Tools you are lending to the model</h2>
+            <p class="muted" style="font-size:14px;margin-top:8px;max-width:62ch">
+              Each server hands the writer a set of tools. The list under a server is
+              what it can actually do, in the words of what it does, not the words the
+              server chose for itself.
+            </p>
+          </section>
+
+          <section class="stack">
+
+            <div class="panel">
+              <div class="panel-head">
+                <span class="grow"><h3 class="h-panel">Quire filesystem</h3><span class="dim mono" style="font-size:11px">bundled &middot; stdio</span></span>
+                <span class="pill pill-ok">on</span>
+                <label class="checkline"><input type="checkbox" class="check" checked><span class="sr">Enabled</span></label>
+              </div>
+              <div class="panel-body" style="padding-top:2px">
+                <div class="rows">
+                  <div class="row"><span class="grow"><span class="name mono">read_file</span><span class="meta">Reads anything under the project folder</span></span></div>
+                  <div class="row"><span class="grow"><span class="name mono">write_file</span><span class="meta">Writes chapters and truth files. Cannot leave the project folder.</span></span></div>
+                  <div class="row"><span class="grow"><span class="name mono">list_dir</span><span class="meta">Lists the project tree</span></span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <span class="grow"><h3 class="h-panel">Web search</h3><span class="dim mono" style="font-size:11px">npx &middot; @modelcontextprotocol/server-brave</span></span>
+                <span class="pill pill-ok">on</span>
+                <label class="checkline"><input type="checkbox" class="check" checked><span class="sr">Enabled</span></label>
+              </div>
+              <div class="panel-body" style="padding-top:2px">
+                <div class="rows">
+                  <div class="row"><span class="grow"><span class="name mono">search</span><span class="meta">Sends your query to Brave. Used by Radar and era research.</span></span></div>
+                  <div class="row"><span class="grow"><span class="name mono">fetch_page</span><span class="meta">Downloads a page you or the model chose</span></span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel" style="border-color:color-mix(in oklab, var(--warn) 42%, transparent)">
+              <div class="panel-head">
+                <span class="grow"><h3 class="h-panel">Shell</h3><span class="dim mono" style="font-size:11px">local &middot; added by you, 12 March</span></span>
+                <span class="pill pill-warn">can leave the project</span>
+                <label class="checkline"><input type="checkbox" class="check"><span class="sr">Enabled</span></label>
+              </div>
+              <div class="panel-body" style="padding-top:2px">
+                <div class="rows">
+                  <div class="row"><span class="grow"><span class="name mono">run_command</span><span class="meta">Runs any command as you, anywhere on this machine. Nothing scopes it to the project.</span></span><span class="dot dot-warn"></span></div>
+                </div>
+                <p class="hint" style="margin-top:11px">Off since the last audit. Turn it on only while you are watching, and turn it off after.</p>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <span class="grow"><h3 class="h-panel">Affinity Publisher</h3><span class="dim mono" style="font-size:11px">local &middot; port 8790</span></span>
+                <span class="pill pill-ok">on</span>
+                <label class="checkline"><input type="checkbox" class="check" checked><span class="sr">Enabled</span></label>
+              </div>
+              <div class="panel-body" style="padding-top:2px">
+                <div class="rows">
+                  <div class="row"><span class="grow"><span class="name mono">place_text</span><span class="meta">Flows a page of the magazine into the open document</span></span></div>
+                  <div class="row"><span class="grow"><span class="name mono">render_spread</span><span class="meta">Screenshots a spread so a page can be checked here</span></span></div>
+                </div>
+              </div>
+            </div>
+
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

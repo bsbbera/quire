@@ -56,9 +56,25 @@ async function ssePort(ms = 2000) {
   } catch { return false; } finally { clearTimeout(t); }
 }
 
+/**
+ * The rule: Quire never opens Affinity on its own.
+ *
+ * Only a build the user asked for may start it, and it says so by passing
+ * `launch`. Everything else — status probes, doctor checks, closing a document,
+ * whatever gets written next — finds a closed port and reports it. The default
+ * is refusal rather than a launch, so a caller that forgets cannot open a
+ * licensed application on somebody's desktop by accident. The dashboard did
+ * exactly that on every single app start.
+ */
 let launching = null;
-export async function ensureRunning({ timeoutMs = 120000 } = {}) {
+export async function ensureRunning({ timeoutMs = 120000, launch = false } = {}) {
   if (await ssePort()) return { started: false };
+  if (!launch) {
+    throw new Error(
+      "Affinity is not running, and Quire does not start it on its own. "
+      + "Open Affinity (and switch on Settings > MCP Server), or start a build from the app.",
+    );
+  }
   // Two builds racing to launch the same application gets two windows and a
   // dialog, so a launch already in flight is joined rather than repeated.
   if (launching) return launching;
@@ -91,9 +107,14 @@ async function ensurePreamble() {
   preambleRead = true;
 }
 
-/** Run one script in Affinity and parse the JSON its console.log prints. */
-async function run(script, ms = 300000) {
-  await ensureRunning();
+/**
+ * Run one script in Affinity and parse the JSON its console.log prints.
+ *
+ * `launch` travels from the operation, not from here: only the ones a person
+ * starts on purpose may open the application. See `ensureRunning`.
+ */
+async function run(script, ms = 300000, { launch = false } = {}) {
+  await ensureRunning({ launch });
   await ensurePreamble();
   let r = await mcp.call("affinity", "execute_script", { script }, ms);
   if (/preamble documentation topic has not yet been read/i.test(String(r.text))) {
@@ -107,7 +128,21 @@ async function run(script, ms = 300000) {
   try { return JSON.parse(m[0]); } catch { return { raw: text }; }
 }
 
-export async function status() {
+/**
+ * What Affinity is doing, without making it do anything.
+ *
+ * Asking used to answer by launching: `run` calls `ensureRunning`, so the
+ * dashboard's status probe started Affinity every time Quire opened. A status
+ * check must never have a side effect that large, so a closed port is
+ * reported rather than opened. Pass `launch` where starting it is the point.
+ */
+export async function status({ launch = false } = {}) {
+  if (!launch && !(await ssePort())) {
+    return {
+      up: false,
+      reason: "Affinity is not running, or its MCP server is off (Settings > MCP Server)",
+    };
+  }
   try {
     const out = await run(`
       const { app } = require("/application");
@@ -119,7 +154,7 @@ export async function status() {
       // pre-judged by a probe that measures the wrong thing.
       try { o.canRead = fs.isDirectory(app.userDesktopPath); }
       catch (e) { o.canRead = false; o.readError = e.message; }
-      console.log(JSON.stringify(o));`, 30000);
+      console.log(JSON.stringify(o));`, 30000, { launch });
     return {
       up: true,
       desktop: out.desktop,
@@ -342,7 +377,7 @@ export async function build(issue, { pdf, issueDir }) {
     EXPORT(deskPdf),
   ].join("\n");
 
-  const out = await run(script, 1800000);
+  const out = await run(script, 1800000, { launch: true });
 
   if (out.exported && existsSync(deskPdf)) {
     mkdirSync(dirname(pdf), { recursive: true });
@@ -413,7 +448,7 @@ export async function openIssue(issue, { issueDir, pdf } = {}) {
     id: issue.id, desktop: st.desktop, stage, pdf,
     cfg: cfgFor(issue, stage.dir, st.desktop),
   };
-  const out = await run(CREATE_TAGGED(issue.pages.length) + `\nconsole.log(JSON.stringify({ok:true}));`, 300000);
+  const out = await run(CREATE_TAGGED(issue.pages.length) + `\nconsole.log(JSON.stringify({ok:true}));`, 300000, { launch: true });
   if (out.raw) throw new Error("could not create the build document: " + out.raw.slice(0, 200));
   return { ok: true, staged: Object.keys(stage.staged).length };
 }
@@ -470,7 +505,7 @@ export async function renderPage(issue, page, out) {
   console.log(JSON.stringify(out));
 })();`,
   ].join("\n");
-  const res = await run(script, 300000);
+  const res = await run(script, 300000, { launch: true });
   if (res.rendered && existsSync(target)) return { ok: true, image: target };
   return { ok: false, error: res.renderError || "Affinity did not write the image" };
 }

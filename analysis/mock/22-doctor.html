@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doctor · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: Health and first run are the same screen. Eight checks in order,
+  each with the fix written underneath it; walked top to bottom on day one,
+  and returned to on the day something breaks. It refuses the separate
+  onboarding wizard, which teaches a layout the user never sees again and
+  leaves the real diagnostics somewhere else.
+  OWN-WORLD: Putty ground, checks as stage-dot rows so the same vocabulary
+  that reports a pipeline reports the machine, one vermilion on the live
+  check. This is the one screen where reveals earn their keep.
+  STORY: On first launch the maker walks down eight rows, fixing two, and the
+  last dot fills. Six weeks later they come back to the same eight rows.
+  FIRST VIEWPORT: How many checks pass, as a fraction at display scale, then
+  the checks themselves.
+  FORM: Inherited world, plan Part III §10 Doctor. No concept seed.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">22</span><b>Doctor</b><span>health, and the first run, as one screen</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="21-setup.html">← Prev</a><a href="index.html">All screens</a><a href="23-reader.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">first run</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" aria-current="page" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><a href="21-setup.html">Setup</a><span class="sep">/</span><h1>Doctor</h1></div>
+        <button class="btn btn-line btn-sm"><svg aria-hidden="true" width="14" height="14"><use href="#i-redo"/></svg>Check again</button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap-read stack-lg">
+
+          <section class="crop reveal" style="padding-bottom:0">
+            <span class="disc fill" style="width:210px;height:210px;right:-104px;top:-112px;opacity:.13"></span>
+            <span class="disc stroke" style="width:104px;height:104px;right:-34px;top:-30px;opacity:.4"></span>
+            <div class="spread" style="align-items:flex-end">
+              <div>
+                <h2 class="h-page">Let us see what you have</h2>
+                <p class="muted" style="font-size:14px;margin-top:10px;max-width:52ch">
+                  Eight checks. Two want something from you; the rest are already fine.
+                  You can start writing before you fix either of them.
+                </p>
+              </div>
+              <div style="text-align:right">
+                <div class="rowflex" style="gap:2px;justify-content:flex-end;align-items:baseline">
+                  <span class="numeral" style="font-size:68px">6</span>
+                  <span class="numeral ghost" style="font-size:34px">/8</span>
+                </div>
+                <div class="label" style="margin-top:6px">passing</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel panel-flush reveal">
+            <div class="panel-body" style="padding-top:14px;padding-bottom:14px">
+              <div class="rows">
+
+                <div class="row" style="align-items:flex-start;padding:14px 4px">
+                  <span class="st done" style="margin-top:3px"><i></i></span>
+                  <span class="grow">
+                    <span class="name">A workspace on disk</span>
+                    <span class="meta mono" style="font-size:11px">~/Quire · 5 productions</span>
+                  </span>
+                  <span class="pill pill-ok">ok</span>
+                </div>
+
+                <div class="row" style="align-items:flex-start;padding:14px 4px">
+                  <span class="st done" style="margin-top:3px"><i></i></span>
+                  <span class="grow">
+                    <span class="name">At least one provider signed in</span>
+                    <span class="meta mono" style="font-size:11px">4 found · 31 models</span>
+                  </span>
+                  <span class="pill pill-ok">ok</span>
+                </div>
+
+                <div class="row" style="align-items:flex-start;padding:14px 4px">
+                  <span class="st done" style="margin-top:3px"><i></i></span>
+                  <span class="grow">
+                    <span class="name">The shim is answering</span>
+                    <span class="meta mono" style="font-size:11px">127.0.0.1:8788 · 12 ms</span>
+                  </span>
+                  <span class="pill pill-ok">ok</span>
+                </div>
+
+                <div class="row" style="align-items:flex-start;padding:14px 4px">
+                  <span class="st done" style="margin-top:3px"><i></i></span>
+                  <span class="grow">
+                    <span class="name">Reading and interface faces installed</span>
+                    <span class="meta mono" style="font-size:11px">Literata · Geist</span>
+                  </span>
+                  <span class="pill pill-ok">ok</span>
+                </div>
+
+                <!-- The live check pulses, using the same dot that reports a
+                     pipeline stage. One vocabulary for "happening now". -->
+                <div class="row" style="align-items:flex-start;padding:14px 4px">
+                  <span class="st now" style="margin-top:3px"><i></i></span>
+                  <span class="grow">
+                    <span class="name">Asking ComfyUI whether it is there</span>
+                    <span class="meta">127.0.0.1:8188</span>
+                  </span>
+                  <svg aria-hidden="true" class="spin" viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="5.4"/></svg>
+                </div>
+
+                <div class="row" style="align-items:flex-start;padding:14px 4px">
+                  <span class="st" style="margin-top:3px"><i></i></span>
+                  <span class="grow">
+                    <span class="name">A checkpoint ComfyUI can load</span>
+                    <span class="meta">The refiner is a separate download from the base model, and only the base one is here.</span>
+                    <span class="rowflex" style="margin-top:9px">
+                      <button class="btn btn-line btn-sm">Download the base model</button>
+                      <button class="btn btn-quiet btn-sm">Point at a folder I already have</button>
+                    </span>
+                  </span>
+                  <span class="pill pill-warn">wants you</span>
+                </div>
+
+                <div class="row" style="align-items:flex-start;padding:14px 4px">
+                  <span class="st" style="margin-top:3px"><i></i></span>
+                  <span class="grow">
+                    <span class="name">Affinity, for laying out issues</span>
+                    <span class="meta">Only needed for magazines. Books never touch it.</span>
+                    <span class="rowflex" style="margin-top:9px">
+                      <button class="btn btn-line btn-sm">Install the bridge</button>
+                      <button class="btn btn-quiet btn-sm">I am only writing books</button>
+                    </span>
+                  </span>
+                  <span class="pill pill-warn">wants you</span>
+                </div>
+
+                <div class="row" style="align-items:flex-start;padding:14px 4px">
+                  <span class="st done" style="margin-top:3px"><i></i></span>
+                  <span class="grow">
+                    <span class="name">MCP servers imported</span>
+                    <span class="meta mono" style="font-size:11px">3 servers · 49 tools · read from 2 apps</span>
+                  </span>
+                  <span class="pill pill-ok">ok</span>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="panel-body" style="border-top:1px solid var(--line)">
+              <div class="rowflex" style="justify-content:space-between">
+                <p class="hint" style="max-width:46ch">Neither open check stops you writing. Both stop you laying out a magazine, and the screen says which is which rather than showing one red total.</p>
+                <a class="btn" href="28-new.html" style="text-decoration:none">Start a book <svg aria-hidden="true" class="ico" width="16" height="16"><use href="#i-arrR"/></svg></a>
+              </div>
+            </div>
+          </section>
+
+          <p class="mock-note"><b>The only screen with reveals.</b> Rows rise in on first scroll here because this is the one surface someone reads top to bottom once. Every work screen renders at rest, because a screen that animates itself on every visit is a screen you learn to resent. <b>Synthetic content:</b> the check results are authored demonstration data.</p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

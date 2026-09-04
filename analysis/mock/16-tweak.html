@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tweak · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: A tweak is a small instruction about one part of a picture, so the
+  screen is a brush and a sentence, and the grid you came from stays visible
+  behind it. It refuses the full-screen editor convention that makes a small
+  correction feel like starting again.
+  OWN-WORLD: Paper drawer over the putty grid, the image at the largest size
+  the drawer allows, one vermilion dashed region, lineage as a strip of real
+  parents along the bottom.
+  STORY: The maker brushes the top third, types one sentence about the
+  headline space, and generates two variants without losing the original.
+  FIRST VIEWPORT: The image with the region already on it, the sentence field
+  under it, the lineage strip last.
+  FORM: Inherited world, plan Part III §7 Tweak drawer. No concept seed.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">16</span><b>Tweak</b><span>region brush · lineage</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="15-images.html">← Prev</a><a href="index.html">All screens</a><a href="17-library.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">comfyui · tweak</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" aria-current="page" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main" style="position:relative">
+      <div class="topbar">
+        <div class="crumbs grow"><span>Machine</span><span class="sep">/</span><a href="15-images.html">Images</a><span class="sep">/</span><h1>Tweak take 1</h1></div>
+        <span class="pill mono">phosphor-v3 · 41902</span>
+      </div>
+
+      <div class="stage">
+        <div class="wrap">
+          <div class="cands" style="opacity:.4">
+            <div class="cand"><span class="plate"><span>take 1</span></span></div>
+            <div class="cand"><span class="plate"><span>take 2</span></span></div>
+            <div class="cand"><span class="plate"><span>take 3</span></span></div>
+            <div class="cand"><span class="plate"><span>take 4</span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- The drawer sits over the grid it came from, so the take being
+           tweaked can still be compared with its siblings. -->
+      <div class="drawer">
+        <div class="drawer-head">
+          <span class="grow">
+            <h3 class="h-panel">Tweak take 1</h3>
+            <span class="dim mono" style="font-size:11px">phosphor-v3 · seed 41902 · third tweak</span>
+          </span>
+          <a class="btn btn-quiet btn-sm" href="15-images.html" aria-label="Close" style="text-decoration:none"><svg aria-hidden="true" width="16" height="16"><use href="#i-x"/></svg></a>
+        </div>
+
+        <div class="drawer-body">
+          <div class="crop" style="position:relative;aspect-ratio:1/1;max-height:38vh;margin:0 auto;border-radius:var(--r-ctl);border:1px solid var(--line);overflow:hidden">
+            <span class="plate"><span>take 1</span></span>
+            <span class="region" style="left:8%;top:6%;right:8%;height:30%"><span class="tagd">brushed</span></span>
+          </div>
+
+          <div class="rowflex" style="margin-top:12px;justify-content:space-between">
+            <div class="seg" data-seg>
+              <button aria-pressed="true"><svg aria-hidden="true" width="14" height="14"><use href="#i-pencil"/></svg>Brush</button>
+              <button aria-pressed="false"><svg aria-hidden="true" width="14" height="14"><use href="#i-x"/></svg>Erase</button>
+              <button aria-pressed="false"><svg aria-hidden="true" width="14" height="14"><use href="#i-grid"/></svg>Whole image</button>
+            </div>
+            <div class="ctl">
+              <label for="bs" style="font-size:11px;color:var(--ink-3)">Brush</label>
+              <input class="slider" id="bs" type="range" min="10" max="120" value="64">
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:18px">
+            <label for="tw">What should change in the brushed part</label>
+            <textarea class="input" id="tw" style="min-height:80px">Quieter here. Drop the second light source and leave the field almost black, so a headline can sit across it.</textarea>
+          </div>
+
+          <div class="rowflex" style="margin-top:12px">
+            <span class="hint">The rest of the image is held. Nothing outside the region is regenerated.</span>
+          </div>
+
+          <div style="margin-top:22px">
+            <div class="spread" style="margin-bottom:10px">
+              <h4 class="h-sub">Where this one came from</h4>
+              <span class="dim" style="font-size:11px">3 steps</span>
+            </div>
+            <div class="lineage">
+              <button class="node"><span class="plate"><span style="font-size:11px">seed</span></span></button>
+              <svg aria-hidden="true" width="14" height="14" class="step"><use href="#i-chevR"/></svg>
+              <button class="node"><span class="plate"><span style="font-size:11px">v2</span></span></button>
+              <svg aria-hidden="true" width="14" height="14" class="step"><use href="#i-chevR"/></svg>
+              <button class="node"><span class="plate"><span style="font-size:11px">v3</span></span></button>
+              <svg aria-hidden="true" width="14" height="14" class="step"><use href="#i-chevR"/></svg>
+              <button class="node" aria-current="true"><span class="plate"><span style="font-size:11px">now</span></span></button>
+              <span class="dim" style="font-size:11px;margin-left:8px">Any parent can be reopened. None of them are deleted.</span>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top:20px">
+            <h4 class="h-sub">What stays fixed</h4>
+            <table class="spec" style="margin-top:8px">
+              <tbody>
+                <tr><td>workflow</td><td class="mono">phosphor-v3.json</td></tr>
+                <tr><td>seed</td><td class="mono">41902 · held</td></tr>
+                <tr><td>denoise</td><td class="mono">0.62 · region only</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="drawer-foot">
+          <button class="btn" data-toast="Two variants queued. Take 1 is untouched.">Generate two variants</button>
+          <a class="btn btn-line" href="15-images.html" style="text-decoration:none">Cancel</a>
+          <span class="grow"></span>
+          <span class="hint">Take 1 is never overwritten.</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

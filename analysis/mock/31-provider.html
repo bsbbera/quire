@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One provider · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: The dangerous field on this screen is the key, so the screen is
+  built around never showing one. It is written once, stored by the shim, and
+  from then on the page reports only that a key exists and when it last
+  worked. Everything else here is the model list, because a provider you
+  cannot enumerate is a provider you cannot trust.
+  OWN-WORLD: One paper column, the model list as rows with their real limits.
+  Vermilion on the single test action.
+  STORY: The maker pastes a key, hits Test, watches four models appear.
+  FIRST VIEWPORT: The endpoint and whether the last call worked.
+  FORM: Inherited world. Grounded in ServiceDetailPage.tsx.
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">31</span><b>One provider</b><span>endpoint &middot; key &middot; models</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="30-providers.html">&larr; Prev</a><a href="index.html">All screens</a><a href="32-mcp.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" aria-current="page" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span data-go="30-providers.html">Model config</span><span class="sep">/</span><h1>DeepSeek</h1></div>
+        <span class="pill pill-ok">last call 200</span>
+        <button class="btn btn-line btn-sm">Test the connection</button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop" style="padding-bottom:0">
+            <span class="disc stroke" style="width:170px;height:170px;left:-78px;top:-84px;opacity:.3"></span>
+            <div class="rowflex" style="align-items:center;gap:14px">
+              <span class="glyph" style="width:46px;height:46px;font-size:17.5px">D</span>
+              <span class="grow">
+                <h2 class="h-page" style="margin:0">DeepSeek</h2>
+                <p class="dim mono" style="font-size:11px;margin-top:4px">api.deepseek.com/v1 &middot; connected 4 days ago</p>
+              </span>
+            </div>
+          </section>
+
+          <section class="cols cols-a" style="align-items:start">
+
+            <div class="panel">
+              <div class="panel-head"><h3 class="h-panel">The connection</h3></div>
+              <div class="panel-body stack">
+                <label class="field"><span class="label">Base URL</span>
+                  <input class="input mono" type="text" value="https://api.deepseek.com/v1">
+                </label>
+                <label class="field"><span class="label">API key</span>
+                  <input class="input mono" type="text" value="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull; 4f2a" readonly>
+                  <span class="hint">Held by the shim on this machine. Quire never reads it back and no screen will ever print it. Paste a new one to replace it.</span>
+                </label>
+                <div class="rowflex" style="gap:9px">
+                  <button class="btn">Save and test</button>
+                  <button class="btn btn-quiet">Forget this key</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><span class="grow"><h3 class="h-panel">Health</h3></span></div>
+              <div class="panel-body">
+                <div class="rows">
+                  <div class="row"><span class="grow"><span class="name">Last call</span><span class="meta">200, 1.4s, chat/completions</span></span><span class="dot dot-clean"></span></div>
+                  <div class="row"><span class="grow"><span class="name">Rate limit</span><span class="meta">no 429 in the last 500 calls</span></span><span class="dot dot-clean"></span></div>
+                  <div class="row"><span class="grow"><span class="name">Spend this month</span><span class="meta">estimated from token counts, not billed</span></span><span class="mono tnum">$14.02</span></div>
+                </div>
+              </div>
+            </div>
+
+          </section>
+
+          <section class="panel panel-flush">
+            <div class="panel-head">
+              <span class="grow"><h3 class="h-panel">Models</h3><span class="dim" style="font-size:11px">Read from the endpoint, not typed in by hand</span></span>
+              <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="14" height="14"><use href="#i-redo"/></svg>Refresh</button>
+            </div>
+            <div class="panel-body" style="padding-top:2px;padding-bottom:12px">
+              <div class="rows">
+                <div class="row"><span class="grow"><span class="name mono">deepseek-chat</span><span class="meta">64k context &middot; routed to reviewer</span></span><span class="pill pill-fill">in use</span></div>
+                <div class="row"><span class="grow"><span class="name mono">deepseek-reasoner</span><span class="meta">64k context &middot; thinks before answering</span></span><span class="pill">available</span></div>
+                <div class="row"><span class="grow"><span class="name mono">deepseek-coder</span><span class="meta">16k context</span></span><span class="pill">available</span></div>
+                <div class="row"><span class="grow"><span class="name mono">deepseek-vl</span><span class="meta">images in, text out</span></span><span class="pill">available</span></div>
+              </div>
+            </div>
+          </section>
+
+          <p class="hint">Routing a model to an agent happens in <span class="xref" data-go="41-project.html">Project settings</span>, not here. This screen owns the connection; that one owns the choice.</p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

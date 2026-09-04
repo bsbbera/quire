@@ -1,5 +1,12 @@
 # Quire workflow rule
 
+**Read `ARCHITECTURE.md` before changing anything.** It maps what exists and
+where — workspace resolution, model resolution, the model catalogue, skills,
+productions and how status is counted. It exists because the alternative was
+guessing at causes and being wrong five times in one session. Update it in the
+same change that makes it wrong.
+
+
 Three stages, three places. `desktop/stages.mjs` is the one file that names them.
 
 | Stage | Where | Written by |

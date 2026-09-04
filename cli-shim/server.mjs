@@ -3,6 +3,7 @@
 // Adapter shapes mirror Open Design's daemon runtime defs.
 // Point InkOS at: baseUrl=http://127.0.0.1:8787/v1  apiKey=local  model=<cli>/<model>
 import { createServer } from "node:http";
+import { collectMeta, newMeta, usageBody } from "./usage.mjs";
 import { spawn, execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname, extname } from "node:path";
@@ -13,6 +14,7 @@ import { homedir } from "node:os";
 import {
   buildPrompt, finishTurn, launchServers, launchServersAcp, streamableUpTo, textOf,
 } from "./harness.mjs";
+import { classify, errorBody, statusOf } from "./errors.mjs";
 
 const PORT = process.env.SHIM_PORT || 8787;
 const LANG = process.env.SHIM_LANG || "English";
@@ -115,19 +117,49 @@ const globFirst = (pattern) => {
 // JSON-RPC over stdio: initialize -> session/new -> result.
 // The full catalog lives in the `model` configOption's `values[]`; the smaller
 // `models.availableModels` is only what the CLI currently has loaded.
-function acpModelIds(result) {
+/**
+ * A CLI's models, with the names the CLI gave them.
+ *
+ * This used to return bare ids. Devin sends
+ *   { value: "glm-5-2", name: "GLM-5.2 High",
+ *     _meta: { "cognition.ai/supportsImages": false } }
+ * and the mapping kept `value` and dropped the rest — so the picker showed
+ * `glm-5-2` and the app had to guess a display name back out of the slug. It
+ * cannot be guessed: `glm-5-2` is "GLM-5.2 High", `gpt-5-6-sol` is not "GPT 5 6
+ * Sol", and no rule turns one into the other. The vendor already answered the
+ * question; this stops throwing the answer away.
+ *
+ * `supportsImages` travels for the same reason — the chat box was inferring
+ * from the id whether a model could read an attachment.
+ */
+function acpModels(result) {
   const cfg = (result?.configOptions || []).find((o) => o?.id === "model" || o?.category === "model");
   // `options` on devin's current ACP build; Open Design's copy reads `values`.
   const fromCfg = [...(cfg?.options || []), ...(cfg?.values || [])]
-    .map((v) => v?.value || v?.id).filter(Boolean);
+    .map((v) => {
+      const id = v?.value || v?.id;
+      if (!id) return null;
+      const images = v?._meta?.["cognition.ai/supportsImages"];
+      return {
+        id,
+        ...(v.name && v.name !== id ? { name: v.name } : {}),
+        ...(typeof images === "boolean" ? { supportsImages: images } : {}),
+      };
+    })
+    .filter(Boolean);
   if (fromCfg.length) return fromCfg;
-  return (result?.models?.availableModels || []).map((m) => m?.modelId).filter(Boolean);
+  return (result?.models?.availableModels || [])
+    .map((m) => (m?.modelId ? { id: m.modelId, ...(m.name ? { name: m.name } : {}) } : null))
+    .filter(Boolean);
 }
 
 // JSON-RPC over stdio: initialize -> session/new -> result.models
+// `handler.onChild` receives the spawned process so a caller can stop it; the
+// helper owns the child otherwise, and nothing else could reach it to cancel.
 function acp(bin, args, handler) {
   return new Promise((resolve, reject) => {
     const child = spawn(bin, args, { cwd: WORKSPACE, env: childEnv, windowsHide: true, stdio: ["pipe", "pipe", "ignore"] });
+    try { handler?.onChild?.(child); } catch { /* a bad hook must not lose the run */ }
     let buf = "", done = false;
     const send = (id, method, params) =>
       child.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n");
@@ -199,7 +231,7 @@ function acp(bin, args, handler) {
           continue;
         }
         if (m.id === 2 && m.result) {
-          if (!handler) return finish(acpModelIds(m.result));
+          if (!handler) return finish(acpModels(m.result));
           handler.onSession({ result: m.result, sessionId: m.result.sessionId, send, finish });
           continue;
         }
@@ -351,25 +383,53 @@ const fingerprint = (agents) => agents
   .map((a) => `${a.id}@${a.version}@${agentState.isEnabled(a.id) ? "on" : "off"}`)
   .sort().join("|");
 
-let modelCache = { at: 0, key: null, data: null };
+let modelCache = { at: 0, key: null, data: null, ttl: 0 };
+const MODELS_TTL = 300000;
+// A fallback is a guess, and a guess must not sit in the cache for as long as
+// an answer. Devin's catalogue arrives over an ACP session that can be slow or
+// refuse on the first call after a restart; when it does, the eight static
+// aliases below stood in for its 197 models and were then held for five
+// minutes and reported as the machine's real capability. Short TTL on any
+// listing that fell back, so the next request goes and asks again.
+const FALLBACK_TTL = 15000;
+
 async function listModels() {
   const agents = detect();
   const key = fingerprint(agents);
-  if (modelCache.data && modelCache.key === key && Date.now() - modelCache.at < 300000) {
+  if (modelCache.data && modelCache.key === key
+    && Date.now() - modelCache.at < (modelCache.ttl || MODELS_TTL)) {
     return modelCache.data;
   }
   const out = [];
+  let guessed = false;
   for (const a of agents) {
     // Switched off in Settings means gone, not hidden: the catalogue is what
     // every other part of the stack reads, so filtering here is the whole
     // enforcement. A disabled CLI cannot be selected because it is not there.
     if (!agentState.isEnabled(a.id)) continue;
-    let ids = [];
-    try { ids = await a.models(a.bin); } catch {}
-    if (!ids.length) ids = a.fallback || ["default"];
-    for (const id of [...new Set(ids)]) out.push({ id: `${a.id}/${id}`, object: "model", owned_by: a.id });
+    let listed = [];
+    try { listed = await a.models(a.bin); } catch {}
+    if (!listed.length) { listed = a.fallback || ["default"]; guessed = true; }
+    // Adapters answer either way: a bare id, or the object an ACP CLI sends
+    // with the name it wants shown. Normalising here rather than in each
+    // adapter keeps `name` optional — a CLI that has no display name for its
+    // models simply sends none, and the UI falls back to the id.
+    const seen = new Set();
+    for (const entry of listed) {
+      const model = typeof entry === "string" ? { id: entry } : entry;
+      if (!model?.id || seen.has(model.id)) continue;
+      seen.add(model.id);
+      out.push({
+        id: `${a.id}/${model.id}`,
+        object: "model",
+        owned_by: a.id,
+        ...(model.name ? { name: model.name } : {}),
+        ...(typeof model.supportsImages === "boolean"
+          ? { supports_images: model.supportsImages } : {}),
+      });
+    }
   }
-  modelCache = { at: Date.now(), key, data: out };
+  modelCache = { at: Date.now(), key, data: out, ttl: guessed ? FALLBACK_TTL : MODELS_TTL };
   return out;
 }
 
@@ -379,7 +439,15 @@ async function listModels() {
 // already done. So tool use is reported into the text stream as a marker,
 // never re-emitted as OpenAI tool_calls — that would tell Studio to run a tool
 // the CLI has already run.
-const toolMark = (name) => name ? `\n› ${name}\n` : "";
+// The marker carries the target as well as the name. Studio draws these as
+// the mock's "Reading first" rows, and a row that cannot say *which* file
+// was read is not worth drawing. The usage frame would be the tidier
+// channel, but `x_quire` does not survive the OpenAI client library, and
+// this text does.
+const toolMark = (name, target) =>
+  name ? `
+› ${name}${target ? ` · ${target}` : ""}
+` : "";
 
 function extractDelta(stream, line) {
   if (stream === "plain") return line + "\n";
@@ -389,7 +457,7 @@ function extractDelta(stream, line) {
       && m.event.delta?.type === "text_delta") return m.event.delta.text || "";
     if (m.type === "stream_event" && m.event?.type === "content_block_start"
       && m.event.content_block?.type === "tool_use") {
-      return toolMark(m.event.content_block.name);
+      return toolMark(m.event.content_block.name, m.event.content_block.input?.path);
     }
     return "";
   }
@@ -399,10 +467,10 @@ function extractDelta(stream, line) {
     if (m.msg?.type === "agent_message_delta") return m.msg.delta || "";
     if (m.msg?.type === "agent_message") return m.msg.message || "";
     if (m.type === "item.started" && m.item?.type === "mcp_tool_call") {
-      return toolMark(m.item.tool || m.item.name);
+      return toolMark(m.item.tool || m.item.name, m.item.arguments?.path || m.item.input?.path);
     }
     if (m.msg?.type === "mcp_tool_call_begin") {
-      return toolMark(m.msg.invocation?.tool || m.msg.tool);
+      return toolMark(m.msg.invocation?.tool || m.msg.tool, m.msg.invocation?.arguments?.path);
     }
     return "";
   }
@@ -428,8 +496,54 @@ const chunkOf = (model, delta, finish = null, calls = null) => ({
 const flatten = (msgs, tools) => buildPrompt(msgs, tools, { language: LANG });
 
 // ------------------------------------------------------------------ completion
-async function complete({ agent, model, prompt, streaming, res, fullModel, tools }) {
+/**
+ * Runs in flight, so one can be stopped.
+ *
+ * A spawned CLI was reachable from nothing: `complete()` held the child in a
+ * local and the request ended when the child did. There was no way to ask the
+ * shim to stop — so the job queue's cancel, when it comes, would have had
+ * nothing to call, and a wedged 40-minute chapter could only be ended by
+ * killing the whole shim and every other run with it.
+ *
+ * Keyed by the caller's own run id (`x-quire-run-id`), because the caller is
+ * the one who will want it back. No id means no entry: an anonymous run is
+ * still fine, it just cannot be cancelled by name.
+ */
+const RUNS = new Map();
+
+/** Stop one run. Returns false when there was nothing by that name. */
+function cancelRun(id) {
+  const run = RUNS.get(id);
+  if (!run) return false;
+  run.aborted = true;
+  try { run.stop?.(); } catch { /* already gone */ }
+  RUNS.delete(id);
+  return true;
+}
+
+/**
+ * How long a CLI may say nothing before it is presumed wedged.
+ *
+ * There was no shim-side limit at all: the client's 90s idle guard was the only
+ * thing between a hung `claude` and a request that never returned. That guard
+ * gives up on the *connection*, leaving the child process alive and holding the
+ * one concurrency slot forever. This kills the child, which is the part that
+ * matters.
+ *
+ * Generous, because a real tool loop is genuinely silent for minutes — the
+ * heartbeat keeps the connection honest meanwhile.
+ */
+const RUN_IDLE_MS = Number(process.env.SHIM_RUN_IDLE_MS) || 600_000;
+
+async function complete({ agent, model, prompt, streaming, res, fullModel, tools, runId }) {
   let got = "";
+  // What the CLI reports about the turn besides the prose. `usage.mjs` was
+  // imported and its call site written, but nothing ever created the object —
+  // so `done()` threw ReferenceError the moment a non-streaming turn finished,
+  // and an unhandled throw in a request handler takes the whole shim down with
+  // it. Every model then failed, which read downstream as "LLM returned empty
+  // response from stream": nothing was listening any more.
+  const meta = newMeta();
   // A CLI is an agent runtime: it thinks, calls its own tools, reads files, and
   // says nothing at all while it does. The client watches for *new* events and
   // gives up after 90s of quiet, so a working run that spends two minutes in a
@@ -466,9 +580,72 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
     sse(res, chunkOf(fullModel, got.slice(sentTo, limit)));
     sentTo = limit;
   };
-  const send = (t) => { if (!t) return; got += t; pump(); };
-  const done = () => {
+  /**
+   * The run's own record: how to stop it, and whether someone already has.
+   *
+   * `stop` is filled in by whichever transport ends up running below. It is set
+   * before either one starts so a cancel arriving in the first millisecond is
+   * still honoured — it marks `aborted`, and the transport checks that as soon
+   * as it has something to kill.
+   */
+  const run = { aborted: false, stop: null, idle: null };
+  if (runId) RUNS.set(runId, run);
+  const armIdle = () => {
+    clearTimeout(run.idle);
+    run.idle = setTimeout(() => {
+      run.timedOut = true;
+      try { run.stop?.(); } catch { /* already gone */ }
+    }, RUN_IDLE_MS);
+  };
+  const release = () => {
+    clearTimeout(run.idle);
+    if (runId && RUNS.get(runId) === run) RUNS.delete(runId);
+  };
+  armIdle();
+  res.on("close", release);
+
+  const send = (t) => { if (!t) return; got += t; armIdle(); pump(); };
+
+  /**
+   * A failed turn, said in a way the caller can act on.
+   *
+   * The streaming half of this used to send `finish_reason: "stop"` and
+   * `[DONE]`, which is the wire's way of saying the model finished normally.
+   * A CLI that died four paragraphs in therefore looked identical to one that
+   * had said everything it meant to, and the truncated text was written into
+   * the chapter. Ending the stream with an error frame and *no* clean finish
+   * is what makes the engine's "stream ended without a terminal event" guard
+   * fire, which is the behaviour that was wanted all along.
+   */
+  const fail = (code, detail) => {
     stopBeat();
+    release();
+    if (res.writableEnded) return;
+    const body = errorBody(code, agent.id, detail);
+    if (streaming) {
+      sse(res, body);
+      res.write("data: [DONE]\n\n");
+      res.end();
+    } else {
+      res.writeHead(statusOf(code), { "content-type": "application/json" });
+      res.end(JSON.stringify(body));
+    }
+  };
+
+  /* A bug in here used to kill the process rather than the request. The shim
+     serves every model in the app from one node process, so a throw while
+     formatting one reply took chat, pipelines and the model picker with it —
+     and `quire-ctl dev up` still reported healthy, because it only checks
+     Studio's port. One request may fail; the shim may not. */
+  const done = () => {
+    try { finish(); } catch (e) {
+      fail("internal", `shim failed to finish the turn: ${e?.message ?? e}`);
+    }
+  };
+
+  const finish = () => {
+    stopBeat();
+    release();
     if (res.writableEnded) return;
     // With a call in hand the prose around it is still the model's, but the
     // block itself is machinery and never belongs in the transcript.
@@ -480,7 +657,7 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
       res.write("data: [DONE]\n\n");
       res.end();
     } else {
-      const n = (s) => Math.ceil((s || "").length / 4);
+
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({
         id: "shim-" + Date.now(), object: "chat.completion", created: (Date.now() / 1e3) | 0,
@@ -495,7 +672,11 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
           },
           finish_reason: finish,
         }],
-        usage: { prompt_tokens: n(prompt), completion_tokens: n(got), total_tokens: n(prompt) + n(got) },
+        // A CLI that does not count reports zero here, not a guess. This used
+        // to be `Math.ceil(text.length / 4)` — a number with no provenance that
+        // every caller downstream treated as measured. Zero is legible: the
+        // ledger reads it as "this provider does not report" and shows a blank.
+        usage: usageBody(meta),
       }));
     }
   };
@@ -505,6 +686,12 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
     const sendPrompt = () => rpc(4, "session/prompt",
       { sessionId: sid, prompt: [{ type: "text", text: prompt }] });
     const handler = {
+      onChild: (proc) => {
+        run.stop = () => { try { proc.kill("SIGTERM"); } catch { /* already gone */ } };
+        // A cancel that arrived while the process was still starting has no
+        // child to kill yet; honour it the moment there is one.
+        if (run.aborted) run.stop();
+      },
       onSession: ({ result, sessionId, send: s }) => {
         rpc = s; sid = sessionId;
         if (!model || model === "default") return sendPrompt();
@@ -518,27 +705,58 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
         if (m.method === "session/update" && u?.sessionUpdate === "agent_message_chunk"
           && u.content?.type === "text") send(u.content.text);
         if (m.method === "session/update" && u?.sessionUpdate === "tool_call") {
-          send(toolMark(u.title || u.kind || u.toolCallId));
+          send(toolMark(u.title || u.kind || u.toolCallId,
+            u.locations?.[0]?.path || u.rawInput?.path));
         }
         if (m.id === 3) return sendPrompt(); // model set (or rejected) -> prompt anyway
         if (m.id === 4 && (m.result || m.error)) {
-          if (m.error) send("[devin error] " + JSON.stringify(m.error).slice(0, 500));
+          // An ACP error used to be appended to the *prose* and then finished
+          // normally, so devin failing produced a 200 whose content began
+          // "[devin error] {...}" — the same failure-as-success the spawn path
+          // had, and the same consequence: it gets written into the chapter.
+          if (m.error) {
+            const detail = JSON.stringify(m.error).slice(0, 500);
+            fail(classify({ exitCode: 1, stderr: detail }), detail);
+            return finish(null);
+          }
           done(); finish(null);
         }
       },
     };
-    try { await acp(agent.bin, DEVIN_ACP_ARGS, handler); } finally { stopBeat(); }
+    let acpError = null;
+    try { await acp(agent.bin, DEVIN_ACP_ARGS, handler); }
+    catch (e) { acpError = e; }
+    finally { stopBeat(); }
+    if (run.aborted) return fail("cancelled", "the run was cancelled");
+    if (run.timedOut) return fail("timeout", `no output for ${RUN_IDLE_MS}ms`);
+    if (acpError) {
+      // `acp()` rejects on its own idle deadline. A wedged agent is worth one
+      // fresh attempt; reported as a generic exit it would never be retried.
+      const detail = String(acpError.message || acpError);
+      return fail(/idle \d+ms/.test(detail) ? "timeout"
+        : classify({ exitCode: 1, stderr: detail }), detail);
+    }
     done();
     return;
   }
 
-  const child = spawn(agent.bin, agent.args(model),
-    { cwd: WORKSPACE, env: childEnv, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
+  let child;
+  try {
+    child = spawn(agent.bin, agent.args(model),
+      { cwd: WORKSPACE, env: childEnv, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
+  } catch (spawnError) {
+    return fail(classify({ spawnError }), spawnError.message);
+  }
+  run.stop = () => { try { child.kill("SIGTERM"); } catch { /* already gone */ } };
+  if (run.aborted) run.stop();
+  let spawnError = null;
+  child.on("error", (e) => { spawnError = e; });
   let buf = "", err = "", sawDelta = false, finalText = "", cliError = false;
   child.stdout.setEncoding("utf8");
   child.stderr.setEncoding("utf8");
   child.stderr.on("data", (c) => { err = (err + c).slice(-8000); });
   const onLine = (l) => {
+    collectMeta(agent.stream, l, meta);
     const d = extractDelta(agent.stream, l);
     if (d) { sawDelta = true; send(d); return; }
     const f = finalOf(agent.stream, l);
@@ -568,26 +786,17 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
   // --include-partial-messages only exists on newer claude builds; fall back
   // to the single final `result` event when no deltas ever arrived.
   if (!sawDelta && finalText) send(finalText);
-  if (!got && err) send("[" + agent.id + " error] " + err.trim().slice(0, 1000));
   // A CLI that failed still prints something on stdout ("API Error: Unable to
   // connect..."), and handing that back as a 200 completion made every caller
   // treat the failure as prose: it lands in a chapter, a page, a cover prompt.
-  // Exit code is the only honest signal, so a non-zero one is an HTTP error.
+  // Exit code is the only honest signal, so a non-zero one is an error — and
+  // now a coded one, so the caller can decide whether trying again is sane.
   stopBeat();
-  if ((exitCode !== 0 || cliError) && !res.writableEnded) {
+  if (run.aborted) return fail("cancelled", "the run was cancelled");
+  if (run.timedOut) return fail("timeout", `no output for ${RUN_IDLE_MS}ms`);
+  if (exitCode !== 0 || cliError || spawnError) {
     const detail = (err.trim() || got.trim() || "no output").slice(0, 1000);
-    const how = exitCode !== 0 ? "exited " + exitCode : "reported failure";
-    if (streaming) {
-      sse(res, chunkOf(fullModel, "", "stop"));
-      res.write("data: [DONE]\n\n");
-      res.end();
-    } else {
-      res.writeHead(502, { "content-type": "application/json" });
-      res.end(JSON.stringify({
-        error: { message: agent.id + " " + how + ": " + detail },
-      }));
-    }
-    return;
+    return fail(classify({ exitCode, cliError, spawnError, stderr: err, stdout: got }), detail);
   }
   done();
 }
@@ -794,7 +1003,12 @@ createServer((req, res) => {
     })());
   }
 
-  if (path === "/affinity/status") return handle(affinity.status());
+  /* Plain status never starts Affinity — the dashboard asks on every load, and
+     that launched it. A caller that is about to build says so explicitly. */
+  if (path === "/affinity/status") {
+    const launch = new URL(req.url, "http://x").searchParams.get("launch") === "1";
+    return handle(affinity.status({ launch }));
+  }
   // Affinity as a pure executor: everything it needs — copy, design decision,
   // images — is already decided and on disk by the time this is called.
   if (path === "/affinity/build" && req.method === "POST") {
@@ -885,6 +1099,17 @@ createServer((req, res) => {
 
   // Progress for the magazine workspace. Studio has its own /api/v1/events for
   // book writing; this is the same idea for a pipeline Studio knows nothing of.
+  // Stop a run by the id its caller gave it. The job queue needs exactly this
+  // and had nothing to call: a spawned CLI was reachable from no route at all,
+  // so cancelling meant killing the shim and every other run with it.
+  const runMatch = /^\/(?:v1\/)?runs\/([^/]+)$/.exec(path);
+  if (runMatch && req.method === "DELETE") {
+    return json(res, 200, { ok: true, cancelled: cancelRun(decodeURIComponent(runMatch[1])) });
+  }
+  if (path === "/v1/runs" && req.method === "GET") {
+    return json(res, 200, { runs: [...RUNS.keys()] });
+  }
+
   if (!path.endsWith("/chat/completions")) return json(res, 404, { error: { message: "not found" } });
 
   let raw = "";
@@ -915,11 +1140,17 @@ createServer((req, res) => {
       const tools = Array.isArray(body.tools) ? body.tools : [];
       await complete({ agent, model: rest.join("/"),
         prompt: flatten(body.messages || [], tools),
-        streaming, res, fullModel: wanted, tools });
+        streaming, res, fullModel: wanted, tools,
+        // The caller names its own run so it can cancel it later. A request
+        // without one still works; it just cannot be stopped by name.
+        runId: req.headers["x-quire-run-id"] || body.run_id || "" });
     } catch (e) {
       if (res.writableEnded) return;
-      if (streaming) { sse(res, chunkOf(body.model, "[shim error] " + e.message, "stop")); res.end(); }
-      else json(res, 502, { error: { message: e.message } });
+      // Same rule as a failed CLI: a stream that ends with a clean finish is
+      // indistinguishable from one that said everything it meant to.
+      const b = errorBody(classify({ exitCode: 1, stderr: e.message }), agent.id, e.message);
+      if (streaming) { sse(res, b); res.write("data: [DONE]\n\n"); res.end(); }
+      else json(res, 502, b);
     }
   });
 }).listen(PORT, "127.0.0.1", () => {

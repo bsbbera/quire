@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A book · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: Opening a book opens a conversation about it. The chapters, people
+  and truth files are a column you point at, the book's state is a column you
+  read, and the middle is where the work is actually commissioned. It refuses
+  the project-dashboard convention I drew here first — a page of panels you
+  look at and then leave to go somewhere else to do anything.
+  OWN-WORLD: The chat surface from screen 27 with a book on either side of
+  it. Charcoal conversation because the work is the work; putty columns
+  because they are chrome. One vermilion on the next action.
+  STORY: The maker sees chapter 6 failed, asks for it to be resumed in the
+  same sentence they ask for chapter 10, and never opens another screen.
+  FIRST VIEWPORT: The last exchange, the composer, and — without moving —
+  eight of twenty-two settled and what the next action is.
+  FORM: Inherited world. The app's real book route, which renders ChatPage
+  mode="book". The redesign plan draws this as a static detail page; the app
+  disagrees, and the app is what ships.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">04</span><b>A book</b><span>chat mode · book column · state column</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="03-books.html">← Prev</a><a href="index.html">All screens</a><a href="05-truth.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">~/Quire/the-lamp-room</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" aria-current="page" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main chat">
+
+      <!-- ── The book, as a column ─────────────────────────────────────────
+           Everything the conversation might need to point at. Clicking a
+           chapter attaches it to the composer; the chevron opens it to read.
+           Putty, because it is chrome and not content. -->
+      <div class="subrail">
+        <div class="subrail-head">
+          <div class="rowflex" style="gap:9px;flex-wrap:nowrap">
+            <span class="crop" style="position:relative;width:34px;height:34px;flex:none;border-radius:var(--r-ctl);border:1px solid var(--line);overflow:hidden">
+              <span class="mark mark-book" style="transform:scale(.42);transform-origin:top right"><span class="d1"></span><span class="d2"></span></span>
+            </span>
+            <span class="grow" style="min-width:0">
+              <span style="display:block;font-size:14px;font-weight:600" class="trunc">The Lamp Room</span>
+              <span class="dim" style="font-size:11px">long novel · 71,400 words</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="subrail-body">
+          <div class="grp" style="margin-top:4px">
+            <div class="label"><span>Chapters</span></div>
+            <div class="rows">
+              <button class="row" style="padding:8px 4px"><span class="num tnum" style="width:1.9em">09</span><span class="grow"><span class="name" style="font-size:14px">The keeper counts the oil</span><span class="meta">needs a read</span></span><span class="dot dot-warn"></span></button>
+              <button class="row" style="padding:8px 4px"><span class="num tnum" style="width:1.9em">08</span><span class="grow"><span class="name" style="font-size:14px">A light that does not carry</span><span class="meta">settled</span></span><span class="dot dot-clean"></span></button>
+              <button class="row" style="padding:8px 4px"><span class="num tnum" style="width:1.9em">07</span><span class="grow"><span class="name" style="font-size:14px">What the tide left</span><span class="meta">settled</span></span><span class="dot dot-clean"></span></button>
+              <button class="row" style="padding:8px 4px"><span class="num tnum" style="width:1.9em">06</span><span class="grow"><span class="name" style="font-size:14px">The assay office</span><span class="meta">stopped at 2,400</span></span><span class="dot dot-bad"></span></button>
+              <button class="row" style="padding:8px 4px"><span class="num tnum" style="width:1.9em">05</span><span class="grow"><span class="name" style="font-size:14px">Nine fathoms and holding</span><span class="meta">settled</span></span><span class="dot dot-clean"></span></button>
+            </div>
+            <button class="btn btn-quiet btn-sm" style="margin-top:6px;width:100%;justify-content:center">All 22</button>
+          </div>
+
+          <div class="grp">
+            <div class="label"><span>People</span></div>
+            <div class="rows">
+              <button class="row" style="padding:8px 4px"><span class="grow"><span class="name" style="font-size:14px">Cormack</span><span class="meta">relief keeper · limps left</span></span></button>
+              <button class="row" style="padding:8px 4px"><span class="grow"><span class="name" style="font-size:14px">Drennan</span><span class="meta">the keeper who is not there</span></span></button>
+            </div>
+          </div>
+
+          <div class="grp">
+            <div class="label"><span>Truth</span></div>
+            <div class="rows">
+              <button class="row" data-go="05-truth.html" style="padding:8px 4px"><span class="grow"><span class="name mono" style="font-size:11px">direction.json</span></span><span class="pill pill-fill" style="font-size:11px">direction</span></button>
+              <button class="row" data-go="05-truth.html" style="padding:8px 4px"><span class="grow"><span class="name mono" style="font-size:11px">continuity.json</span></span><span class="pill" style="font-size:11px">rules</span></button>
+              <button class="row" data-go="05-truth.html" style="padding:8px 4px"><span class="grow"><span class="name mono" style="font-size:11px">memory.json</span><span class="meta">2 new this week</span></span></button>
+            </div>
+            <button class="btn btn-quiet btn-sm" data-go="05-truth.html" style="margin-top:6px;width:100%;justify-content:center">All nine files</button>
+          </div>
+
+          <div class="grp">
+            <div class="label"><span>Style and world</span></div>
+            <div class="rowflex" style="gap:5px;padding:0 4px">
+              <span class="pill" style="font-size:11px">Coastal gothic</span>
+              <span class="pill" style="font-size:11px">Restrained</span>
+              <span class="pill" style="font-size:11px">No epigraphs</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── The conversation ───────────────────────────────────────────── -->
+      <div class="convo">
+
+        <div class="topbar">
+          <div class="crumbs grow"><a href="03-books.html">Books</a><span class="sep">/</span><h1>The Lamp Room</h1></div>
+          <span class="pill mono">claude · sonnet-4.6</span>
+          <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="15" height="15"><use href="#i-plus"/></svg>New session</button>
+        </div>
+
+        <div class="dark crop">
+          <span class="disc dots dots-light" style="width:250px;height:250px;right:-120px;top:-128px"></span>
+
+          <div class="scroll-y" style="flex:1;min-height:0;padding:24px clamp(16px,3vw,32px) 8px">
+            <div class="thread" style="max-width:800px;margin:0 auto">
+
+              <div class="msg">
+                <span class="who-av human">SB</span>
+                <div class="body">
+                  <div class="tag">You · 12 minutes ago</div>
+                  <p style="font-size:14px;line-height:1.6;color:var(--on-char)">
+                    Chapter 6 stopped in the middle. Resume it, and once it settles start
+                    chapter 10 &mdash; I do not want to sit here while it runs.
+                  </p>
+                  <div class="rowflex" style="margin-top:9px;gap:6px">
+                    <span class="attach"><svg aria-hidden="true" width="12" height="12"><use href="#i-file"/></svg>ch06.draft.md</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="msg">
+                <span class="who-av model">Q</span>
+                <div class="body">
+                  <div class="tag">Two runs, queued</div>
+                  <div class="stack" style="gap:7px;margin-top:2px">
+                    <div class="tool"><svg aria-hidden="true" width="14" height="14" class="tick"><use href="#i-check"/></svg>Resumed <span class="mono">ch06</span> from the last full paragraph<span class="grow"></span><span class="mono dim" style="font-size:11px">2,400 → 3,180</span></div>
+                    <div class="tool"><svg aria-hidden="true" width="14" height="14" class="tick"><use href="#i-check"/></svg>Settled <span class="mono">ch06</span><span class="grow"></span><span class="mono dim" style="font-size:11px">no findings</span></div>
+                    <div class="tool"><svg aria-hidden="true" class="spin" viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="5.4"/></svg>Auditing <span class="mono">ch09</span> first, because it is blocking</div>
+                  </div>
+                  <p style="font-size:14px;line-height:1.6;color:var(--on-char);margin-top:12px">
+                    Chapter 6 is whole again and settled. I put the chapter 9 audit ahead of
+                    chapter 10, because a blocked chapter behind a new one is how the limp got
+                    two legs in the first place<span class="caret"></span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="msg">
+                <span class="who-av model">Q</span>
+                <div class="body">
+                  <div class="tag">One thing before chapter 10</div>
+                  <div class="fail" style="border-color:color-mix(in oklab, var(--warn) 55%, transparent)">
+                    <svg aria-hidden="true" width="16" height="16" style="color:var(--warn);margin-top:1px"><use href="#i-alert"/></svg>
+                    <div>
+                      <b style="color:var(--warn)">Chapter 9 has a finding that blocks it.</b>
+                      <span class="kept">Everything else is settled.</span>
+                      Chapter 10 opens on the morning after chapter 9, so the limp needs deciding first.
+                    </div>
+                    <a class="btn btn-line btn-sm" href="08-audit.html" style="margin-left:auto;text-decoration:none">Open the audit</a>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="composer">
+            <div style="max-width:800px;margin:0 auto">
+              <div class="quick">
+                <button class="pill"><svg aria-hidden="true" width="11" height="11"><use href="#i-pencil"/></svg>Write chapter 10</button>
+                <button class="pill"><svg aria-hidden="true" width="11" height="11"><use href="#i-pulse"/></svg>Audit the whole book</button>
+                <button class="pill"><svg aria-hidden="true" width="11" height="11"><use href="#i-eye"/></svg>Where is this going?</button>
+                <button class="pill"><svg aria-hidden="true" width="11" height="11"><use href="#i-file"/></svg>Summarise 1&ndash;9 for me</button>
+              </div>
+              <div class="box">
+                <textarea placeholder="Ask for a chapter, a revision, a fact check. Click anything in the left column to attach it." aria-label="Message"></textarea>
+                <div class="tools">
+                  <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="15" height="15"><use href="#i-clip"/></svg>Attach</button>
+                  <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="15" height="15"><use href="#i-skill"/></svg>Skills</button>
+                  <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="15" height="15"><use href="#i-cpu"/></svg><span class="mono" style="font-size:11px">sonnet-4.6</span><svg aria-hidden="true" width="13" height="13"><use href="#i-chevD"/></svg></button>
+                  <span class="grow"></span>
+                  <span class="dim" style="font-size:11px"><span class="kbd">Enter</span> sends</span>
+                  <button class="btn btn-sm" aria-label="Send"><svg aria-hidden="true" width="15" height="15"><use href="#i-send"/></svg></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Where the book is ──────────────────────────────────────────────
+           The overview the plan drew as a whole screen. It is a column,
+           because you read it while doing something else and never only to
+           look at it. -->
+      <div class="subrail">
+        <div class="subrail-head">
+          <div class="rowflex" style="justify-content:space-between;align-items:flex-end">
+            <div>
+              <div class="numeral" style="font-size:43px">08</div>
+              <div class="label" style="margin-top:5px">of 22 settled</div>
+            </div>
+            <svg aria-hidden="true" class="ring" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19" style="stroke:var(--line)"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:76"/></svg>
+          </div>
+        </div>
+
+        <div class="subrail-body">
+          <div class="label" style="padding:0 4px 8px"><span>Chapter 9 is at</span></div>
+          <div class="rows">
+            <div class="row" style="padding:8px 4px"><span class="st done" style="gap:9px"><i></i>plan</span></div>
+            <div class="row" style="padding:8px 4px"><span class="st done" style="gap:9px"><i></i>draft</span></div>
+            <div class="row" style="padding:8px 4px"><span class="st now" style="gap:9px"><i></i>audit</span><span class="grow"></span><span class="meta">62%</span></div>
+            <div class="row" style="padding:8px 4px"><span class="st" style="gap:9px"><i></i>revise</span></div>
+            <div class="row" style="padding:8px 4px"><span class="st" style="gap:9px"><i></i>settle</span></div>
+          </div>
+
+          <div class="grp">
+            <div class="label" style="padding:0 4px 8px"><span>Waiting on you</span></div>
+            <div class="gate is-open" style="padding:11px 12px">
+              <span class="grow">
+                <span class="what">Chapter 9 needs a read</span>
+                <span class="when">3,120 words · 6 findings</span>
+              </span>
+            </div>
+            <a class="btn" href="07-review.html" style="margin-top:8px;width:100%;justify-content:center;text-decoration:none">
+              Read it <svg aria-hidden="true" class="ico" width="15" height="15"><use href="#i-arrR"/></svg>
+            </a>
+            <button class="btn btn-line btn-sm" style="margin-top:6px;width:100%;justify-content:center">Write chapter 10 anyway</button>
+          </div>
+
+          <div class="grp">
+            <div class="label" style="padding:0 4px 8px"><span>Made in this session</span></div>
+            <div class="rows">
+              <button class="row" data-go="06-chapter.html" style="padding:9px 4px">
+                <span class="dot dot-clean"></span>
+                <span class="grow"><span class="name mono" style="font-size:11px">ch06.md</span><span class="meta">3,180 words · settled</span></span>
+              </button>
+              <button class="row" data-go="08-audit.html" style="padding:9px 4px">
+                <span class="dot dot-warn"></span>
+                <span class="grow"><span class="name mono" style="font-size:11px">ch09.findings.json</span><span class="meta">6 findings · 1 blocks</span></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="grp">
+            <table class="spec">
+              <tbody>
+                <tr><td>words</td><td class="mono">71,400</td></tr>
+                <tr><td>target</td><td class="mono">70,400</td></tr>
+                <tr><td>model</td><td class="mono">sonnet-4.6</td></tr>
+                <tr><td>folder</td><td class="mono">the-lamp-room</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

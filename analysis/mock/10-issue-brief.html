@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Issue brief · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: An issue is a pipeline, so the tab strip is the pipeline and not a
+  filing cabinet. Done stages carry the filled dot, the live one pulses, and
+  the strip never reorders. It refuses the settings-tabs convention where the
+  tabs are categories of form fields in arbitrary order.
+  OWN-WORLD: Putty ground, halftone discs because this is the print side of
+  the app, one vermilion on the live tab and the pillars.
+  STORY: The maker reads back what they told the machine the issue was for,
+  edits one pillar, and moves to the section board.
+  FIRST VIEWPORT: Issue title with the issue number at display scale, the
+  pipeline strip immediately under it, then the intake answers as prose the
+  maker actually wrote.
+  FORM: Inherited world, plan Part III §6 Brief. No concept seed.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">10</span><b>Issue brief</b><span>intake · pillars</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="09-run.html">← Prev</a><a href="index.html">All screens</a><a href="11-issue-sections.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">~/Quire/fathom/issue-04</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" aria-current="page" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><a href="02-home.html">Home</a><span class="sep">/</span><span>Magazine</span><span class="sep">/</span><h1>Fathom 4</h1></div>
+        <span class="pill mono">claude · sonnet-4.6</span>
+        <span class="pill pill-warn">3 pages at the beauty gate</span>
+        <button class="gatepill" data-go="02-home.html"><span class="n tnum">3</span> waiting on you</button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop" style="padding-bottom:0">
+            <span class="disc dots" style="width:190px;height:190px;right:-80px;top:-92px;opacity:.35"></span>
+            <div class="spread" style="align-items:flex-end">
+              <h2 class="h-page">What the Deep Sea Knows</h2>
+              <div class="numeral ghost" style="font-size:68px">04</div>
+            </div>
+
+            <!-- The strip is the pipeline. It never reorders, and a done stage
+                 keeps its filled dot so the shape of the run stays readable. -->
+            <div class="tabs" style="margin-top:20px" data-tabs>
+              <button class="tab done" aria-selected="true"><i></i>Brief</button>
+              <a class="tab done" href="11-issue-sections.html" style="text-decoration:none"><i></i>Sections</a>
+              <a class="tab" href="12-issue-pages.html" style="text-decoration:none"><i></i>Pages</a>
+              <a class="tab" href="14-issue-build.html" style="text-decoration:none"><i></i>Build</a>
+            </div>
+          </section>
+
+          <section class="cols cols-a" style="align-items:start">
+
+            <div class="stack">
+              <div class="panel">
+                <h3 class="h-panel">What you told it</h3>
+                <p class="note" style="font-size:14px">Intake, in your own words. Editing here re-plans the sections; it does not touch pages that are already laid out.</p>
+
+                <div class="stack" style="gap:16px;margin-top:16px">
+                  <div class="field">
+                    <label for="a1">Who is this issue for</label>
+                    <textarea class="input" id="a1">Nine to twelve. Reads well, but has never been told that most of the ocean is dark and always has been.</textarea>
+                  </div>
+                  <div class="field">
+                    <label for="a2">The one thing they should still know in a year</label>
+                    <textarea class="input" id="a2">The deep sea is not empty and it is not quiet. It is the largest place life lives, and we have seen almost none of it.</textarea>
+                  </div>
+                  <div class="field">
+                    <label for="a3">What this issue must not do</label>
+                    <textarea class="input" id="a3">No monsters. No "scientists were shocked". Nothing that treats a real animal as a punchline.</textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <h3 class="h-panel">Pillars</h3>
+                <p class="note" style="font-size:14px">Four ideas the issue keeps coming back to. Every page is assigned to one, and a page that fits none is a page that gets cut.</p>
+                <div class="rowflex" style="margin-top:14px">
+                  <span class="pill pill-fill">Pressure is a place<button class="btn btn-quiet btn-sm" style="padding:0 0 0 6px;color:inherit" aria-label="Remove"><svg aria-hidden="true" width="11" height="11"><use href="#i-x"/></svg></button></span>
+                  <span class="pill pill-fill">Light you make yourself<button class="btn btn-quiet btn-sm" style="padding:0 0 0 6px;color:inherit" aria-label="Remove"><svg aria-hidden="true" width="11" height="11"><use href="#i-x"/></svg></button></span>
+                  <span class="pill pill-fill">Snow that is not snow<button class="btn btn-quiet btn-sm" style="padding:0 0 0 6px;color:inherit" aria-label="Remove"><svg aria-hidden="true" width="11" height="11"><use href="#i-x"/></svg></button></span>
+                  <span class="pill pill-fill">How we look without going<button class="btn btn-quiet btn-sm" style="padding:0 0 0 6px;color:inherit" aria-label="Remove"><svg aria-hidden="true" width="11" height="11"><use href="#i-x"/></svg></button></span>
+                  <button class="pill"><svg aria-hidden="true" width="11" height="11"><use href="#i-plus"/></svg>Add</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="stack">
+              <div class="panel crop">
+                <span class="disc dots" style="width:130px;height:130px;right:-56px;bottom:-62px;opacity:.3"></span>
+                <h3 class="h-panel">The shape of it</h3>
+                <div class="rows" style="margin-top:10px">
+                  <div class="row" style="padding:11px 4px"><span class="grow"><span class="name">64 pages</span><span class="meta">6 sections · 4 pillars</span></span></div>
+                  <div class="row" style="padding:11px 4px"><span class="grow"><span class="name">28 laid out</span><span class="meta">3 waiting on your eye</span></span><span class="pill pill-warn">judge</span></div>
+                  <div class="row" style="padding:11px 4px"><span class="grow"><span class="name">41 pieces of artwork</span><span class="meta">12 kept · 6 in the queue</span></span></div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <h3 class="h-panel">Research it stands on</h3>
+                <p class="note" style="font-size:14px">Every claim in the issue traces to one of these. A page with no source cannot pass the copy gate.</p>
+                <div class="rows" style="margin-top:10px">
+                  <div class="row" style="padding:10px 4px"><span class="grow"><span class="name">Sinking particles and the biological pump</span><span class="meta mono" style="font-size:11px">reviewed · 2 pages cite it</span></span><svg aria-hidden="true" width="15" height="15" class="dim"><use href="#i-chevR"/></svg></div>
+                  <div class="row" style="padding:10px 4px"><span class="grow"><span class="name">Counting bioluminescence on a transect</span><span class="meta mono" style="font-size:11px">reviewed · 4 pages cite it</span></span><svg aria-hidden="true" width="15" height="15" class="dim"><use href="#i-chevR"/></svg></div>
+                  <div class="row" style="padding:10px 4px"><span class="grow"><span class="name">Hadal amphipod survey</span><span class="meta mono" style="font-size:11px">needs a second source</span></span><span class="pill pill-warn">thin</span></div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <h3 class="h-panel">Next</h3>
+                <p class="note" style="font-size:14px">The brief is settled. The board is where the issue stops being an idea.</p>
+                <a class="btn" href="11-issue-sections.html" style="margin-top:12px;text-decoration:none">Open the section board <svg aria-hidden="true" class="ico" width="16" height="16"><use href="#i-arrR"/></svg></a>
+              </div>
+            </div>
+
+          </section>
+
+          <p class="mock-note"><b>Synthetic content.</b> The issue, its pillars, page counts and research titles are authored demonstration data.</p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

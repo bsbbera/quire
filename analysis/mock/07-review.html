@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: Judging a chapter is reading it, not filling in a form. The verdict
+  bar lives inside the reading card and sticks to its bottom edge, so the
+  decision is made where the evidence is. It refuses the review-queue pattern
+  that shows a summary and asks you to approve something you are not looking at.
+  OWN-WORLD: The same charcoal reading card as chapter 6, plus one sticky bar
+  in the same charcoal, one vermilion primary, one outlined refusal.
+  STORY: The maker reaches the end of the chapter, the bar is already there,
+  they approve, and the next waiting chapter deals itself in from the right.
+  FIRST VIEWPORT: Prose. The bar is at the bottom of the card from the start,
+  not revealed on scroll, because a hidden control is a control you hunt for.
+  FORM: Inherited world, plan Part III §4 review mode. No concept seed.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">07</span><b>Review</b><span>approve · reject with a note</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="06-chapter.html">← Prev</a><a href="index.html">All screens</a><a href="08-audit.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">~/Quire/the-lamp-room/ch09.md</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" aria-current="page" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><a href="03-books.html">Books</a><span class="sep">/</span><a href="04-book.html">The Lamp Room</a><span class="sep">/</span><h1>Chapter 9</h1></div>
+        <span class="pill pill-warn">1 of 2 waiting</span>
+        <button class="btn btn-quiet btn-sm">Next waiting<svg aria-hidden="true" width="15" height="15"><use href="#i-chevR"/></svg></button>
+        <button class="gatepill" data-go="02-home.html"><span class="n tnum">3</span> waiting on you</button>
+      </div>
+
+      <div class="stage" style="padding-bottom:34px">
+        <div class="wrap-read">
+
+          <div class="dark crop">
+            <span class="disc dots dots-light" style="width:230px;height:230px;left:-96px;bottom:-118px"></span>
+            <span class="disc stroke" style="width:132px;height:132px;right:-58px;top:-62px;opacity:.45"></span>
+
+            <div class="readhead">
+              <div class="grow">
+                <h2 class="dual" style="font-size:27.5px">
+                  <span class="provenance">The Lamp Room · drafted 4 minutes ago</span>
+                  The keeper counts the oil
+                </h2>
+              </div>
+              <div class="numeral" style="font-size:68px">09</div>
+            </div>
+
+            <div class="readbar">
+              <div class="ctl">
+                <span>Size</span>
+                <div class="seg" data-seg>
+                  <button aria-pressed="false" style="font-size:11px">A</button>
+                  <button aria-pressed="true" style="font-size:14px">A</button>
+                  <button aria-pressed="false" style="font-size:14px">A</button>
+                </div>
+              </div>
+              <div class="grow"></div>
+              <span class="pill">3,120 words</span>
+              <a class="pill pill-warn" href="08-audit.html" style="text-decoration:none">6 findings</a>
+            </div>
+
+            <div style="padding:26px 26px 0">
+              <div class="read" style="color:var(--on-char);--rm:64ch">
+                <p class="lead">Eleven weeks is a long time for a light to keep itself, and the log said nothing about it. Cormack read the last page twice on the boat over, holding it out of the spray, and found only the ordinary entries a keeper makes when there is nothing to make an entry about.</p>
+                <p>The tender put him off at the landing and did not wait. He watched it turn in the sound with the particular haste of a crew that has somewhere else to be, and then he carried his box up the hundred and forty steps cut into the rock, and let himself in through a door that was not locked.</p>
+                <p>Inside, everything was in its place. That was the first thing, and it took him some time to understand why it troubled him. The kitchen was swept. <mark>He set the box down and favoured his right leg going up the last flight</mark>, and stood a while in the lamp room with his hand on the rail.</p>
+                <p>He counted the oil again in the morning, and again on the second evening, and the figure did not move. Somebody had been burning it at exactly the rate the book required, and writing none of it down, for seventy-seven days.</p>
+              </div>
+            </div>
+
+            <!-- The verdict bar. Sticky to the card, not the page: approving
+                 never means scrolling back up to find the control. -->
+            <div class="verdict">
+              <button class="btn" data-toast="Chapter 9 approved. The next waiting chapter is chapter 4 of Winter Assay.">
+                <svg aria-hidden="true" width="16" height="16"><use href="#i-check"/></svg>Approve
+              </button>
+              <button class="btn btn-line">Reject with a note</button>
+              <span class="grow"></span>
+              <span class="muted" style="font-size:11px">Approving settles the chapter and starts chapter 10.</span>
+              <span class="kbd">A</span>
+            </div>
+          </div>
+
+          <div class="cols cols-2" style="margin-top:16px">
+            <div class="panel">
+              <h3 class="h-panel">If you reject it</h3>
+              <p class="note" style="font-size:14px">The note is the instruction for the rewrite, so it is written here rather than chosen from a list of reasons.</p>
+              <div class="field" style="margin-top:12px">
+                <label for="note">What is wrong with it</label>
+                <textarea class="input" id="note" placeholder="The limp swapped legs. Chapter 3 has it on the left.">The limp swapped legs. Chapter 3 has it on the left, and continuity.json agrees with chapter 3.</textarea>
+              </div>
+              <div class="rowflex" style="margin-top:12px">
+                <button class="btn btn-line btn-sm">Rewrite from the note</button>
+                <span class="hint">The draft stays on disk either way.</span>
+              </div>
+            </div>
+
+            <div class="panel crop">
+              <span class="disc stroke-l" style="width:140px;height:140px;right:-60px;bottom:-66px"></span>
+              <h3 class="h-panel">The marked passage</h3>
+              <p class="note" style="font-size:14px">One highlight in the prose above. Clicking it opens the finding that made the mark.</p>
+              <div class="rows" style="margin-top:10px">
+                <a class="row" href="08-audit.html" style="text-decoration:none">
+                  <span class="finding sev sev-bad" style="width:8px;height:8px;border-radius:50%;padding:0"></span>
+                  <span class="grow"><span class="name">The limp changed legs</span><span class="meta">continuity · against chapter 3 and continuity.json</span></span>
+                  <svg aria-hidden="true" width="15" height="15" class="dim"><use href="#i-chevR"/></svg>
+                </a>
+              </div>
+              <p class="hint" style="margin-top:12px">Five more findings are warnings or notes, and none of them block approval.</p>
+            </div>
+          </div>
+
+          <p class="mock-note"><b>Synthetic content.</b> The chapter, the finding and the rejection note are authored demonstration data.</p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

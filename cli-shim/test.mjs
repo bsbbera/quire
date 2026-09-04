@@ -85,6 +85,57 @@ const bad = await fetch(`${BASE}/v1/chat/completions`, {
 });
 check("unknown cli -> 400", () => assert.equal(bad.status, 400));
 
+// ------------------------------------------------------------------------ runs
+// A spawned CLI used to be reachable from no route at all: stopping one meant
+// killing the shim and taking every other run with it.
+console.log("runs:");
+const runsList = await fetch(`${BASE}/v1/runs`).then((r) => r.json());
+check("the registry answers with a list", () => assert.ok(Array.isArray(runsList.runs)));
+const noSuch = await fetch(`${BASE}/v1/runs/definitely-not-running`, { method: "DELETE" })
+  .then((r) => r.json());
+check("cancelling nothing says so rather than failing", () => {
+  assert.equal(noSuch.ok, true);
+  assert.equal(noSuch.cancelled, false);
+});
+
+if (LIVE) {
+  // The one that matters: a run in flight is listed, stops when asked, and the
+  // stream it was feeding ends as an error rather than a clean finish. A
+  // cancelled turn that reports `finish_reason: "stop"` is indistinguishable
+  // from a complete one, and the half-written text lands in a chapter.
+  console.log("cancellation (live):");
+  const id = "test-cancel-" + Date.now();
+  const model = models.data.find((m) => m.owned_by === status.agents[0].id)?.id;
+  let frames = "";
+  const streaming = fetch(`${BASE}/v1/chat/completions`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-quire-run-id": id },
+    body: JSON.stringify({
+      model, stream: true,
+      messages: [{ role: "user", content: "Count from 1 to 500, one line each, slowly." }],
+    }),
+  }).then(async (res) => {
+    for await (const chunk of res.body) frames += String(chunk);
+  });
+
+  // Give the child time to exist before asking for it by name.
+  await new Promise((r) => setTimeout(r, 5000));
+  const listed = await fetch(`${BASE}/v1/runs`).then((r) => r.json());
+  check("a run in flight is listed", () => assert.ok(listed.runs.includes(id)));
+
+  const killed = await fetch(`${BASE}/v1/runs/${id}`, { method: "DELETE" }).then((r) => r.json());
+  check("cancel reports it stopped something", () => assert.equal(killed.cancelled, true));
+
+  await streaming;
+  check("the cancelled stream ends as an error, not a finish", () => {
+    assert.ok(frames.includes('"code":"cancelled"'), "no cancelled code in the stream");
+    assert.ok(!frames.includes('"finish_reason":"stop"'),
+      "a cancelled run claimed a clean finish");
+  });
+  const after = await fetch(`${BASE}/v1/runs`).then((r) => r.json());
+  check("the registry lets go of a finished run", () => assert.ok(!after.runs.includes(id)));
+}
+
 if (LIVE) {
   console.log("live completions (one per CLI, slow):");
   for (const a of status.agents) {
@@ -246,6 +297,35 @@ check("mcp discovery finds configured servers", () => {
   });
   check("mcp rejects an unknown tool", () =>
     assert.ok(rpc.get(4)?.error, "unknown tool should be an error"));
+}
+
+/* A completed non-streaming turn, which is the shape that had no test.
+   `usageBody(meta)` was called with a `meta` nothing ever created, so the
+   moment a turn finished the handler threw ReferenceError and took the whole
+   shim process down — every model in the app went with it, and downstream it
+   read as "LLM returned empty response from stream". Free models reached that
+   line; ones that error earlier never did, which is why it looked selective.
+   Needs --live: it is the completing that breaks it. */
+if (LIVE) {
+  const model = process.env.SHIM_TEST_MODEL || "devin/glm-5-2";
+  const body = await (await fetch(`${BASE}/v1/chat/completions`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ model, stream: false, messages: [{ role: "user", content: "say ok" }] }),
+  })).json();
+
+  check("a non-streaming turn returns a completion", () => {
+    assert.ok(body?.choices?.[0]?.message, `no message in ${JSON.stringify(body).slice(0, 200)}`);
+  });
+  check("a non-streaming turn reports usage", () => {
+    assert.ok(body?.usage, "no usage block");
+    // A CLI that does not count says so; it must never be shown as zero spend.
+    assert.equal(typeof body.usage.x_quire?.reported, "boolean");
+  });
+  check("the shim is still alive after a completed turn", async () => {
+    const res = await fetch(`${BASE}/v1/status`);
+    assert.equal(res.status, 200, "shim died finishing a turn");
+  });
 }
 
 await Promise.all(pending);
