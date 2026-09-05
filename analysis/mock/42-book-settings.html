@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book settings · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: This is where a book&rsquo;s own facts live, and it is also the only
+  place a book can be destroyed. So the screen is ordered by consequence:
+  what it is called, then how it is being made, then, at the bottom behind
+  its own colour, the end of it. Nothing destructive is ever adjacent to
+  something routine.
+  OWN-WORLD: Paper sections, the state row as a segmented control because a
+  book is in exactly one state, and a single red-edged panel at the floor.
+  STORY: The maker pauses a book they are not going to finish this year.
+  FIRST VIEWPORT: The title and the state.
+  FORM: Inherited world. Grounded in BookDetail.tsx: manuscriptTitle, status
+  (active/paused/outlining/completed/dropped), truth files, export, delete.
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">42</span><b>Book settings</b><span>identity &middot; state &middot; the dangerous end</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="41-project.html">&larr; Prev</a><a href="index.html">All screens</a><a href="43-play.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" aria-current="page" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span data-go="03-books.html">Books</span><span class="sep">/</span><span data-go="04-book.html">The Lamp Room</span><span class="sep">/</span><h1>Settings</h1></div>
+        <span class="pill pill-ok">saved</span>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop" style="padding-bottom:0">
+            <span class="disc stroke" style="width:180px;height:180px;left:-84px;top:-88px;opacity:.3"></span>
+            <div class="rowflex" style="align-items:center;gap:15px">
+              <span class="mark badge mark-book" style="width:44px;height:44px;flex:none"><span class="d1"></span><span class="d2"></span></span>
+              <span class="grow">
+                <h2 class="h-page" style="margin:0">The Lamp Room</h2>
+                <p class="dim mono" style="font-size:11px;margin-top:4px">22 chapters &middot; 68,410 words &middot; started 4 November</p>
+              </span>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><h3 class="h-panel">What it is</h3></div>
+            <div class="panel-body stack">
+              <label class="field"><span class="label">Manuscript title</span><input class="input" type="text" value="The Lamp Room"></label>
+              <div class="cols cols-a" style="align-items:start">
+                <label class="field"><span class="label">Genre</span><select class="input"><option>Quiet horror</option><option>Literary</option><option>Historical</option></select>
+                  <span class="hint">Its rules come from <span class="xref" data-go="37-genres.html">Genres</span> and apply to every chapter written after this.</span>
+                </label>
+                <label class="field"><span class="label">Planned length</span><input class="input tnum" type="number" value="30"><span class="hint">chapters</span></label>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><span class="grow"><h3 class="h-panel">State</h3><span class="dim" style="font-size:11px">What the daemon is allowed to do with it</span></span></div>
+            <div class="panel-body stack">
+              <div class="seg" data-seg>
+                <button aria-pressed="true">Active</button>
+                <button aria-pressed="false">Paused</button>
+                <button aria-pressed="false">Outlining</button>
+                <button aria-pressed="false">Completed</button>
+                <button aria-pressed="false">Dropped</button>
+              </div>
+              <p class="hint" style="margin-top:-2px">Active means the daemon will pick this book up on its own. Paused means it stays exactly as it is until you say otherwise.</p>
+              <div class="rows">
+                <div class="row" data-go="05-truth.html"><span class="grow"><span class="name">Truth files</span><span class="meta">direction, people, world, voice &middot; last settled 4 days ago</span></span><span class="act"><button class="btn btn-quiet btn-sm">Open</button></span></div>
+                <div class="row" data-go="36-analytics.html"><span class="grow"><span class="name">Analytics</span><span class="meta">where the chapters are stuck</span></span><span class="act"><button class="btn btn-quiet btn-sm">Open</button></span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><span class="grow"><h3 class="h-panel">Export</h3><span class="dim" style="font-size:11px">Nothing here changes the book</span></span></div>
+            <div class="panel-body">
+              <div class="rowflex" style="gap:9px;flex-wrap:wrap">
+                <button class="btn btn-line btn-sm">Markdown</button>
+                <button class="btn btn-line btn-sm">EPUB</button>
+                <button class="btn btn-line btn-sm">DOCX</button>
+                <label class="checkline" style="margin-left:8px"><input type="checkbox" class="check" checked><span>Settled chapters only</span></label>
+              </div>
+              <p class="hint" style="margin-top:11px">With that box ticked, this exports 8 of 22 chapters. Untick it to include everything that is still waiting on you.</p>
+            </div>
+          </section>
+
+          <section class="panel" style="border-color:color-mix(in oklab, var(--bad) 42%, transparent)">
+            <div class="panel-head"><span class="grow"><h3 class="h-panel">The end of it</h3><span class="dim" style="font-size:11px">There is no undo and no copy kept</span></span></div>
+            <div class="panel-body">
+              <p class="muted" style="font-size:14px;max-width:60ch">
+                Deleting removes 22 chapters, four truth files and every audit ever run
+                against them, from disk. Export first if there is any chance you want it.
+              </p>
+              <button class="btn btn-bad" style="margin-top:14px" data-confirm="delete-book">Delete The Lamp Room</button>
+            </div>
+          </section>
+
+          <!-- The confirmation the system already specifies: charcoal, one
+               vermilion action, and that action is the safe one. Shown here
+               open, because a mockup cannot be clicked into a modal. -->
+          <div class="scrim" style="position:static;padding:0;background:none">
+            <div class="dialog">
+              <h3>Delete The Lamp Room?</h3>
+              <p>22 chapters, 68,410 words, four truth files and every audit ever run against them are in <span class="mono" style="font-size:11px">~/Quire/the-lamp-room</span>. Quire deletes the folder. Nothing is recoverable from inside the app afterwards.</p>
+              <p>Eleven of those chapters have never been read by a person.</p>
+              <div class="dialog-foot">
+                <button class="btn">Keep it</button>
+                <span class="grow"></span>
+                <button class="btn btn-bad">Delete the folder</button>
+                <span class="kbd">Esc</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beauty gate · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: The same reader, plus a verdict. A spread is judged as a spread,
+  at spread size, because the gutter is where most magazine layouts fail and
+  a page-at-a-time review cannot see it. It refuses the approval-queue
+  convention of judging thumbnails in a list.
+  OWN-WORLD: The reader from screen 23, unchanged, with the four verbs from
+  the page detail added along the bottom. Nothing new is invented for this
+  screen, which is the point.
+  STORY: The maker looks at 26 and 27 together, sees the headline is fighting
+  the artwork across the gutter, and sends 27 back for a re-world.
+  FIRST VIEWPORT: Two pages, side by side, larger than anything else in the
+  app; the verdict bar under them.
+  FORM: Inherited world, plan Part III §12 beauty-gate variant. No concept seed.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">24</span><b>Beauty gate</b><span>the spread, judged</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="23-reader.html">← Prev</a><a href="index.html">All screens</a><a href="25-states.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen rail-thin">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">Fathom 4 · spread 26–27</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="dark crop" style="flex:1;min-height:0;border-radius:0;display:flex;flex-direction:column">
+        <span class="disc dots dots-light" style="width:300px;height:300px;left:-160px;bottom:-150px"></span>
+
+        <h1 class="sr">Fathom issue 4, spreads 24 to 29</h1>
+        <div class="readbar" style="margin-top:0;border-top:0;padding-left:clamp(20px,4vw,54px);padding-right:clamp(20px,4vw,54px)">
+          <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="15" height="15"><use href="#i-chevL"/></svg>24–25</button>
+          <div class="grow"></div>
+          <span class="label">Fathom 4 · Light · phosphor on black</span>
+          <div class="grow"></div>
+          <span class="pill pill-warn">2 of 3 to judge</span>
+          <button class="btn btn-quiet btn-sm">28–29<svg aria-hidden="true" width="15" height="15"><use href="#i-chevR"/></svg></button>
+        </div>
+
+        <div style="flex:1;min-height:0;display:grid;place-items:center;padding:clamp(18px,3vh,34px) clamp(20px,4vw,54px);position:relative">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;width:100%;max-width:1000px;max-height:100%;box-shadow:var(--e3)">
+            <div class="crop" style="aspect-ratio:3/4;position:relative;background:var(--char-2)">
+              <span class="plate"><span>page 26 · text and inset</span></span>
+              <span class="numeral ghost" style="position:absolute;left:14px;bottom:10px;font-size:34px">26</span>
+            </div>
+            <div class="crop" style="aspect-ratio:3/4;position:relative;background:var(--char-2)">
+              <span class="plate"><span>page 27 · full bleed opener</span></span>
+              <span class="numeral ghost" style="position:absolute;right:14px;bottom:10px;font-size:34px">27</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Same four verbs as the page detail, same order. A verdict means
+             the same thing wherever it is given. -->
+        <div class="verdict" style="padding-left:clamp(20px,4vw,54px);padding-right:clamp(20px,4vw,54px)">
+          <span class="label" style="margin-right:4px">Page 27</span>
+          <div class="seg" data-seg>
+            <button aria-pressed="false"><svg aria-hidden="true" width="15" height="15"><use href="#i-heart"/></svg>Keep</button>
+            <button aria-pressed="false"><svg aria-hidden="true" width="15" height="15"><use href="#i-redo"/></svg>Redesign</button>
+            <button aria-pressed="true"><svg aria-hidden="true" width="15" height="15"><use href="#i-drop"/></svg>Re-world</button>
+            <button aria-pressed="false"><svg aria-hidden="true" width="15" height="15"><use href="#i-pencil"/></svg>Tweak</button>
+          </div>
+          <span class="grow"></span>
+          <span class="muted" style="font-size:11px">Re-world keeps the copy and the layout, and changes only how it looks.</span>
+          <button class="btn btn-sm" data-toast="Page 27 sent back for a re-world. Next: page 28.">Send it back <svg aria-hidden="true" class="ico" width="14" height="14"><use href="#i-arrR"/></svg></button>
+        </div>
+
+        <div style="height:2px;background:var(--line-char);position:relative">
+          <div style="position:absolute;inset:0 58% 0 0;background:var(--vermilion)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

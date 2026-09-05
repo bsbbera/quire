@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analytics · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: Three totals and a bar chart is a report nobody acts on. So the
+  numbers here are framed as a question about progress: how much is settled,
+  how much is stuck, and where the stuck part is. The status distribution is
+  the real content, and it is drawn as a single stacked bar so the shape of
+  the book is one glance rather than five.
+  OWN-WORLD: Big vermilion numerals for the totals, the states carrying their
+  own three colours, the per-chapter strip below as evidence for the bar.
+  STORY: The maker sees eleven chapters sitting in review and goes to clear them.
+  FIRST VIEWPORT: The stacked bar, because that is the answer.
+  FORM: Inherited world. Grounded in Analytics.tsx: totalChapters, totalWords,
+  avgWordsPerChapter, statusDistribution.
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">36</span><b>Analytics</b><span>chapters &middot; words &middot; where they are stuck</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="35-radar.html">&larr; Prev</a><a href="index.html">All screens</a><a href="37-genres.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" aria-current="page" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span data-go="03-books.html">Books</span><span class="sep">/</span><span data-go="04-book.html">The Lamp Room</span><span class="sep">/</span><h1>Analytics</h1></div>
+        <span class="pill pill-warn">11 waiting on you</span>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop" style="padding-bottom:0">
+            <span class="disc stroke" style="width:190px;height:190px;left:-88px;top:-92px;opacity:.3"></span>
+            <h2 class="h-page">Where the book actually is</h2>
+          </section>
+
+          <section class="cols" style="grid-template-columns:repeat(3,1fr);gap:14px">
+            <div class="panel"><div class="panel-body">
+              <span class="label">Chapters</span><div class="numeral">22</div>
+              <p class="dim" style="font-size:11px">planned to 30</p>
+            </div></div>
+            <div class="panel"><div class="panel-body">
+              <span class="label">Words</span><div class="numeral tnum">68,410</div>
+              <p class="dim" style="font-size:11px">about 240 printed pages</p>
+            </div></div>
+            <div class="panel"><div class="panel-body">
+              <span class="label">Average chapter</span><div class="numeral tnum">3,110</div>
+              <p class="dim" style="font-size:11px">tightest 1,940 &middot; longest 4,802</p>
+            </div></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><span class="grow"><h3 class="h-panel">The shape of it</h3><span class="dim" style="font-size:11px">Every chapter, by what state it is in</span></span></div>
+            <div class="panel-body">
+              <div class="rowflex" style="gap:3px;height:22px;align-items:stretch;border-radius:999px;overflow:hidden;margin-bottom:16px">
+                <span style="flex:8;background:var(--ok)" title="8 settled"></span>
+                <span style="flex:11;background:var(--warn)" title="11 in review"></span>
+                <span style="flex:1;background:var(--bad)" title="1 blocked"></span>
+                <span style="flex:2;background:var(--line)" title="2 drafted"></span>
+              </div>
+              <div class="rows">
+                <div class="row"><span class="dot dot-clean"></span><span class="grow"><span class="name">Settled</span><span class="meta">audited, agreed with the truth files, done</span></span><span class="mono tnum">8</span></div>
+                <div class="row"><span class="dot dot-warn"></span><span class="grow"><span class="name">In review</span><span class="meta">written, waiting for you to read them</span></span><span class="mono tnum">11</span></div>
+                <div class="row"><span class="dot dot-bad"></span><span class="grow"><span class="name">Blocked</span><span class="meta">chapter 9 contradicts people.json and stops chapter 10</span></span><span class="mono tnum">1</span></div>
+                <div class="row"><span class="dot dot-never"></span><span class="grow"><span class="name">Drafted</span><span class="meta">first pass only, not yet audited</span></span><span class="mono tnum">2</span></div>
+              </div>
+            </div>
+          </section>
+
+          <div class="gate" data-go="08-audit.html">
+            <span class="grow"><span class="what">Eleven chapters are waiting on a person, not on the machine</span><span class="when">That is half the book. Nothing further gets settled until some of them clear.</span></span>
+            <button class="gatepill">Start reading<span class="n">11</span></button>
+          </div>
+
+          <section class="panel panel-flush">
+            <div class="panel-head"><h3 class="h-panel">Chapter by chapter</h3></div>
+            <div class="panel-body" style="padding-top:2px;padding-bottom:12px">
+              <div class="rows">
+                <div class="row" data-go="06-chapter.html"><span class="num">06</span><span class="grow"><span class="name">The window seat</span><span class="meta">3,402 words &middot; settled 4 days ago</span></span><span class="dot dot-clean"></span></div>
+                <div class="row" data-go="06-chapter.html"><span class="num">07</span><span class="grow"><span class="name">What Marta found</span><span class="meta">3,214 words &middot; written by the daemon at 02:31</span></span><span class="dot dot-warn"></span></div>
+                <div class="row" data-go="06-chapter.html"><span class="num">08</span><span class="grow"><span class="name">The second lamp</span><span class="meta">2,980 words &middot; written by the daemon at 03:26</span></span><span class="dot dot-warn"></span></div>
+                <div class="row" data-go="07-review.html"><span class="num">09</span><span class="grow"><span class="name">Downstairs</span><span class="meta">3,118 words &middot; 3 findings, one contradiction</span></span><span class="dot dot-bad"></span></div>
+                <div class="row"><span class="num dim">10</span><span class="grow"><span class="name dim">Not written</span><span class="meta">held until chapter 9 clears</span></span><span class="dot dot-never"></span></div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

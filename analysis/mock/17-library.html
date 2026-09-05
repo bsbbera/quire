@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Library · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: An asset is worth keeping only if the recipe that made it is kept
+  too, so selecting anything opens its sidecar rather than a preview. The
+  library is a record of how, not a folder of what. It refuses the DAM
+  convention of a grid whose only metadata is a filename and a date.
+  OWN-WORLD: Putty ground, images edge to edge, the sidecar as a paper drawer
+  with the recipe in mono, rejected work ghosted rather than hidden.
+  STORY: The maker finds the plate they used on Fathom 3, reads what made it,
+  and promotes it so the next issue can reach it.
+  FIRST VIEWPORT: Filter pills, then the grid; the sidecar opens beside it.
+  FORM: Inherited world, plan Part III §8. No concept seed.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">17</span><b>Library</b><span>assets · sidecars · promotion</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="16-tweak.html">← Prev</a><a href="index.html">All screens</a><a href="18-worlds.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">~/Quire/library</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" aria-current="page" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><h1>Library</h1><span class="sep">·</span><span class="dim">218 kept · 96 rejected</span></div>
+        <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="15" height="15"><use href="#i-search"/></svg><span class="kbd">Ctrl K</span></button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap cols cols-a" style="align-items:start">
+
+          <div class="stack">
+            <div class="spread">
+              <h2 class="h-page">Everything worth using again</h2>
+            </div>
+
+            <div class="rowflex">
+              <button class="pill" aria-pressed="true">All</button>
+              <button class="pill" aria-pressed="false">Plates</button>
+              <button class="pill" aria-pressed="false">Diagrams</button>
+              <button class="pill" aria-pressed="false">Covers</button>
+              <span style="width:10px"></span>
+              <button class="pill" aria-pressed="false">Fathom</button>
+              <button class="pill" aria-pressed="false">The Lamp Room</button>
+              <span style="width:10px"></span>
+              <button class="pill" aria-pressed="false">Rejected</button>
+            </div>
+
+            <div class="cands" style="margin-top:4px">
+              <button class="cand" aria-pressed="true"><span class="plate"><span>phosphor plate</span></span><span class="recipe mono">phosphor-v3 · 41902 · used 3×</span></button>
+              <button class="cand"><span class="plate"><span>cyanotype grid</span></span><span class="recipe mono">cyano-v1 · 20114 · used 6×</span></button>
+              <button class="cand"><span class="plate"><span>paper cut snow</span></span><span class="recipe mono">papercut-v2 · 77310 · used 2×</span></button>
+              <button class="cand"><span class="plate"><span>sonar plot</span></span><span class="recipe mono">sonar-v1 · 5522 · used 4×</span></button>
+              <button class="cand"><span class="plate"><span>lamp room cover</span></span><span class="recipe mono">inkwash-v4 · 88120 · used 1×</span></button>
+              <button class="cand"><span class="plate"><span>cutaway, hull</span></span><span class="recipe mono">cyano-v1 · 20118 · used 1×</span></button>
+              <button class="cand" style="opacity:.4"><span class="plate"><span>rejected</span></span><span class="recipe mono">phosphor-v2 · 38770</span></button>
+              <button class="cand" style="opacity:.4"><span class="plate"><span>rejected</span></span><span class="recipe mono">phosphor-v2 · 38769</span></button>
+            </div>
+
+            <p class="hint">Rejected work stays at 40 per cent rather than disappearing. It is the record of what did not work, and it is the only way to tell a look that was tried from a look that was never considered.</p>
+          </div>
+
+          <!-- ── The sidecar ─────────────────────────────────────────────── -->
+          <div class="panel panel-flush">
+            <div class="panel-head">
+              <span class="grow">
+                <h3 class="h-panel">Phosphor plate</h3>
+                <span class="dim mono" style="font-size:11px">lib/plates/phosphor-41902.png</span>
+              </span>
+              <span class="pill pill-ok">kept</span>
+            </div>
+
+            <div style="padding:16px">
+              <div class="crop" style="aspect-ratio:1/1;border-radius:var(--r-ctl);border:1px solid var(--line);position:relative;overflow:hidden">
+                <span class="plate"><span>phosphor plate</span></span>
+              </div>
+            </div>
+
+            <div class="panel-body" style="padding-top:0">
+              <h4 class="h-sub" style="margin-bottom:8px">How it was made</h4>
+              <table class="spec">
+                <tbody>
+                  <tr><td>workflow</td><td class="mono">phosphor-v3.json</td></tr>
+                  <tr><td>checkpoint</td><td class="mono">sdxl-base-1.0</td></tr>
+                  <tr><td>seed</td><td class="mono">41902</td></tr>
+                  <tr><td>steps</td><td class="mono">28 · cfg 5.5</td></tr>
+                  <tr><td>size</td><td class="mono">1024 × 1408</td></tr>
+                  <tr><td>tweaks</td><td class="mono">3 · lineage kept</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="panel-body" style="border-top:1px solid var(--line)">
+              <h4 class="h-sub" style="margin-bottom:8px">Where it has been used</h4>
+              <div class="rows">
+                <div class="row" style="padding:9px 4px"><span class="grow"><span class="name">Fathom 4, page 27</span><span class="meta">kept · 20 minutes ago</span></span></div>
+                <div class="row" style="padding:9px 4px"><span class="grow"><span class="name">Fathom 3, page 44</span><span class="meta">kept · last quarter</span></span></div>
+                <div class="row" style="padding:9px 4px"><span class="grow"><span class="name">Fathom 3, cover rough</span><span class="meta">rejected · too busy behind the logo</span></span></div>
+              </div>
+            </div>
+
+            <div class="panel-body" style="border-top:1px solid var(--line)">
+              <div class="rowflex">
+                <button class="btn btn-sm" data-toast="Promoted. Every production can reach it now.">Promote to the library</button>
+                <button class="btn btn-line btn-sm"><svg aria-hidden="true" width="14" height="14"><use href="#i-redo"/></svg>Make another like it</button>
+              </div>
+              <p class="hint" style="margin-top:10px">Promoting moves it out of the issue that made it, so the next production can reach it without knowing where it came from.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="wrap"><p class="mock-note"><b>Stand-in artwork.</b> Every tile is a labelled placeholder. <b>Synthetic content:</b> filenames, seeds and usage history are authored demonstration data.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

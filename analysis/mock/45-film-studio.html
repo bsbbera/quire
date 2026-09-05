@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Film studio · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: A five-phase wizard usually means five screens you cannot leave, so
+  this one is a spine, not a corridor: every phase is reachable at any time,
+  each carries its own state dot, and the world anchor stays pinned on the
+  right through all of them because every later phase is judged against it.
+  Validate is not the last step, it is the only step with a verdict.
+  OWN-WORLD: The phase spine as a horizontal chain with the vermilion filling
+  left to right; the anchor panel as the fixed reference; the disc pair for
+  the film mark.
+  STORY: The maker jumps back from Nodes to World to change one rule and
+  watches the validation count move.
+  FIRST VIEWPORT: The spine, so the whole shape of the job is visible at once.
+  FORM: Inherited world. Grounded in FilmWizard.tsx: phases world, scale,
+  structure, workshop, validate, their subviews, and the world anchor fields.
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">45</span><b>Film studio</b><span>world &middot; scale &middot; structure &middot; nodes &middot; validate</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="44-graph.html">&larr; Prev</a><a href="index.html">All screens</a><a href="46-flow.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" aria-current="page" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span>Interactive film</span><span class="sep">/</span><h1>The Quiet Hour</h1></div>
+        <span class="pill pill-warn">2 problems</span>
+        <button class="btn btn-line btn-sm" data-go="43-play.html">Play</button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop" style="padding-bottom:0">
+            <span class="disc stroke" style="width:190px;height:190px;left:-88px;top:-92px;opacity:.3"></span>
+            <div class="rowflex" style="align-items:center;gap:15px">
+              <span class="mark badge mark-film" style="width:44px;height:44px;flex:none"><span class="d1"></span><span class="d2"></span></span>
+              <span class="grow">
+                <h2 class="h-page" style="margin:0">The Quiet Hour</h2>
+                <p class="dim mono" style="font-size:11px;margin-top:4px">61 nodes &middot; 7 endings &middot; 40 minutes</p>
+              </span>
+            </div>
+          </section>
+
+          <nav class="stages" aria-label="Phases">
+            <button class="st" data-go="45-film-studio.html"><span class="dot dot-clean"></span><b>World</b><span class="dim">settled</span></button>
+            <button class="st"><span class="dot dot-clean"></span><b>Scale</b><span class="dim">61 nodes, 7 endings</span></button>
+            <button class="st"><span class="dot dot-clean"></span><b>Structure</b><span class="dim">19 branch points</span></button>
+            <button class="st" aria-current="step"><span class="dot dot-warn"></span><b>Nodes</b><span class="dim">54 of 61 written</span></button>
+            <button class="st"><span class="dot dot-bad"></span><b>Validate</b><span class="dim">2 problems</span></button>
+          </nav>
+
+          <div class="cols" style="grid-template-columns:1fr 300px;gap:18px;align-items:start">
+
+            <div class="stack">
+              <div class="tabs" data-tabs>
+                <button class="tab" aria-selected="true" data-panel="tree"><i></i>Node list</button>
+                <button class="tab" aria-selected="false" data-panel="chat"><i></i>Write with the model</button>
+              </div>
+
+              <section class="panel panel-flush" data-panel="tree">
+                <div class="panel-head">
+                  <span class="grow"><h3 class="h-panel">Nodes still empty</h3><span class="dim" style="font-size:11px">Seven of sixty-one have a title and nothing else</span></span>
+                  <button class="btn btn-sm">Write the next one</button>
+                </div>
+                <div class="panel-body" style="padding-top:2px;padding-bottom:14px">
+                  <div class="rows">
+                    <div class="row"><span class="num">22</span><span class="grow"><span class="name">Behind the door</span><span class="meta">reached from node 14 &middot; 2 choices planned</span></span><span class="dot dot-never"></span><span class="act"><button class="btn btn-quiet btn-sm">Write</button></span></div>
+                    <div class="row"><span class="num">31</span><span class="grow"><span class="name">The second landing</span><span class="meta">reached from node 22</span></span><span class="dot dot-never"></span><span class="act"><button class="btn btn-quiet btn-sm">Write</button></span></div>
+                    <div class="row"><span class="num">38</span><span class="grow"><span class="name">Halloran alone</span><span class="meta">requires <span class="mono">trust &ge; 4</span></span></span><span class="dot dot-never"></span><span class="act"><button class="btn btn-quiet btn-sm">Write</button></span></div>
+                    <div class="row"><span class="num">44</span><span class="grow"><span class="name">Morning</span><span class="meta">leads to two endings</span></span><span class="dot dot-never"></span><span class="act"><button class="btn btn-quiet btn-sm">Write</button></span></div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="panel" data-panel="chat" hidden>
+                <div class="panel-body">
+                  <p class="muted" style="font-size:14px;max-width:58ch">
+                    Writing a node is the same conversation as writing a chapter. This tab
+                    opens <span class="xref" data-go="47-film-author.html">the authoring
+                    chat</span> with the node, its incoming choices and the world anchor
+                    already in context.
+                  </p>
+                  <button class="btn" style="margin-top:14px" data-go="47-film-author.html">Open the conversation</button>
+                </div>
+              </section>
+
+              <section class="panel" style="border-color:color-mix(in oklab, var(--bad) 40%, transparent)">
+                <div class="panel-head"><span class="grow"><h3 class="h-panel">Validation</h3><span class="dim" style="font-size:11px">Run against the whole graph, not the node you are on</span></span></div>
+                <div class="panel-body stack">
+                  <div class="finding">
+                    <span class="sev sev-bad">unreachable</span>
+                    <span class="grow"><b>An ending nobody can get to</b><span class="meta">&ldquo;The house keeps her&rdquo; needs trust at zero and the lamp off. Every route that empties trust lights the lamp first.</span></span>
+                    <span class="act"><button class="btn btn-line btn-sm" data-go="44-graph.html">Show</button></span>
+                  </div>
+                  <div class="finding">
+                    <span class="sev sev-warn">dead choice</span>
+                    <span class="grow"><b>A choice on node 14 never appears</b><span class="meta">Its condition cannot be true where it sits.</span></span>
+                    <span class="act"><button class="btn btn-line btn-sm" data-go="44-graph.html">Show</button></span>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <aside class="panel" style="position:sticky;top:14px">
+              <div class="panel-head"><span class="grow"><h3 class="h-panel">World anchor</h3><span class="dim" style="font-size:11px">Every phase is judged against this</span></span></div>
+              <div class="panel-body stack">
+                <div><span class="label">Story core</span><p class="read" style="font-size:14px;margin-top:5px;line-height:1.6">A woman takes a live-in job in a house where one room is never opened, and is told it is nothing.</p></div>
+                <div><span class="label">Theme</span><p style="font-size:14px;margin-top:5px">Being believed</p></div>
+                <div><span class="label">Genre</span><p style="font-size:14px;margin-top:5px">Quiet horror</p></div>
+                <div><span class="label">Duration</span><p class="mono tnum" style="font-size:14px;margin-top:5px">40 min</p></div>
+                <div>
+                  <span class="label">World rules</span>
+                  <div class="rowflex" style="gap:6px;flex-wrap:wrap;margin-top:7px">
+                    <span class="chip">nothing supernatural is confirmed</span>
+                    <span class="chip">the lamp is the only light upstairs</span>
+                    <span class="chip">no character lies outright</span>
+                  </div>
+                </div>
+                <div>
+                  <span class="label">Main characters</span>
+                  <div class="rows" style="margin-top:6px">
+                    <div class="row"><span class="who-av">M</span><span class="grow"><span class="name">Marta</span><span class="meta">the reader</span></span></div>
+                    <div class="row"><span class="who-av">H</span><span class="grow"><span class="name">Halloran</span><span class="meta">owns the house</span></span></div>
+                    <div class="row"><span class="who-av">E</span><span class="grow"><span class="name">Eileen</span><span class="meta">was here before her</span></span></div>
+                  </div>
+                </div>
+                <button class="btn btn-quiet btn-sm">Edit the anchor</button>
+              </div>
+            </aside>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

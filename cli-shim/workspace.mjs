@@ -12,14 +12,40 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 
 const HOME = homedir();
 
-// Deliberately NOT inside the workspace: the file that says where the
-// workspace is cannot live in it.
 const CONFIG_DIR = join(HOME, ".quire");
-const CONFIG = join(CONFIG_DIR, "workspace.json");
+
+/**
+ * Which install is asking.
+ *
+ * Dev and prod ran out of one workspace. The pointer below lives in the home
+ * folder rather than in either install, so it answered both of them the same
+ * way: a model chosen in prod became the model dev ran on, silently, and the
+ * two shared one set of books and sessions besides. Separating them needs a
+ * name for whoever is asking.
+ *
+ * The dev build already compiles its own ports in (desktop/build-dev.mjs) and
+ * main.rs hands them to every child it spawns, so the shim port is a
+ * per-install fact that is already plumbed through - nothing new to wire and
+ * no rebuild of the shell before it starts working. QUIRE_INSTANCE is read
+ * first so a later build can name itself outright without changing any of
+ * this. An unset port is prod, which is the install a person double-clicks.
+ */
+const PROD_SHIM_PORT = "8787";
+const INSTANCE = process.env.QUIRE_INSTANCE?.trim()
+  || (process.env.SHIM_PORT && process.env.SHIM_PORT !== PROD_SHIM_PORT ? "dev" : "");
+
+// Deliberately NOT inside the workspace: the file that says where the
+// workspace is cannot live in it. One file per install, so choosing a folder
+// in one of them cannot move the other's out from under it.
+const CONFIG = join(CONFIG_DIR, INSTANCE ? `workspace.${INSTANCE}.json` : "workspace.json");
 
 /** The two names a workspace has had. An existing ~/InkDesk holds real books,
- *  so the rename to Quire must not silently start empty under the new name. */
-const LEGACY = [join(HOME, "Quire"), join(HOME, "InkDesk")];
+ *  so the rename to Quire must not silently start empty under the new name.
+ *  A dev install has no such history: it gets its own folder and starts empty,
+ *  because the point of it is to be thrown away. */
+const LEGACY = INSTANCE
+  ? [join(HOME, `Quire-${INSTANCE}`)]
+  : [join(HOME, "Quire"), join(HOME, "InkDesk")];
 
 function readConfig() {
   try { return JSON.parse(readFileSync(CONFIG, "utf-8")); } catch { return {}; }
@@ -27,19 +53,31 @@ function readConfig() {
 
 /**
  * The workspace root, in precedence order:
- *   1. what the user picked in Settings
- *   2. QUIRE_WORKSPACE
- *   3. an existing ~/Quire or ~/InkDesk
- *   4. ~/Quire
+ *   1. what the user picked in Settings, for this install
+ *   2. this install's QUIRE_WORKSPACE
+ *   3. an existing default folder for this install
+ *   4. that folder's name, whether or not it is there yet
+ *
+ * Prod's default is ~/Quire (or a ~/InkDesk left from the old name); a dev
+ * install's is ~/Quire-dev. See INSTANCE above for why they differ.
  *
  * The saved choice beats the env var on purpose. The env var is inherited by
  * every child from whatever shell launched the app, so if it lost, a stale
  * export would silently undo a folder the user had just picked and confirmed.
+ *
+ * And a bare QUIRE_WORKSPACE is prod's. It names *the* workspace, it is set
+ * once at the user level, and every process on the machine inherits it - so a
+ * dev install that honoured it would land straight back in prod's books no
+ * matter what else was arranged, which is exactly what it did. A dev install
+ * reads QUIRE_WORKSPACE_DEV or nothing.
  */
 export function root() {
   const saved = readConfig().path;
   if (typeof saved === "string" && saved.trim() && isAbsolute(saved)) return resolve(saved);
-  if (process.env.QUIRE_WORKSPACE) return resolve(process.env.QUIRE_WORKSPACE);
+  const fromEnv = INSTANCE
+    ? process.env[`QUIRE_WORKSPACE_${INSTANCE.toUpperCase()}`]
+    : process.env.QUIRE_WORKSPACE;
+  if (fromEnv) return resolve(fromEnv);
   return LEGACY.find(existsSync) || LEGACY[0];
 }
 

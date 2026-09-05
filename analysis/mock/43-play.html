@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Playing · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: This is the only screen in the app that is not for the maker, and
+  it has to prove that by looking nothing like the rest. The workbench
+  disappears: no panels, no rails inside the frame, one column of scene at
+  reading width on charcoal, and the choices are the only lit thing. The
+  maker is watching their own work behave, so the state they carry is shown
+  quietly at the top, not as UI furniture.
+  OWN-WORLD: Charcoal ground, reading measure, the scene description in
+  italic as the app already sets stage direction, choices as full-width
+  plates that light on hover. Vermilion is the speaker label and the choice
+  edge, nothing else.
+  STORY: The maker plays their own branch and finds a choice that never fires.
+  FIRST VIEWPORT: The scene. Nothing above it but the title.
+  FORM: Inherited world. Grounded in StoryPlayer.tsx: node title, sceneDesc,
+  dialogue speaker and text, visible choices filtered by vars, ending panel.
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">43</span><b>Playing</b><span>the reader&rsquo;s side of a branching story</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="42-book-settings.html">&larr; Prev</a><a href="index.html">All screens</a><a href="44-graph.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" aria-current="page" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span data-go="44-graph.html">The Quiet Hour</span><span class="sep">/</span><h1>Playing</h1></div>
+        <span class="pill mono">node 14 of 61</span>
+        <span class="pill mono">trust 3 &middot; lamp on</span>
+        <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="14" height="14"><use href="#i-redo"/></svg>Start over</button>
+      </div>
+
+      <div class="stage">
+        <div class="dark on-char" style="min-height:100%;padding:0">
+          <div class="wrap-read" style="padding:52px 0 64px">
+
+            <div class="crop" style="padding-bottom:0">
+              <span class="disc stroke" style="width:280px;height:280px;left:-150px;top:-140px;opacity:.16"></span>
+              <span class="disc dots dots-light" style="width:92px;height:92px;right:-30px;top:-40px;opacity:.3"></span>
+              <span class="label">Chapter two &middot; the landing</span>
+              <h2 class="h-page" style="margin-top:10px">The door at the end</h2>
+            </div>
+
+            <p class="read" style="font-style:italic;opacity:.62;font-size:17.5px;line-height:1.85;margin-top:26px">
+              The landing is colder than the stairs were. There is a door at the far end
+              that was not open an hour ago, and the light behind it is the wrong colour
+              for a bedroom.
+            </p>
+
+            <div class="stack" style="margin-top:32px">
+              <div>
+                <div class="label" style="color:var(--vermilion-ink)">Marta</div>
+                <p class="read" style="font-size:17.5px;line-height:1.8;margin-top:5px">You said the top floor was shut.</p>
+              </div>
+              <div>
+                <div class="label" style="color:var(--vermilion-ink)">Halloran</div>
+                <p class="read" style="font-size:17.5px;line-height:1.8;margin-top:5px">It is shut. That is not the same as locked, and I would rather you did not test the difference tonight.</p>
+              </div>
+            </div>
+
+            <div class="stack" style="margin-top:40px">
+              <button class="opt">Open the door<span class="eff">trust &minus;1</span></button>
+              <button class="opt">Go back down and say nothing<span class="eff">no change</span></button>
+              <button class="opt">Ask him what is behind it<span class="eff">trust +1 &middot; unlocks a later scene</span></button>
+            </div>
+
+            <div class="panel" style="margin-top:44px;background:transparent;border-style:dashed;opacity:.72">
+              <div class="panel-body">
+                <span class="label">Hidden from the reader, shown to you</span>
+                <p class="dim" style="font-size:14px;margin-top:8px;line-height:1.6">
+                  A fourth choice on this node &mdash; <b>Take the lamp with you</b> &mdash;
+                  requires <span class="mono">lamp = off</span>. You are carrying it lit,
+                  so no reader arriving this way will ever see it.
+                </p>
+                <button class="btn btn-line btn-sm" style="margin-top:12px" data-go="44-graph.html">Find it in the graph</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

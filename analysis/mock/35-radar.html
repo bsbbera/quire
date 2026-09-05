@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Market radar · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: Market advice is the easiest thing in this app to write and the
+  easiest to believe wrongly, so every claim on this screen is stamped with
+  when it was gathered and what it was gathered from. A recommendation with
+  no date is a rumour.
+  OWN-WORLD: Putty ground, one wide paper card per recommendation, the
+  confidence expressed as a filled arc rather than a percentage badge, so it
+  reads as an opinion and not a measurement.
+  STORY: The maker scans, disagrees with the top recommendation, and keeps the
+  third one.
+  FIRST VIEWPORT: When this was last scanned, then the summary in prose.
+  FORM: Inherited world. Grounded in RadarView.tsx: scan action, summary,
+  recommendations, scan history.
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">35</span><b>Market radar</b><span>scan &middot; summary &middot; history</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="34-logs.html">&larr; Prev</a><a href="index.html">All screens</a><a href="36-analytics.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" aria-current="page" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span>Tools</span><span class="sep">/</span><h1>Market radar</h1></div>
+        <span class="pill mono">scanned 2 days ago</span>
+        <button class="btn btn-sm">Scan the market</button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop" style="padding-bottom:0">
+            <span class="disc stroke" style="width:210px;height:210px;left:-96px;top:-104px;opacity:.3"></span>
+            <span class="disc dots" style="width:78px;height:78px;left:-118px;top:78px;opacity:.42"></span>
+            <h2 class="h-page">An opinion with a date on it</h2>
+            <p class="muted" style="font-size:14px;margin-top:8px;max-width:62ch">
+              Read across the places your genre is actually sold, two days ago. Nothing
+              here is a fact about your book. It is a guess about a crowd, and it goes
+              stale in about a fortnight.
+            </p>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><span class="grow"><h3 class="h-panel">Market summary</h3><span class="dim mono" style="font-size:11px">quiet-horror &middot; english &middot; serialised</span></span></div>
+            <div class="panel-body">
+              <p class="read" style="font-size:14px;line-height:1.7">
+                Slow-burn domestic horror is still absorbing readers who left the
+                haunted-house wave, but the openings that hold them have shortened by
+                about a third. The three strongest performers this quarter all put a
+                living person in danger inside the first thousand words. Anthologies
+                are not moving. Serialised weekly is.
+              </p>
+            </div>
+          </section>
+
+          <section class="stack">
+            <h3 class="h-sub">What it suggests</h3>
+
+            <div class="panel">
+              <div class="panel-body rowflex" style="gap:16px;align-items:start">
+                <svg aria-hidden="true" class="ring" viewBox="0 0 56 56" style="flex:none;width:52px;height:52px"><circle class="t" cx="28" cy="28" r="24"/><circle class="v" cx="28" cy="28" r="24" style="stroke-dashoffset:34"/></svg>
+                <span class="grow">
+                  <b style="font-size:14px;display:block">Cut The Lamp Room down to a shorter opening</b>
+                  <p class="muted" style="font-size:14px;margin-top:6px">Your first chapter reaches its first threat at word 2,140. The comparable books that held readers this quarter did it inside 1,000.</p>
+                  <span class="dim mono" style="font-size:11px;display:block;margin-top:8px">from 41 titles &middot; gathered 2 days ago</span>
+                </span>
+                <span class="act" style="flex:none"><button class="btn btn-line btn-sm" data-go="27-chat.html">Talk it through</button></span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-body rowflex" style="gap:16px;align-items:start">
+                <svg aria-hidden="true" class="ring" viewBox="0 0 56 56" style="flex:none;width:52px;height:52px"><circle class="t" cx="28" cy="28" r="24"/><circle class="v" cx="28" cy="28" r="24" style="stroke-dashoffset:78"/></svg>
+                <span class="grow">
+                  <b style="font-size:14px;display:block">Serialise weekly rather than publishing whole</b>
+                  <p class="muted" style="font-size:14px;margin-top:6px">Weekly instalments in this genre keep about four times the readers a complete release does. This is a distribution change, not a writing one.</p>
+                  <span class="dim mono" style="font-size:11px;display:block;margin-top:8px">from 41 titles &middot; gathered 2 days ago</span>
+                </span>
+                <span class="act" style="flex:none"><button class="btn btn-quiet btn-sm">Keep</button></span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-body rowflex" style="gap:16px;align-items:start">
+                <svg aria-hidden="true" class="ring" viewBox="0 0 56 56" style="flex:none;width:52px;height:52px"><circle class="t" cx="28" cy="28" r="24"/><circle class="v" cx="28" cy="28" r="24" style="stroke-dashoffset:112"/></svg>
+                <span class="grow">
+                  <b style="font-size:14px;display:block">Drop the second point of view</b>
+                  <p class="muted" style="font-size:14px;margin-top:6px">Weakly supported. Two of the comparable books did this; four did the opposite and did better. Shown because it recurred, not because it is likely.</p>
+                  <span class="dim mono" style="font-size:11px;display:block;margin-top:8px">from 6 titles &middot; gathered 2 days ago</span>
+                </span>
+                <span class="act" style="flex:none"><button class="btn btn-quiet btn-sm">Dismiss</button></span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel panel-flush">
+            <div class="panel-head"><h3 class="h-panel">Scan history</h3></div>
+            <div class="panel-body" style="padding-top:2px;padding-bottom:12px">
+              <div class="rows">
+                <div class="row"><span class="grow"><span class="name">2 days ago</span><span class="meta">41 titles &middot; 3 recommendations &middot; you kept 1</span></span><span class="act"><button class="btn btn-quiet btn-sm">Open</button></span></div>
+                <div class="row"><span class="grow"><span class="name">3 weeks ago</span><span class="meta">38 titles &middot; 4 recommendations &middot; you kept 2</span></span><span class="act"><button class="btn btn-quiet btn-sm">Open</button></span></div>
+                <div class="row"><span class="grow"><span class="name">2 months ago</span><span class="meta">36 titles &middot; 2 recommendations &middot; you kept none</span></span><span class="act"><button class="btn btn-quiet btn-sm">Open</button></span></div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

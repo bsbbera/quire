@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Worlds · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: A world is a working system, not a mood board, so each one is shown
+  as a real spread at real size with its three parts named underneath. This
+  is the screen that shows what the app is for, so it gets two columns and
+  the largest tiles in the product. It refuses the swatch-grid convention
+  where a visual identity is reduced to five colour chips.
+  OWN-WORLD: Putty ground, spreads cropped by a disc, halftone because this
+  is the print side, one vermilion on the world in use.
+  STORY: The maker looks along the shelf of worlds, sees which issue each one
+  built, and opens the composer to make a sixth.
+  FIRST VIEWPORT: Two worlds, at a size where the difference between them is
+  actually visible.
+  FORM: Inherited world, plan Part III §9 Gallery. No concept seed.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">18</span><b>Worlds</b><span>the gallery · system · technique · props</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="17-library.html">← Prev</a><a href="index.html">All screens</a><a href="19-composer.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">~/Quire/worlds</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" aria-current="page" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span>Machine</span><span class="sep">/</span><h1>Worlds</h1></div>
+        <div class="seg" data-seg>
+          <button aria-pressed="true">Gallery</button>
+          <a class="tab" href="19-composer.html" style="text-decoration:none;padding:5px 11px;font-size:14px;border-radius:4px;color:var(--ink-2)">Composer</a>
+          <a class="tab" href="20-taste.html" style="text-decoration:none;padding:5px 11px;font-size:14px;border-radius:4px;color:var(--ink-2)">Taste</a>
+        </div>
+        <button class="btn btn-line btn-sm"><svg aria-hidden="true" width="14" height="14"><use href="#i-plus"/></svg>New world</button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop" style="padding-bottom:0">
+            <span class="disc dots" style="width:210px;height:210px;left:-96px;top:-104px;opacity:.32"></span>
+            <div class="spread" style="align-items:flex-end">
+              <div>
+                <h2 class="h-page">Six built, four in use</h2>
+                <p class="muted" style="font-size:14px;margin-top:8px;max-width:56ch">A world is a system, a technique and a set of props. Give the machine all three and every page of a section comes out looking like it belongs to the same magazine.</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="cols cols-2">
+
+            <div class="tile crop" data-go="19-composer.html" style="min-height:0;padding:0;cursor:pointer">
+              <div style="aspect-ratio:16/9;position:relative;border-bottom:1px solid var(--line)">
+                <span class="plate"><span>phosphor on black · sample spread</span></span>
+              </div>
+              <div style="padding:16px 18px">
+                <div class="spread" style="align-items:flex-start">
+                  <h3 style="font-size:17.5px">Phosphor on black</h3>
+                  <span class="pill pill-fill">in use</span>
+                </div>
+                <div class="rowflex" style="margin-top:11px">
+                  <span class="pill">system · two colour</span>
+                  <span class="pill">technique · phosphor glow</span>
+                  <span class="pill">props · specimen labels</span>
+                </div>
+                <p class="who" style="margin-top:11px;font-size:11px;color:var(--ink-3)">Fathom 4, Light section · 14 pages</p>
+              </div>
+            </div>
+
+            <div class="tile crop" data-go="19-composer.html" style="min-height:0;padding:0;cursor:pointer">
+              <div style="aspect-ratio:16/9;position:relative;border-bottom:1px solid var(--line)">
+                <span class="plate"><span>cyanotype blueprint · sample spread</span></span>
+              </div>
+              <div style="padding:16px 18px">
+                <div class="spread" style="align-items:flex-start">
+                  <h3 style="font-size:17.5px">Cyanotype blueprint</h3>
+                  <span class="pill pill-fill">in use</span>
+                </div>
+                <div class="rowflex" style="margin-top:11px">
+                  <span class="pill">system · single hue</span>
+                  <span class="pill">technique · contact print</span>
+                  <span class="pill">props · rules and callouts</span>
+                </div>
+                <p class="who" style="margin-top:11px;font-size:11px;color:var(--ink-3)">Fathom 4, Pressure section · 12 pages</p>
+              </div>
+            </div>
+
+            <div class="tile crop" data-go="19-composer.html" style="min-height:0;padding:0;cursor:pointer">
+              <div style="aspect-ratio:16/9;position:relative;border-bottom:1px solid var(--line)">
+                <span class="plate"><span>paper cut, warm grey · sample spread</span></span>
+              </div>
+              <div style="padding:16px 18px">
+                <div class="spread" style="align-items:flex-start">
+                  <h3 style="font-size:17.5px">Paper cut, warm grey</h3>
+                  <span class="pill pill-fill">in use</span>
+                </div>
+                <div class="rowflex" style="margin-top:11px">
+                  <span class="pill">system · three tone</span>
+                  <span class="pill">technique · cut paper</span>
+                  <span class="pill pill-warn">props · thin at 3</span>
+                </div>
+                <p class="who" style="margin-top:11px;font-size:11px;color:var(--ink-3)">Fathom 4, Snow section · 10 pages</p>
+              </div>
+            </div>
+
+            <div class="tile crop" data-go="19-composer.html" style="min-height:0;padding:0;cursor:pointer">
+              <div style="aspect-ratio:16/9;position:relative;border-bottom:1px solid var(--line)">
+                <span class="plate"><span>ink wash on grey · sample spread</span></span>
+              </div>
+              <div style="padding:16px 18px">
+                <div class="spread" style="align-items:flex-start">
+                  <h3 style="font-size:17.5px">Ink wash on grey</h3>
+                  <span class="pill">idle</span>
+                </div>
+                <div class="rowflex" style="margin-top:11px">
+                  <span class="pill">system · monochrome</span>
+                  <span class="pill">technique · wet wash</span>
+                  <span class="pill">props · hand lettering</span>
+                </div>
+                <p class="who" style="margin-top:11px;font-size:11px;color:var(--ink-3)">Last used on Fathom 3 · 8 pages</p>
+              </div>
+            </div>
+
+            <a class="tile tile-new" href="19-composer.html" style="min-height:180px;text-decoration:none">
+              <span class="arrow" aria-hidden="true"><svg aria-hidden="true" width="18" height="18"><use href="#i-plus"/></svg></span>
+              <span style="font-size:14px;font-weight:600">Compose a world</span>
+              <span class="hint">system · technique · props</span>
+            </a>
+
+          </section>
+
+          <p class="mock-note"><b>Stand-in artwork.</b> Every sample spread is a labelled placeholder; in the app this is a real rendered spread, cropped by a disc. <b>Synthetic content:</b> world names, parts and usage are authored demonstration data.</p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

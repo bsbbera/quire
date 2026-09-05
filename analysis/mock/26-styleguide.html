@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The system · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: The style guide is the stylesheet, rendered. Every swatch, control
+  and surface below is drawn by the same vermilion.css the twenty-five
+  screens import, so this page cannot fall out of date with them. It refuses
+  the design-system convention of a document that describes a system it is
+  not actually running.
+  OWN-WORLD: The system describing itself, in itself.
+  STORY: Someone porting a screen into the app opens this, finds the class
+  name, and copies it.
+  FIRST VIEWPORT: The four colour workers at panel scale, named by the only
+  role each is allowed to have.
+  FORM: Inherited world. Plan Part IV V0, the living style guide.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">26</span><b>The system</b><span>tokens · type · controls · motion</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="25-states.html">← Prev</a><a href="index.html">All screens</a>
+  </nav>
+</header>
+
+<div class="sheetwrap">
+
+  <div class="sheet-hero crop">
+    <span class="disc fill" style="width:300px;height:300px;right:-130px;top:-140px;opacity:.13"></span>
+    <span class="disc stroke" style="width:150px;height:150px;right:-46px;top:-30px;opacity:.4"></span>
+    <h1 style="font-size:clamp(34px,5vw,56px)">The system, running</h1>
+    <p>Everything below is drawn by <span class="mono">vermilion.css</span>, the same file the
+      twenty-five screens import. There is no second copy of these values anywhere, which is
+      the only reason this page can be trusted.</p>
+  </div>
+
+  <!-- Colour -->
+  <section class="sheet-sec">
+    <h2>Colour · four workers, three states</h2>
+    <div class="cols cols-2">
+      <div class="panel">
+        <table class="spec">
+          <thead><tr><th style="width:56px"></th><th style="width:110px">Token</th><th>The only role it has</th></tr></thead>
+          <tbody>
+            <tr><td><span class="sw" style="background:var(--putty)"></span></td><td class="mono">--putty</td><td>The page behind everything. Nothing else is a background wash.</td></tr>
+            <tr><td><span class="sw" style="background:var(--paper)"></span></td><td class="mono">--paper</td><td>Panels, tiles, inputs.</td></tr>
+            <tr><td><span class="sw" style="background:var(--char)"></span></td><td class="mono">--char</td><td>The work itself: manuscript, run threads, focused passages.</td></tr>
+            <tr><td><span class="sw" style="background:var(--vermilion)"></span></td><td class="mono">--vermilion</td><td>The one accent. Discs, primaries, numerals, focus, the active rail, progress.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <table class="spec">
+          <thead><tr><th style="width:56px"></th><th style="width:110px">Token</th><th>State only, never decoration</th></tr></thead>
+          <tbody>
+            <tr><td><span class="sw" style="background:var(--ok)"></span></td><td class="mono">--ok</td><td>Settled, approved, connected, passing.</td></tr>
+            <tr><td><span class="sw" style="background:var(--warn)"></span></td><td class="mono">--warn</td><td>Wants a person. Not an error.</td></tr>
+            <tr><td><span class="sw" style="background:var(--bad)"></span></td><td class="mono">--bad</td><td>Stopped, blocked, missing.</td></tr>
+            <tr><td><span class="sw" style="background:var(--ink)"></span></td><td class="mono">--ink</td><td>Text. <span class="mono">--ink-2</span> and <span class="mono">--ink-3</span> step it back.</td></tr>
+          </tbody>
+        </table>
+        <p class="hint" style="margin-top:12px">No gradients except the skeleton sweep. No new hues. Every tint is <span class="mono">color-mix()</span> from these, so the set stays at seven plus three.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Type -->
+  <section class="sheet-sec">
+    <h2>Type · three faces, three jobs</h2>
+    <div class="cols cols-3">
+      <div class="panel">
+        <div class="label">Interface</div>
+        <h3 style="font-size:27.5px;margin-top:8px">Geist</h3>
+        <p class="note" style="font-size:14px;margin-top:8px">Headings, buttons, labels, body and data. One family carries all of it. An Operate surface does not need a display face, and a second one would be noise.</p>
+        <div style="margin-top:14px">
+          <div style="font-size:27.5px;letter-spacing:-.032em;font-weight:600">Page title 30</div>
+          <div style="font-size:17.5px;font-weight:600;margin-top:8px">Panel heading 16</div>
+          <div style="font-size:14px;margin-top:8px">Body 15, which is what most of the app is set in.</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-top:8px">Meta 12.5</div>
+          <div class="label" style="margin-top:10px">Label 11 · .15em</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="label">Manuscript, and only manuscript</div>
+        <h3 style="font-family:var(--font-read);font-size:27.5px;font-weight:500;margin-top:8px">Literata</h3>
+        <p class="note" style="font-size:14px;margin-top:8px">Anywhere prose from the pipeline appears. Drawn for long reading on screens, which is the one job in this app that lasts hours.</p>
+        <div class="read" style="--rs:15px;--rm:100%;margin-top:14px">
+          <p class="lead">Eleven weeks is a long time for a light to keep itself, and the log said nothing about it.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="label">Measurement</div>
+        <h3 class="mono" style="font-size:27.5px;margin-top:8px">Geist Mono</h3>
+        <p class="note" style="font-size:14px;margin-top:8px">Ids, paths, model names, token counts, seeds. Never as a costume for &ldquo;technical&rdquo;.</p>
+        <div class="mono" style="font-size:14px;margin-top:14px;line-height:1.9;color:var(--ink-2)">
+          claude · sonnet-4.6<br>
+          ~/Quire/the-lamp-room/ch09.md<br>
+          phosphor-v3 · seed 41902<br>
+          127.0.0.1:8788 · 12 ms
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Geometry -->
+  <section class="sheet-sec">
+    <h2>Geometry · the identity</h2>
+    <div class="cols cols-2">
+      <div class="panel crop" style="min-height:190px">
+        <span class="disc fill" style="width:170px;height:170px;right:-70px;top:-76px;opacity:.16"></span>
+        <span class="disc stroke" style="width:90px;height:90px;right:-24px;top:-20px;opacity:.45"></span>
+        <span class="disc dots" style="width:110px;height:110px;left:-44px;bottom:-52px;opacity:.4"></span>
+        <h3 class="h-panel">Discs, cropped by their panel</h3>
+        <p class="note" style="font-size:14px;margin-top:6px">Zero to two per panel, at most one filled. They anchor to corners and bleed a quarter to a half out of frame. They are decorative, and they are never under text.</p>
+        <p class="hint" style="margin-top:10px">Halftone is reserved for the print side (magazine, images, layout), where the texture quietly means ink on paper.</p>
+      </div>
+      <div class="panel">
+        <h3 class="h-panel">Shape lock</h3>
+        <div class="rowflex" style="gap:18px;margin-top:14px;align-items:flex-end">
+          <div style="text-align:center"><div style="width:64px;height:44px;border:1.5px solid var(--line);border-radius:var(--r-ctl);background:var(--putty-2)"></div><div class="hint" style="margin-top:7px">6px<br>controls</div></div>
+          <div style="text-align:center"><div style="width:64px;height:56px;border:1.5px solid var(--line);border-radius:var(--r-card);background:var(--putty-2)"></div><div class="hint" style="margin-top:7px">18px<br>cards</div></div>
+          <div style="text-align:center"><div style="width:64px;height:64px;border:1.5px solid var(--line);border-radius:var(--r-screen);background:var(--putty-2)"></div><div class="hint" style="margin-top:7px">22px<br>the window</div></div>
+          <div style="text-align:center"><div style="width:64px;height:26px;border:1.5px solid var(--line);border-radius:999px;background:var(--putty-2)"></div><div class="hint" style="margin-top:7px">round<br>pills</div></div>
+        </div>
+        <p class="hint" style="margin-top:16px">No other radius may exist. Borders are 1px <span class="mono">--line</span>; emphasis borders are 1.5px.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Icons -->
+  <section class="sheet-sec">
+    <h2>Icons · one grid, one weight</h2>
+    <div class="panel">
+      <div class="rowflex" style="gap:20px;color:var(--ink-2)">
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-quire"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-home"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-book"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-magazine"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-layers"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-sliders"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-image"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-globe"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-pulse"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-plug"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-folder"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-file"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-search"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-check"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-x"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-plus"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-arrR"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-chevR"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-redo"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-play"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-down"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-eye"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-pencil"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-trash"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-lock"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-clock"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-alert"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-info"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-heart"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-drop"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-cpu"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-grid"/></svg>
+        <svg aria-hidden="true" width="21" height="21"><use href="#i-list"/></svg>
+      </div>
+      <p class="hint" style="margin-top:16px">Drawn on one 24px grid at 1.6 stroke, round caps and joins, no fills. Emoji and Unicode glyphs are not an icon system, and a set assembled from three sources reads as three sets. The mark itself is three nested arcs. A quire is the gathering of folded sheets that makes one signature of a book.</p>
+    </div>
+  </section>
+
+  <!-- Controls -->
+  <section class="sheet-sec">
+    <h2>Controls</h2>
+    <div class="cols cols-2">
+      <div class="panel">
+        <h3 class="h-panel">On paper</h3>
+        <div class="rowflex" style="gap:12px;margin-top:14px">
+          <button class="btn">Primary</button>
+          <button class="btn btn-line">Outlined</button>
+          <button class="btn btn-quiet">Quiet</button>
+          <button class="btn btn-bad">Destructive</button>
+          <button class="btn" disabled>Disabled</button>
+        </div>
+        <div class="rowflex" style="gap:12px;margin-top:14px">
+          <button class="arrow" aria-label="Next"><svg aria-hidden="true" width="18" height="18"><use href="#i-arrR"/></svg></button>
+          <div class="seg" data-seg><button aria-pressed="true">One</button><button aria-pressed="false">Two</button><button aria-pressed="false">Three</button></div>
+          <span class="onoff"><button aria-pressed="true">on</button><button class="off" aria-pressed="false">off</button></span>
+          <span class="kbd">Ctrl K</span>
+        </div>
+        <div class="rowflex" style="gap:12px;margin-top:14px">
+          <input class="slider" type="range" min="0" max="100" value="62" aria-label="Example slider">
+          <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+          <svg aria-hidden="true" class="spin" viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="5.4"/></svg>
+          <span class="thinking"><i></i><i></i><i></i></span>
+        </div>
+      </div>
+      <div class="dark" style="padding:20px 22px">
+        <h3 class="h-panel">On charcoal</h3>
+        <div class="rowflex" style="gap:12px;margin-top:14px">
+          <button class="btn">Primary</button>
+          <button class="btn btn-line">Outlined</button>
+          <button class="btn btn-quiet">Quiet</button>
+        </div>
+        <div class="rowflex" style="gap:12px;margin-top:14px">
+          <div class="seg" data-seg><button aria-pressed="true">A</button><button aria-pressed="false">A</button><button aria-pressed="false">A</button></div>
+          <span class="pill">neutral</span>
+          <span class="pill pill-fill">live</span>
+          <span class="kbd">Esc</span>
+        </div>
+        <div class="stages" style="margin-top:16px">
+          <span class="st done"><i></i>research</span>
+          <span class="st done"><i></i>draft</span>
+          <span class="st now"><i></i>audit</span>
+          <span class="st"><i></i>revise</span>
+        </div>
+        <p class="muted" style="font-size:14px;margin-top:14px">Every control has a charcoal rendition, because the work surfaces are charcoal and a control that only exists on paper is half a control.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Motion -->
+  <section class="sheet-sec">
+    <h2>Motion · one easing, three durations</h2>
+    <div class="panel">
+      <table class="spec">
+        <thead><tr><th style="width:120px">Duration</th><th style="width:180px">Used for</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">150ms</td><td>hover, press, colour</td><td>Fast enough that it reads as the control responding rather than as an animation.</td></tr>
+          <tr><td class="mono">300ms</td><td>movement, layout, rows</td><td>Anything that changes where something is.</td></tr>
+          <tr><td class="mono">640ms</td><td>first-run reveals only</td><td>The one screen someone reads top to bottom once. Never on a work screen.</td></tr>
+          <tr><td class="mono">cubic-bezier(.16,1,.3,1)</td><td>everything</td><td>One easing. Anything outside this set is a bug, not a decision.</td></tr>
+        </tbody>
+      </table>
+      <p class="hint" style="margin-top:14px">
+        Motion conveys state and nothing else: a run advancing, a gate clearing, an approval leaving the list. Under <span class="mono">prefers-reduced-motion</span> every sequence
+        jumps to its final state. Nothing animates within reach of a reading column.
+      </p>
+    </div>
+  </section>
+
+  <!-- Voice -->
+  <section class="sheet-sec">
+    <h2>Voice</h2>
+    <div class="cols cols-2">
+      <div class="panel">
+        <h3 class="h-panel">Never</h3>
+        <div class="rows" style="margin-top:10px">
+          <div class="row" style="padding:10px 4px"><span class="grow"><span class="name" style="color:var(--bad)">Error occurred</span><span class="meta">Says nothing, and offers nothing.</span></span></div>
+          <div class="row" style="padding:10px 4px"><span class="grow"><span class="name" style="color:var(--bad)">Loading&hellip;</span><span class="meta">A shaped skeleton says what is coming.</span></span></div>
+          <div class="row" style="padding:10px 4px"><span class="grow"><span class="name" style="color:var(--bad)">Success!</span><span class="meta">Name the thing that succeeded.</span></span></div>
+          <div class="row" style="padding:10px 4px"><span class="grow"><span class="name" style="color:var(--bad)">No items found</span><span class="meta">An empty state teaches the screen.</span></span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 class="h-panel">Instead</h3>
+        <div class="rows" style="margin-top:10px">
+          <div class="row" style="padding:10px 4px"><span class="grow"><span class="name">The provider dropped the connection at 2,400 words.</span><span class="meta">What stopped, what survived, the way forward.</span></span></div>
+          <div class="row" style="padding:10px 4px"><span class="grow"><span class="name">Before anything arrives</span><span class="meta">Over the skeleton of the list that is coming.</span></span></div>
+          <div class="row" style="padding:10px 4px"><span class="grow"><span class="name">Chapter 9 approved. Nothing was lost.</span><span class="meta">The toast names what happened.</span></span></div>
+          <div class="row" style="padding:10px 4px"><span class="grow"><span class="name">Nothing is written yet</span><span class="meta">Then one heading and one way to start.</span></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="mock-note">
+    <b>Porting note.</b> When this ships, <span class="mono">vermilion.css</span> moves into the app as a
+    file and the JSX carries these class names. The only edit it needs is the font block at the top:
+    the CDN import becomes the bundled <span class="mono">@fontsource</span> imports, because
+    PRODUCT.md forbids loading any asset over the network.
+  </p>
+
+</div>
+</body>
+</html>

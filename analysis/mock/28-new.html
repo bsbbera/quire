@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Start something · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: Thirteen ways to start is a screen, not a menu. They are grouped by
+  what each one needs FROM YOU — nothing, an existing work, or a reader who
+  steers — because that is the only question you are actually answering when
+  you pick one. It refuses the launcher convention of thirteen equal items in
+  a sidebar, which makes the four places you go every day compete with a
+  choice you make once a month.
+  OWN-WORLD: Putty ground, paper tiles, and the disc identity doing real work
+  for the first time: a derived form orbits the thing it derives from, a
+  translation is the same shape twice, a branching play forks, an open world
+  has no edge. Silhouette before title.
+  STORY: The maker wants to continue a book they already have, finds the
+  middle group without reading a word, and picks Continuation.
+  FIRST VIEWPORT: The question, then the first group at full width.
+  FORM: Inherited world. The app's START CREATING sidebar section, moved to a
+  screen. Not in the redesign plan.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">28</span><b>Start something</b><span>thirteen forms · silhouette before title</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="03-books.html">← Books</a><a href="index.html">All screens</a><a href="27-chat.html">Chat →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">~/Quire</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" aria-current="page" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><a href="02-home.html">Home</a><span class="sep">/</span><h1>Start something</h1></div>
+        <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="15" height="15"><use href="#i-search"/></svg><span class="kbd">Ctrl K</span></button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop" style="padding-bottom:0">
+            <span class="disc fill" style="width:230px;height:230px;right:-112px;top:-124px;opacity:.13"></span>
+            <span class="disc stroke" style="width:118px;height:118px;right:-38px;top:-34px;opacity:.4"></span>
+            <span class="disc dots" style="width:96px;height:96px;left:-58px;bottom:-66px;opacity:.28"></span>
+            <h2 class="h-page">What are you making?</h2>
+            <p class="muted" style="font-size:14px;margin-top:10px;max-width:56ch">
+              Picking one opens a conversation, not a form. You describe it, the machine asks a
+              few questions and writes the first truth files as you answer, and nothing lands on
+              disk until you say so. Grouped by what each form needs from you, because that is
+              the question you are really answering.
+            </p>
+          </section>
+
+          <!-- ── From nothing ──────────────────────────────────────────────
+               The forms that begin with a blank folder. -->
+          <section>
+            <div class="rowflex" style="gap:12px;margin-bottom:14px">
+              <span class="label">From nothing</span>
+              <span style="flex:1;height:1px;background:var(--line)"></span>
+              <span class="dim" style="font-size:11px">You bring the idea</span>
+            </div>
+            <div class="tiles">
+
+              <button class="tile crop" data-go="29-create.html">
+                <span class="mark mark-book"><span class="d1"></span><span class="d2"></span></span>
+                <span class="top"><span class="label">longest</span></span>
+                <h3>Long novel</h3>
+                <span class="who">Chapter by chapter, through draft, audit and revise. The form the rest of the app is shaped around.</span>
+              </button>
+
+              <button class="tile crop" data-go="29-create.html">
+                <span class="mark mark-short"><span class="d1"></span></span>
+                <span class="top"><span class="label">one sitting</span></span>
+                <h3>Short story</h3>
+                <span class="who">One file, one arc. Same loop as a novel, without the chapter machinery.</span>
+              </button>
+
+              <button class="tile crop" data-go="29-create.html">
+                <span class="mark mark-script"><span class="d1"></span><span class="d2"></span></span>
+                <span class="top"><span class="label">ruled</span></span>
+                <h3>Script</h3>
+                <span class="who">Scenes, slugs and speakers. Prose rules do not apply, and the audit knows it.</span>
+              </button>
+
+              <button class="tile crop" data-go="29-create.html">
+                <span class="mark mark-storyboard"><span class="d1"></span><span class="d2"></span></span>
+                <span class="top"><span class="label">drawn</span></span>
+                <h3>Storyboard</h3>
+                <span class="who">Panels with a line of direction each. Goes to Images for the frames.</span>
+              </button>
+
+              <button class="tile crop" data-go="29-create.html">
+                <span class="mark mark-mag"><span class="d1"></span></span>
+                <span class="top"><span class="label">printed</span></span>
+                <h3>Magazine</h3>
+                <span class="who">A staged issue: brief, flatplan, per-page copy, artwork, and a laid-out PDF.</span>
+              </button>
+
+            </div>
+          </section>
+
+          <!-- ── From something that exists ────────────────────────────────
+               Every one of these takes a source, so every silhouette here has
+               two parts: the thing, and the thing it came from. -->
+          <section>
+            <div class="rowflex" style="gap:12px;margin-bottom:14px">
+              <span class="label">From something that exists</span>
+              <span style="flex:1;height:1px;background:var(--line)"></span>
+              <span class="dim" style="font-size:11px">You bring a source</span>
+            </div>
+            <div class="tiles">
+
+              <button class="tile crop" data-go="29-create.html">
+                <span class="mark mark-fanfic"><span class="d2"></span><span class="d1"></span></span>
+                <span class="top"><span class="label">orbits a work</span></span>
+                <h3>Fanfic</h3>
+                <span class="who">Someone else&rsquo;s world, your story. Import the canon first and it becomes truth files.</span>
+              </button>
+
+              <button class="tile crop" data-go="29-create.html">
+                <span class="mark mark-side"><span class="d1"></span><span class="d2"></span></span>
+                <span class="top"><span class="label">beside a work</span></span>
+                <h3>Side-story</h3>
+                <span class="who">A minor character&rsquo;s week. Shares truth files with the book it hangs off.</span>
+              </button>
+
+              <button class="tile crop" data-go="29-create.html">
+                <span class="mark mark-continuation"><span class="d1"></span><span class="d2"></span></span>
+                <span class="top"><span class="label">carries on</span></span>
+                <h3>Continuation</h3>
+                <span class="who">Picks up where a finished book stopped, with its canon and its voice already loaded.</span>
+              </button>
+
+              <button class="tile crop" data-go="29-create.html">
+                <span class="mark mark-imitation"><span class="d1"></span><span class="d2"></span></span>
+                <span class="top"><span class="label">same hand</span></span>
+                <h3>Imitation</h3>
+                <span class="who">A new story in a studied voice. The style pack is built from the source before a word is written.</span>
+              </button>
+
+              <button class="tile crop" data-go="29-create.html">
+                <span class="mark mark-translation"><span class="d1"></span><span class="d2"></span></span>
+                <span class="top"><span class="label">same book, twice</span></span>
+                <h3>Translation</h3>
+                <span class="who">Chapter for chapter, with the terms fixed once and held. Exports EPUB, PDF, plain text.</span>
+              </button>
+
+            </div>
+          </section>
+
+          <!-- ── Steered by a reader ───────────────────────────────────────
+               These three are not linear, so none of them is a single disc. -->
+          <section>
+            <div class="rowflex" style="gap:12px;margin-bottom:14px">
+              <span class="label">Steered by a reader</span>
+              <span style="flex:1;height:1px;background:var(--line)"></span>
+              <span class="dim" style="font-size:11px">Somebody else decides what happens</span>
+            </div>
+            <div class="tiles">
+
+              <button class="tile crop" data-go="29-create.html">
+                <span class="mark mark-film"><span class="d1"></span><span class="d2"></span></span>
+                <span class="top"><span class="label">shot</span></span>
+                <h3>Interactive film</h3>
+                <span class="who">Scenes with choices between them, and a frame for every beat. The heaviest form in the app.</span>
+              </button>
+
+              <button class="tile crop" data-go="29-create.html">
+                <span class="mark mark-branch"><span class="d1"></span><span class="d2"></span></span>
+                <span class="top"><span class="label">forks</span></span>
+                <h3>Branching play</h3>
+                <span class="who">A story graph rather than a spine. Every ending has to be reachable, and the audit checks that.</span>
+              </button>
+
+              <button class="tile crop" data-go="29-create.html">
+                <span class="mark mark-world"><span class="d1"></span><span class="d2"></span></span>
+                <span class="top"><span class="label">no edge</span></span>
+                <h3>Open world</h3>
+                <span class="who">Places, people and state, with no fixed order. The reader goes where they like and the canon holds.</span>
+              </button>
+
+            </div>
+          </section>
+
+          <div role="link" tabindex="0" class="panel crop" data-go="27-chat.html">
+            <span class="disc stroke-l" style="width:150px;height:150px;right:-64px;bottom:-70px"></span>
+            <div class="spread">
+              <div>
+                <h3 class="h-panel">Not sure which</h3>
+                <p class="note" style="font-size:14px;margin-top:4px">Describe it in a sentence and Quire will pick the form, set up the folder and write the first truth file. You can change the form afterwards.</p>
+              </div>
+              <span class="arrow arrow-lg"><svg aria-hidden="true" width="20" height="20"><use href="#i-arrR"/></svg></span>
+            </div>
+          </div>
+
+          <p class="mock-note">
+            <b>Where this lives.</b> In the running app these thirteen are a
+            <span class="mono">START CREATING</span> list in the sidebar. Thirteen rail items would
+            drown the four places you go every day, so the rail carries one door
+            (<b>Start something</b>, top of the rail on every screen) and the choosing happens here,
+            where each form has room to say what it needs from you.
+            <b>Synthetic content:</b> the descriptions are authored demonstration data.
+          </p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

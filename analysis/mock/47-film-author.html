@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Authoring a node · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: Interactive film authoring is the fourth mode of the same ChatPage
+  that writes books, so it must look like Chat and not like a form. What
+  changes is only what stands beside the conversation: incoming choices on
+  the left because a scene is defined by how you arrive at it, and the node
+  being built on the right, filling as the model works.
+  OWN-WORLD: Identical to screen 27 and 29 by design. The one thing added is
+  the choice-effect row, because a choice here writes to a variable and a
+  chapter never did.
+  STORY: The maker asks for the scene, sees the third choice invented, and
+  keeps it.
+  FIRST VIEWPORT: The conversation, mid-work.
+  FORM: Inherited world. Grounded in App.tsx routing film-author into
+  ChatPage with mode="interactive-film-authoring".
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">47</span><b>Authoring a node</b><span>the fourth chat mode</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="46-flow.html">&larr; Prev</a><a href="index.html">All screens</a><a href="index.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" aria-current="page" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span data-go="45-film-studio.html">The Quiet Hour</span><span class="sep">/</span><h1>Node 22 &middot; Behind the door</h1></div>
+        <span class="pill mono">mode: interactive-film-authoring</span>
+        <button class="btn btn-line btn-sm" data-go="43-play.html">Play from here</button>
+      </div>
+
+      <div class="stage">
+        <div class="chat">
+
+          <aside class="subrail">
+            <div class="subrail-head"><b>How readers arrive</b></div>
+            <div class="subrail-body">
+              <div class="grp">
+                <span class="label">From node 14</span>
+                <div class="rows">
+                  <div class="row" data-go="44-graph.html"><span class="grow"><span class="name">Open the door</span><span class="meta mono">trust &minus;1</span></span></div>
+                  <div class="row" data-go="44-graph.html"><span class="grow"><span class="name">Ask what is behind it</span><span class="meta mono">trust +1</span></span></div>
+                </div>
+              </div>
+              <div class="grp">
+                <span class="label">State on arrival</span>
+                <div class="rows">
+                  <div class="row"><span class="grow"><span class="name mono">lamp</span><span class="meta">always on &mdash; both routes light it</span></span><span class="dot dot-clean"></span></div>
+                  <div class="row"><span class="grow"><span class="name mono">trust</span><span class="meta">between 2 and 5</span></span><span class="dot dot-clean"></span></div>
+                  <div class="row"><span class="grow"><span class="name mono">knows_about_eileen</span><span class="meta">may be either</span></span><span class="dot dot-warn"></span></div>
+                </div>
+              </div>
+              <div class="grp">
+                <span class="label">World rules in force</span>
+                <div class="rowflex" style="gap:6px;flex-wrap:wrap">
+                  <span class="chip">nothing supernatural is confirmed</span>
+                  <span class="chip">no character lies outright</span>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <div class="convo"><div class="dark on-char">
+            <div class="thread scroll-y grow">
+
+              <div class="msg">
+                <span class="tag">You</span>
+                <div class="body"><p>Write node 22. Marta has just opened the door. Remember she may or may not know about Eileen &mdash; it cannot depend on that.</p></div>
+              </div>
+
+              <div class="msg">
+                <span class="tag" style="color:var(--vermilion-ink)">Quire</span>
+                <div class="body">
+                  <p>Both arrivals light the lamp, so she can see. I will write the room as ordinary and let the wrongness be one detail she cannot place, and I will keep Eileen out of the prose so the node works either way.</p>
+                </div>
+              </div>
+
+              <div class="tool"><span class="tick"></span><span class="grow">read <span class="mono">world-anchor.json</span>, node 14, and the two incoming choices</span></div>
+              <div class="tool"><span class="tick"></span><span class="grow">wrote scene description &mdash; 41 words</span></div>
+              <div class="tool"><span class="tick"></span><span class="grow">wrote 4 lines of dialogue for Marta and Halloran</span></div>
+              <div class="tool"><span class="tick"></span><span class="grow">proposed 3 choices, one of them conditional</span></div>
+
+              <div class="msg">
+                <span class="tag" style="color:var(--vermilion-ink)">Quire</span>
+                <div class="body">
+                  <p>The third choice I invented is conditional on <span class="mono">trust &ge; 4</span>. It is the only route to node 38, which is currently unreachable &mdash; this fixes that, but it also means a low-trust reader never sees the room a second time. Your call.</p>
+                </div>
+              </div>
+
+              <div class="gate">
+                <span class="grow"><span class="what">Keep the conditional choice</span><span class="when">Writes node 22 and one new edge to node 38. Node 38 stops being unreachable.</span></span>
+                <button class="gatepill">Keep it</button>
+              </div>
+
+              <div class="thinking"><span class="spin"></span>waiting on you before writing anything to the graph</div>
+
+            </div>
+
+            <div class="composer">
+              <div class="box">
+                <textarea rows="2" aria-label="Message" placeholder="Ask for a change, or say keep it&hellip;"></textarea>
+                <div class="tools">
+                  <button class="attach" aria-label="Attach a file"><svg aria-hidden="true" width="15" height="15"><use href="#i-clip"/></svg></button>
+                  <span class="quick">node 22</span>
+                  <span class="quick">world anchor</span>
+                  <span class="grow"></span>
+                  <span class="kbd">&crarr;</span>
+                  <button class="btn btn-sm"><svg aria-hidden="true" width="14" height="14"><use href="#i-send"/></svg>Send</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          </div>
+
+          <aside class="subrail">
+            <div class="subrail-head"><b>The node so far</b></div>
+            <div class="subrail-body">
+              <div class="grp">
+                <span class="label">Scene</span>
+                <p class="read" style="font-size:14px;line-height:1.65;font-style:italic;opacity:.8">A child&rsquo;s bedroom, made up and cold, with the bed turned down on both sides.</p>
+              </div>
+              <div class="grp">
+                <span class="label">Dialogue</span>
+                <div class="rows">
+                  <div class="row"><span class="who-av">M</span><span class="grow"><span class="name">Marta</span><span class="meta">2 lines</span></span></div>
+                  <div class="row"><span class="who-av">H</span><span class="grow"><span class="name">Halloran</span><span class="meta">2 lines</span></span></div>
+                </div>
+              </div>
+              <div class="grp">
+                <span class="label">Choices</span>
+                <div class="rows">
+                  <div class="row"><span class="grow"><span class="name">Close it again</span><span class="meta mono">&rarr; 23</span></span><span class="dot dot-clean"></span></div>
+                  <div class="row"><span class="grow"><span class="name">Ask whose room it was</span><span class="meta mono">&rarr; 31 &middot; trust +1</span></span><span class="dot dot-clean"></span></div>
+                  <div class="row"><span class="grow"><span class="name">Come back in the morning</span><span class="meta mono">&rarr; 38 &middot; needs trust &ge; 4</span></span><span class="dot dot-warn"></span></div>
+                </div>
+              </div>
+              <div class="grp">
+                <span class="label">Written this session</span>
+                <div class="rows">
+                  <div class="row"><span class="grow"><span class="name mono">node-22.json</span><span class="meta">not saved yet</span></span><span class="dot dot-never"></span></div>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

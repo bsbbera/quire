@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Genres · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: A genre here is not a label, it is a set of rules a book inherits:
+  chapter types, fatigue words, a power ladder, a pacing rule. So the screen
+  is a two-column editor, list on the left, the rules themselves on the
+  right, and the rules are shown as what they will forbid rather than as
+  configuration.
+  OWN-WORLD: Paper list against putty, the selected genre carrying a
+  vermilion edge, the markdown rule body set in the reading face rather than
+  a code box, because a person wrote it and a person will read it.
+  STORY: The maker adds a fatigue word after seeing it four times in one chapter.
+  FIRST VIEWPORT: The genre list and which book uses each.
+  FORM: Inherited world. Grounded in GenreManager.tsx: chapterTypes,
+  fatigueWords, numericalSystem, powerScaling, eraResearch, pacingRule, rules.
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">37</span><b>Genres</b><span>rules a book inherits</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="36-analytics.html">&larr; Prev</a><a href="index.html">All screens</a><a href="38-style.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" aria-current="page" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span>System</span><span class="sep">/</span><h1>Genres</h1></div>
+        <span class="pill mono">4 genres &middot; 5 books</span>
+        <button class="btn btn-line btn-sm"><svg aria-hidden="true" width="14" height="14"><use href="#i-plus"/></svg>New genre</button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop" style="padding-bottom:0">
+            <span class="disc stroke" style="width:180px;height:180px;left:-84px;top:-88px;opacity:.3"></span>
+            <h2 class="h-page">Rules a book inherits before it is written</h2>
+            <p class="muted" style="font-size:14px;margin-top:8px;max-width:62ch">
+              A genre is not a shelf label here. It is the set of constraints the writer
+              is handed at the start of every chapter, and the words it is told never to
+              reach for twice.
+            </p>
+          </section>
+
+          <div class="cols" style="grid-template-columns:250px 1fr;gap:18px;align-items:start">
+
+            <div class="panel panel-flush">
+              <div class="panel-head"><h3 class="h-panel">All genres</h3></div>
+              <div class="panel-body" style="padding:6px">
+                <div class="rows">
+                  <div class="row" aria-current="true"><span class="grow"><span class="name">Quiet horror</span><span class="meta">2 books</span></span></div>
+                  <div class="row"><span class="grow"><span class="name">Progression fantasy</span><span class="meta">1 book</span></span></div>
+                  <div class="row"><span class="grow"><span class="name">Literary</span><span class="meta">1 book</span></span></div>
+                  <div class="row"><span class="grow"><span class="name">Historical</span><span class="meta">1 book &middot; era research on</span></span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="stack">
+
+              <section class="panel">
+                <div class="panel-head">
+                  <span class="grow"><h3 class="h-panel">Quiet horror</h3><span class="dim" style="font-size:11px">Used by The Lamp Room and The Salt House</span></span>
+                  <button class="btn btn-quiet btn-sm">Copy to project</button>
+                  <span class="hint" style="margin:0 4px 0 0">used by 2 books</span>
+                  <button class="btn btn-bad btn-sm">Delete</button>
+                </div>
+                <div class="panel-body stack">
+
+                  <div class="field">
+                    <span class="label">Chapter types</span>
+                    <div class="rowflex" style="gap:7px;flex-wrap:wrap;margin-top:7px">
+                      <span class="chip">arrival</span><span class="chip">domestic</span><span class="chip">discovery</span>
+                      <span class="chip">withdrawal</span><span class="chip">confrontation</span>
+                      <button class="chip" style="border-style:dashed"><svg aria-hidden="true" width="12" height="12"><use href="#i-plus"/></svg>Add</button>
+                    </div>
+                    <span class="hint">The planner cycles these so three discoveries never land in a row.</span>
+                  </div>
+
+                  <div class="field">
+                    <span class="label">Fatigue words</span>
+                    <div class="rowflex" style="gap:7px;flex-wrap:wrap;margin-top:7px">
+                      <span class="chip">shiver<span class="n">4</span></span>
+                      <span class="chip">unsettling<span class="n">6</span></span>
+                      <span class="chip">a chill<span class="n">3</span></span>
+                      <span class="chip">something was wrong<span class="n">2</span></span>
+                      <span class="chip">breath caught<span class="n">5</span></span>
+                      <button class="chip" style="border-style:dashed"><svg aria-hidden="true" width="12" height="12"><use href="#i-plus"/></svg>Add</button>
+                    </div>
+                    <span class="hint">The count is how many times each already appears across the two books. Anything here gets flagged on the second use in a chapter.</span>
+                  </div>
+
+                  <div class="cols cols-a" style="align-items:start">
+                    <label class="field"><span class="label">Pacing rule</span>
+                      <input class="input" type="text" value="A threat must be present by word 1,000">
+                    </label>
+                    <label class="field"><span class="label">Power scaling</span>
+                      <select class="input"><option>None &mdash; nobody gets stronger</option><option>Soft ladder</option><option>Numbered tiers</option></select>
+                    </label>
+                  </div>
+
+                  <div class="rowflex" style="gap:22px;flex-wrap:wrap">
+                    <label class="checkline"><input type="checkbox" class="check"><span>Numerical system</span></label>
+                    <label class="checkline"><input type="checkbox" class="check"><span>Era research</span></label>
+                  </div>
+
+                </div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-head"><span class="grow"><h3 class="h-panel">Rules</h3><span class="dim" style="font-size:11px">Handed to the writer verbatim, every chapter</span></span></div>
+                <div class="panel-body">
+                  <div class="read read-field" contenteditable="true" style="min-height:180px;font-size:14px;line-height:1.72">
+                    <p><b>Nothing supernatural is ever confirmed.</b> The reader may believe it. A character may believe it. The book never does.</p>
+                    <p>Violence happens off the page or after the section break. What is on the page is the aftermath and who has to clean it.</p>
+                    <p>Every chapter ends on an ordinary domestic act &mdash; a kettle, a door, a light. Never on a revelation.</p>
+                    <p>No dream sequences. No mirrors. No character describing their own face.</p>
+                  </div>
+                  <div class="rowflex" style="gap:9px;margin-top:13px">
+                    <button class="btn">Save changes</button>
+                    <button class="btn btn-quiet">Cancel</button>
+                  </div>
+                </div>
+              </section>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

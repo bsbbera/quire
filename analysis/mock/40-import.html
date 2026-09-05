@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Import · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: Import is really five different acts wearing one name, so the tabs
+  are the screen. Bringing chapters into an existing book is filing.
+  Attaching a canon is lineage. Fanfic, side-story and imitation each make a
+  new book out of an old one, and each needs a different sentence from the
+  user, so each gets its own form rather than one generic uploader.
+  OWN-WORLD: A single paper form per tab, the lineage drawn with the disc
+  pair so the parent-to-derivative relationship is a shape and not a label.
+  STORY: The maker attaches a novel as canon, then starts a side-story from it.
+  FIRST VIEWPORT: The five tabs, so the ambiguity is resolved immediately.
+  FORM: Inherited world. Grounded in ImportManager.tsx tabs: chapters, canon,
+  fanfic, spinoff, imitation, and their real hint copy.
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">40</span><b>Import</b><span>chapters &middot; canon &middot; derived work</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="39-translation.html">&larr; Prev</a><a href="index.html">All screens</a><a href="41-project.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" aria-current="page" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span>Tools</span><span class="sep">/</span><h1>Import</h1></div>
+        <span class="pill mono">5 books on this machine</span>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <section class="crop" style="padding-bottom:0">
+            <span class="disc stroke" style="width:184px;height:184px;left:-86px;top:-88px;opacity:.3"></span>
+            <h2 class="h-page">Bringing something in that already exists</h2>
+            <p class="muted" style="font-size:14px;margin-top:8px;max-width:62ch">
+              Two of these file text into a book you already have. Three of them make a
+              new book out of an old one, and the difference between those three is what
+              they take from the parent.
+            </p>
+          </section>
+
+          <div class="tabs" data-tabs>
+            <button class="tab" aria-selected="false" data-panel="chapters"><i></i>Chapters</button>
+            <button class="tab" aria-selected="false" data-panel="canon"><i></i>Canon</button>
+            <button class="tab" aria-selected="false" data-panel="fanfic"><i></i>Fanfic</button>
+            <button class="tab" aria-selected="true" data-panel="spinoff"><i></i>Side-story</button>
+            <button class="tab" aria-selected="false" data-panel="imitation"><i></i>Imitation</button>
+          </div>
+
+          <section class="panel" data-panel="chapters" hidden>
+            <div class="panel-head"><span class="grow"><h3 class="h-panel">Import chapters</h3><span class="dim" style="font-size:11px">Filing text into a book that already exists</span></span></div>
+            <div class="panel-body stack">
+              <label class="field"><span class="label">Target book</span>
+                <select class="input"><option>Select target book&hellip;</option><option>The Lamp Room</option><option>The Salt House</option></select>
+              </label>
+              <label class="field"><span class="label">Split regex</span>
+                <input class="input mono" type="text" value="^Chapter\s+\d+" placeholder="optional">
+                <span class="hint">Left empty, everything lands as one chapter. This is the only field here that is worth getting right.</span>
+              </label>
+              <label class="field"><span class="label">Text</span>
+                <textarea class="input" rows="7" placeholder="Paste chapter text&hellip;" style="resize:vertical"></textarea>
+              </label>
+              <div class="rowflex"><button class="btn">Import</button></div>
+            </div>
+          </section>
+
+          <section class="panel" data-panel="canon" hidden>
+            <div class="panel-head"><span class="grow"><h3 class="h-panel">Import canon</h3><span class="dim" style="font-size:11px">Telling a derivative book what its parent is</span></span></div>
+            <div class="panel-body stack">
+              <div class="cols cols-a" style="align-items:end">
+                <label class="field"><span class="label">Source, the parent</span><select class="input"><option>Select source&hellip;</option><option>The Lamp Room</option></select></label>
+                <label class="field"><span class="label">Target, the derivative</span><select class="input"><option>Select target&hellip;</option><option>The Salt House</option></select></label>
+              </div>
+              <p class="hint">The derivative inherits people.json and world.json from the parent and may not contradict them. That is what makes it derived rather than merely similar.</p>
+              <div class="rowflex"><button class="btn">Attach canon</button></div>
+            </div>
+          </section>
+
+          <section class="panel" data-panel="fanfic" hidden>
+            <div class="panel-head"><span class="grow"><h3 class="h-panel">Fanfic</h3><span class="dim" style="font-size:11px">Someone else&rsquo;s world, your story</span></span></div>
+            <div class="panel-body stack">
+              <label class="field"><span class="label">Title</span><input class="input" type="text" placeholder="Fanfic title"></label>
+              <label class="field"><span class="label">Source material</span>
+                <textarea class="input" rows="7" placeholder="Paste source material&hellip;" style="resize:vertical"></textarea>
+                <span class="hint">Setting, cast, rules. Enough that the writer does not invent a version of the world that fans will not recognise.</span>
+              </label>
+              <div class="rowflex"><button class="btn">Create</button></div>
+            </div>
+          </section>
+
+          <section class="panel" data-panel="spinoff">
+            <div class="panel-head"><span class="grow"><h3 class="h-panel">Side-story</h3><span class="dim" style="font-size:11px">Your world, a story off the main line</span></span></div>
+            <div class="panel-body stack">
+              <p class="muted" style="font-size:14px;max-width:64ch">
+                Pick an existing book as the canon. A standalone side-story book is
+                generated: it inherits the cast and the world, but tells a plot that
+                stays outside the main line and cannot contradict it.
+              </p>
+
+              <div class="crop" style="padding:20px 0 8px">
+                <div class="lineage">
+                  <span class="node named"><span class="mark badge mark-book" style="width:32px;height:32px;flex:none"><span class="d1"></span><span class="d2"></span></span><span><b>The Lamp Room</b><span class="dim">22 chapters &middot; canon</span></span></span>
+                  <span class="step"><svg aria-hidden="true" width="18" height="18"><use href="#i-arrR"/></svg></span>
+                  <span class="node named"><span class="mark badge mark-side" style="width:32px;height:32px;flex:none"><span class="d1"></span><span class="d2"></span></span><span><b>New side-story</b><span class="dim">inherits people and world</span></span></span>
+                </div>
+              </div>
+
+              <div class="cols cols-a" style="align-items:end">
+                <label class="field"><span class="label">Parent book</span><select class="input"><option>The Lamp Room</option><option>The Salt House</option></select></label>
+                <label class="field"><span class="label">Side-story title</span><input class="input" type="text" value="What Marta Did Before"></label>
+              </div>
+              <label class="field"><span class="label">Direction</span>
+                <textarea class="input" rows="4" style="resize:vertical">Marta, the fifteen years before she took the house. Ends the week she arrives, so it can never collide with the main line.</textarea>
+                <span class="hint">Optional. Which character, which subplot, which what-if.</span>
+              </label>
+              <div class="rowflex" style="gap:9px"><button class="btn">Create the side-story</button><span class="hint" style="align-self:center">Opens as a conversation, like every other way of starting a book.</span></div>
+            </div>
+          </section>
+
+          <section class="panel" data-panel="imitation" hidden>
+            <div class="panel-head"><span class="grow"><h3 class="h-panel">Imitation</h3><span class="dim" style="font-size:11px">Their voice, your story</span></span></div>
+            <div class="panel-body stack">
+              <p class="muted" style="font-size:14px;max-width:64ch">
+                A reference text plus your own idea. A new original book is created in
+                that writing style. The style is imitated; the plot is not.
+              </p>
+              <label class="field"><span class="label">New book title</span><input class="input" type="text" placeholder="New book title"></label>
+              <label class="field"><span class="label">Your story idea</span>
+                <textarea class="input" rows="4" placeholder="Your original story idea (what it is about)&hellip;" style="resize:vertical"></textarea>
+              </label>
+              <label class="field"><span class="label">Reference text</span>
+                <textarea class="input" rows="6" placeholder="Paste reference text to imitate its style, not its plot&hellip;" style="resize:vertical"></textarea>
+                <span class="hint">Runs through the <span class="xref" data-go="38-style.html">style analyzer</span> first, and you see the profile before anything is written.</span>
+              </label>
+              <div class="rowflex"><button class="btn">Create</button></div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

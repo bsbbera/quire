@@ -3,6 +3,7 @@
 // The graph used to be hardcoded here. It lives in workflows/*.json now, so
 // this file is only the machine half — finding the install, launching the
 // right runner for the hardware, filling a graph and waiting on a render.
+import * as events from "./events.mjs";
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -192,15 +193,26 @@ export async function generate({
 
   const id = queued.prompt_id;
   const until = Date.now() + timeoutMs;
+  /* The poll loop already runs; it simply never told anyone. Emitting from
+     inside it is free and turns a silent five-minute wait into a line that
+     moves. */
+  events.emit("comfy:generate:start", { id, width: values.width, height: values.height });
+  let polls = 0;
   while (Date.now() < until) {
     await new Promise((res) => setTimeout(res, 1200));
+    polls += 1;
     const h = await (await fetch(`${COMFY_URL}/history/${id}`)).json().catch(() => ({}));
     const entry = h[id];
-    if (!entry) continue;
+    if (!entry) {
+      events.emit("comfy:generate:progress", { id, waited: polls * 1.2 });
+      continue;
+    }
     const st = entry.status || {};
     if (st.status_str === "error") {
       const m = (st.messages || []).find((x) => x[0] === "execution_error");
-      throw new Error("ComfyUI execution failed: " + (m ? JSON.stringify(m[1]).slice(0, 400) : "unknown"));
+      const why = "ComfyUI execution failed: " + (m ? JSON.stringify(m[1]).slice(0, 400) : "unknown");
+      events.emit("comfy:generate:fail", { id, error: why });
+      throw new Error(why);
     }
     const images = Object.values(entry.outputs || {}).flatMap((o) => o.images || []);
     if (!images.length) continue;
@@ -212,6 +224,7 @@ export async function generate({
       mkdirSync(dirname(outFile), { recursive: true });
       writeFileSync(outFile, buf);
     }
+    events.emit("comfy:generate:done", { id, bytes: buf.length, outFile: outFile || null });
     return {
       ok: true, seed, file: outFile, bytes: buf.length, comfyFile: img.filename,
       workflow: w.id, device: dev, ms: Date.now() - started,

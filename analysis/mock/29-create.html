@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Starting a book · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: You start a book by talking, not by filling in a form. Picking a
+  form opens a conversation seeded for it, and the folder builds itself in
+  the margin as you answer — so the setup IS the first working session, and
+  there is never a wizard you complete and then leave behind. It refuses the
+  new-project-modal convention, which asks for a title and a genre before you
+  know either.
+  OWN-WORLD: The chat surface from screen 27, unchanged, with the right
+  column showing files appearing on disk instead of files already there.
+  Charcoal conversation, one vermilion on the create gate.
+  STORY: The maker says one sentence about a lighthouse, answers three
+  questions, watches direction.json get written, and takes the gate.
+  FIRST VIEWPORT: The form they picked, the question they are on, and the
+  folder so far.
+  FORM: Inherited world. The app's real book-create route, which renders
+  ChatPage mode="book-create". Not in the redesign plan.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">29</span><b>Starting a book</b><span>creation is a conversation</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="28-new.html">← Forms</a><a href="index.html">All screens</a><a href="04-book.html">The book →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">~/Quire · new long novel</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" aria-current="page" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main chat chat-2">
+
+      <div class="convo">
+
+        <div class="topbar">
+          <div class="crumbs grow">
+            <a href="28-new.html">Start something</a><span class="sep">/</span><h1>Long novel</h1>
+          </div>
+          <span class="pill mono">claude · sonnet-4.6</span>
+          <button class="btn btn-quiet btn-sm" data-go="28-new.html">Change the form</button>
+        </div>
+
+        <div class="dark crop">
+          <span class="disc dots dots-light" style="width:260px;height:260px;right:-124px;top:-134px"></span>
+          <span class="disc stroke" style="width:130px;height:130px;right:-52px;top:-56px;opacity:.4"></span>
+
+          <div class="scroll-y" style="flex:1;min-height:0;padding:24px clamp(16px,3vw,32px) 8px">
+            <div class="thread" style="max-width:780px;margin:0 auto">
+
+              <!-- The form is the seed of the conversation, not a setting on
+                   a form. It arrives as the model's opening line. -->
+              <div class="msg">
+                <span class="who-av model">Q</span>
+                <div class="body">
+                  <div class="tag">Long novel</div>
+                  <p style="font-size:14px;line-height:1.6;color:var(--on-char)">
+                    Twenty-something chapters, through draft, audit and revise. Tell me what it is
+                    in a sentence and I will ask about the rest. If you would rather start from
+                    something you have written, say so and I will read it instead.
+                  </p>
+                </div>
+              </div>
+
+              <div class="msg">
+                <span class="who-av human">SB</span>
+                <div class="body">
+                  <div class="tag">You</div>
+                  <p style="font-size:14px;line-height:1.6;color:var(--on-char)">
+                    A relief keeper is sent to a lighthouse that has been running itself for
+                    eleven weeks. No supernatural explanation. Nobody rescues him.
+                  </p>
+                </div>
+              </div>
+
+              <div class="msg">
+                <span class="who-av model">Q</span>
+                <div class="body">
+                  <div class="tag">Three questions, then I will write it down</div>
+                  <p style="font-size:14px;line-height:1.6;color:var(--on-char)">
+                    That is enough to start. Answer these however briefly you like.
+                  </p>
+                  <div class="rows" style="margin-top:12px">
+                    <div class="row" style="border-color:var(--line-char);padding:11px 4px">
+                      <span class="num tnum" style="width:1.7em">1</span>
+                      <span class="grow"><span class="name" style="color:var(--on-char)">Where does it end?</span><span class="meta" style="color:var(--on-char-2)">Not the plot &mdash; the last image.</span></span>
+                      <span class="pill pill-ok">answered</span>
+                    </div>
+                    <div class="row" style="border-color:var(--line-char);padding:11px 4px">
+                      <span class="num tnum" style="width:1.7em">2</span>
+                      <span class="grow"><span class="name" style="color:var(--on-char)">Whose head are we in?</span><span class="meta" style="color:var(--on-char-2)">One point of view, or several.</span></span>
+                      <span class="pill pill-ok">answered</span>
+                    </div>
+                    <div class="row" style="border-color:var(--line-char);padding:11px 4px">
+                      <span class="num tnum" style="width:1.7em">3</span>
+                      <span class="grow"><span class="name" style="color:var(--on-char)">How long, roughly?</span><span class="meta" style="color:var(--on-char-2)">Chapters and words each. A guess is fine.</span></span>
+                      <span class="pill pill-fill">now</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="msg">
+                <span class="who-av model">Q</span>
+                <div class="body">
+                  <div class="tag">Writing it down as you answer</div>
+                  <div class="stack" style="gap:7px;margin-top:2px">
+                    <div class="tool"><svg aria-hidden="true" width="14" height="14" class="tick"><use href="#i-check"/></svg>Wrote <span class="mono">direction.json</span><span class="grow"></span><span class="mono dim" style="font-size:11px">premise, ends_on, never</span></div>
+                    <div class="tool"><svg aria-hidden="true" width="14" height="14" class="tick"><use href="#i-check"/></svg>Wrote <span class="mono">voice.json</span><span class="grow"></span><span class="mono dim" style="font-size:11px">third person, past</span></div>
+                    <div class="tool"><svg aria-hidden="true" class="spin" viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="5.4"/></svg>Naming the folder</div>
+                  </div>
+                  <p style="font-size:14px;line-height:1.6;color:var(--on-char);margin-top:12px">
+                    I have it as <b>The Lamp Room</b> unless you would rather call it something
+                    else. Nothing is fixed &mdash; every one of these files stays editable<span class="caret"></span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- The gate. Everything above this line is a conversation;
+                   below it, a folder exists. -->
+              <div class="msg">
+                <span class="who-av model">Q</span>
+                <div class="body">
+                  <div class="tag">Ready when you are</div>
+                  <div class="gate is-open" style="background:var(--char-2);border-color:var(--vermilion-ink)">
+                    <span class="glyph" style="width:32px;height:32px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--vermilion);color:var(--vermilion-ink)"><svg aria-hidden="true" width="15" height="15"><use href="#i-folder"/></svg></span>
+                    <span class="grow">
+                      <span class="what" style="color:var(--on-char)">Make the folder and start chapter 1</span>
+                      <span class="when" style="color:var(--on-char-2)"><span class="mono">~/Quire/the-lamp-room</span> · 4 files · nothing else on the machine changes</span>
+                    </span>
+                    <button class="btn btn-line btn-sm">Keep talking first</button>
+                    <button class="btn btn-sm" data-go="04-book.html">Make it</button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="composer">
+            <div style="max-width:780px;margin:0 auto">
+              <div class="quick">
+                <button class="pill">22 chapters, 3,200 words each</button>
+                <button class="pill">Shorter &mdash; 12 chapters</button>
+                <button class="pill">I do not know yet</button>
+                <button class="pill"><svg aria-hidden="true" width="11" height="11"><use href="#i-folder"/></svg>Start from a file I have</button>
+              </div>
+              <div class="box">
+                <textarea placeholder="How long, roughly? A guess is fine — it only sets the target the audit measures against." aria-label="Message"></textarea>
+                <div class="tools">
+                  <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="15" height="15"><use href="#i-clip"/></svg>Attach</button>
+                  <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="15" height="15"><use href="#i-skill"/></svg>Skills</button>
+                  <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="15" height="15"><use href="#i-cpu"/></svg><span class="mono" style="font-size:11px">sonnet-4.6</span><svg aria-hidden="true" width="13" height="13"><use href="#i-chevD"/></svg></button>
+                  <span class="grow"></span>
+                  <span class="dim" style="font-size:11px"><span class="kbd">Enter</span> sends</span>
+                  <button class="btn btn-sm" aria-label="Send"><svg aria-hidden="true" width="15" height="15"><use href="#i-send"/></svg></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── The folder, filling up ─────────────────────────────────────────
+           The same panel that shows artifacts in an ordinary chat. Here it
+           shows the book coming into existence, so the setup never feels
+           like a form that will be thrown away. -->
+      <div class="subrail">
+        <div class="subrail-head">
+          <div class="label">Being made</div>
+          <div class="rowflex" style="gap:8px;margin-top:8px;flex-wrap:nowrap">
+            <span class="crop" style="position:relative;width:34px;height:34px;flex:none;border-radius:var(--r-ctl);border:1px solid var(--line);overflow:hidden">
+              <span class="mark mark-book" style="transform:scale(.42);transform-origin:top right"><span class="d1"></span><span class="d2"></span></span>
+            </span>
+            <span class="grow" style="min-width:0">
+              <span style="display:block;font-size:14px;font-weight:600" class="trunc">The Lamp Room</span>
+              <span class="dim mono" style="font-size:11px">long novel</span>
+            </span>
+          </div>
+          <p class="hint" style="margin-top:9px">Not on disk yet. Taking the gate writes all four files at once.</p>
+        </div>
+
+        <div class="subrail-body">
+          <div class="label" style="padding:0 4px 6px"><span>Files it will write</span></div>
+          <div class="rows">
+            <div class="row" style="padding:9px 4px">
+              <span class="dot dot-clean"></span>
+              <span class="grow"><span class="name mono" style="font-size:11px">direction.json</span><span class="meta">premise · ends_on · never</span></span>
+            </div>
+            <div class="row" style="padding:9px 4px">
+              <span class="dot dot-clean"></span>
+              <span class="grow"><span class="name mono" style="font-size:11px">voice.json</span><span class="meta">third person, past</span></span>
+            </div>
+            <div class="row" style="padding:9px 4px">
+              <span class="dot dot-warn"></span>
+              <span class="grow"><span class="name mono" style="font-size:11px">runtime.json</span><span class="meta">waiting on the length</span></span>
+            </div>
+            <div class="row" style="padding:9px 4px">
+              <span class="dot dot-never"></span>
+              <span class="grow"><span class="name mono" style="font-size:11px">people.json</span><span class="meta">empty until chapter 1</span></span>
+            </div>
+          </div>
+
+          <div class="grp">
+            <div class="label" style="padding:0 4px 6px"><span>Direction, so far</span></div>
+            <div class="panel" style="padding:12px 13px">
+              <pre class="mono" style="font-size:11px;line-height:1.7;margin:0;white-space:pre-wrap;color:var(--ink-2)"><span style="color:var(--vermilion-ink)">"premise"</span>: "A relief keeper is
+  sent to a light that has been
+  running itself for eleven weeks."
+<span style="color:var(--vermilion-ink)">"never"</span>: ["a supernatural
+  explanation", "a rescue from
+  the mainland"]</pre>
+            </div>
+            <p class="hint" style="margin-top:9px">Read it back and correct me in the chat. Editing here comes later, on the truth screen.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

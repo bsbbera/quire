@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Truth files · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: Canon has a rank, and the rank is the interface. Files are listed in
+  authority order and the tier is the loudest thing on each row, because the
+  whole point of the system is that a later file never overrules an earlier
+  one. It refuses the flat file-tree every editor ships, which makes every
+  file look equally true.
+  OWN-WORLD: Putty ground, paper panels, one vermilion on the ruling tier.
+  Geist Mono for the file body — this is structured canon, not prose, and
+  Literata is reserved for the manuscript.
+  STORY: The maker checks which file decides a disputed fact, edits it there,
+  and sees what the runs have been writing into memory without their say-so.
+  FIRST VIEWPORT: File rows left in authority order, the open file right.
+  FORM: Inherited world, plan Part III §3, truth-files half. No concept seed.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">05</span><b>Truth files</b><span>authority tiers · the canon editor</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="04-book.html">← Prev</a><a href="index.html">All screens</a><a href="06-chapter.html">Next →</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">~/Quire/the-lamp-room/truth</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" aria-current="page" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><a href="03-books.html">Books</a><span class="sep">/</span><a href="04-book.html">The Lamp Room</a><span class="sep">/</span><h1>Truth</h1></div>
+        <span class="pill mono">claude · sonnet-4.6</span>
+        <span class="pill pill-ok"><svg aria-hidden="true" width="11" height="11"><use href="#i-check"/></svg>shim ready</span>
+        <button class="gatepill" data-go="02-home.html"><span class="n tnum">3</span> waiting on you</button>
+        <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="15" height="15"><use href="#i-search"/></svg><span class="kbd">Ctrl K</span></button>
+      </div>
+
+      <div class="stage">
+        <div class="wrap stack-lg">
+
+          <div class="head" style="margin-bottom:0">
+            <h2 class="h-page">Nine files, listed by what wins</h2>
+            <p>Every file here is on disk and nothing else is. When two files disagree, the higher tier decides, and the lower one is what gets edited.</p>
+          </div>
+
+          <section class="cols cols-b" style="align-items:start">
+
+            <div class="panel panel-flush">
+              <div class="panel-head">
+                <h3 class="h-panel grow">Files</h3>
+                <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="14" height="14"><use href="#i-plus"/></svg>New</button>
+              </div>
+              <div class="panel-body" style="padding-top:2px;padding-bottom:10px">
+                <div class="rows">
+
+                  <button class="row" aria-current="true">
+                    <span class="grow"><span class="name mono">direction.json</span><span class="meta">what the book is for · 1 key</span></span>
+                    <span class="pill pill-fill">direction</span>
+                  </button>
+                  <button class="row">
+                    <span class="grow"><span class="name mono">people.json</span><span class="meta">11 named</span></span>
+                    <span class="pill">foundation</span>
+                  </button>
+                  <button class="row">
+                    <span class="grow"><span class="name mono">places.json</span><span class="meta">6 named · 2 with plans</span></span>
+                    <span class="pill">foundation</span>
+                  </button>
+                  <button class="row">
+                    <span class="grow"><span class="name mono">timeline.json</span><span class="meta">Mar 1911 &ndash; Nov 1911</span></span>
+                    <span class="pill">foundation</span>
+                  </button>
+                  <button class="row">
+                    <span class="grow"><span class="name mono">voice.json</span><span class="meta">what the prose may not do</span></span>
+                    <span class="pill">rules</span>
+                  </button>
+                  <button class="row">
+                    <span class="grow"><span class="name mono">continuity.json</span><span class="meta">14 facts the audit checks</span></span>
+                    <span class="pill">rules</span>
+                  </button>
+                  <button class="row">
+                    <span class="grow"><span class="name mono">runtime.json</span><span class="meta">stage order · retry policy</span></span>
+                    <span class="pill">runtime</span>
+                  </button>
+                  <button class="row">
+                    <span class="grow"><span class="name mono">memory.json</span><span class="meta">written by the runs</span></span>
+                    <span class="pill">memory</span>
+                  </button>
+                  <button class="row">
+                    <span class="grow"><span class="name mono">scratch.json</span><span class="meta">safe to delete</span></span>
+                    <span class="pill">memory</span>
+                  </button>
+
+                </div>
+              </div>
+            </div>
+
+            <div class="panel panel-flush">
+              <div class="panel-head">
+                <span class="grow">
+                  <h3 class="h-panel mono" style="font-size:14px">direction.json</h3>
+                  <span class="dim" style="font-size:11px">edited by you · 4 days ago · 612 bytes</span>
+                </span>
+                <span class="pill pill-fill">direction</span>
+                <button class="btn btn-line btn-sm">Save</button>
+              </div>
+
+              <!-- Canon is structured data, so it is set in the mono face. The
+                   plan called for Literata here; Literata is the manuscript
+                   face and a JSON object is not manuscript. -->
+              <div class="panel-body">
+                <pre class="mono" style="font-size:14px;line-height:1.72;margin:0;white-space:pre-wrap;color:var(--ink-2)"><span style="color:var(--ink-3)">{</span>
+  <span style="color:var(--vermilion-ink)">"premise"</span>: <span style="color:var(--ink)">"A relief keeper is sent to a light that</span>
+             <span style="color:var(--ink)">has been running itself for eleven weeks."</span>,
+  <span style="color:var(--vermilion-ink)">"ends_on"</span>: <span style="color:var(--ink)">"He signs the log for the man who is</span>
+             <span style="color:var(--ink)">not there."</span>,
+  <span style="color:var(--vermilion-ink)">"never"</span>:   [<span style="color:var(--ink)">"a supernatural explanation"</span>,
+              <span style="color:var(--ink)">"a rescue from the mainland"</span>],
+  <span style="color:var(--vermilion-ink)">"length"</span>:  <span style="color:var(--ink)">"22 chapters, 3,200 words each"</span>
+<span style="color:var(--ink-3)">}</span></pre>
+              </div>
+
+              <div class="panel-body" style="border-top:1px solid var(--line);padding-top:14px">
+                <div class="rowflex" style="justify-content:space-between">
+                  <span class="hint">Direction is the only tier a run may never write to.</span>
+                  <span class="pill pill-ok"><svg aria-hidden="true" width="11" height="11"><use href="#i-check"/></svg>valid</span>
+                </div>
+              </div>
+            </div>
+
+          </section>
+
+          <section class="panel">
+            <h3 class="h-panel">What the runs wrote while you were away</h3>
+            <p class="note" style="font-size:14px">Memory is the one tier the machine may edit. These are this week&rsquo;s additions, and any of them can be struck out.</p>
+            <div class="rows" style="margin-top:10px">
+              <div class="row">
+                <span class="glyph"><svg aria-hidden="true" width="14" height="14"><use href="#i-pencil"/></svg></span>
+                <span class="grow"><span class="name">The keeper&rsquo;s limp is on the left</span><span class="meta">added by the chapter 3 draft · used 4 times since</span></span>
+                <span class="act"><span class="btn btn-quiet btn-sm">Strike out</span><span class="btn btn-line btn-sm">Promote to foundation</span></span>
+              </div>
+              <div class="row">
+                <span class="glyph"><svg aria-hidden="true" width="14" height="14"><use href="#i-pencil"/></svg></span>
+                <span class="grow"><span class="name">The relief boat is called the <i>Sanda</i></span><span class="meta">added by the chapter 7 draft · used once</span></span>
+                <span class="act"><span class="btn btn-quiet btn-sm">Strike out</span><span class="btn btn-line btn-sm">Promote to foundation</span></span>
+              </div>
+            </div>
+          </section>
+
+          <p class="mock-note"><b>Synthetic content.</b> File names follow the real canon tiers; their contents are authored demonstration data.</p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

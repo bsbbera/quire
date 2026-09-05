@@ -41,46 +41,6 @@ function toast(msg) {
   toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
 }
 
-function openDrawer(open) {
-  $("#drawer").hidden = !open;
-  $("#scrim").hidden = !open;
-}
-$("#openSettings").onclick = () => { openDrawer(true); loadComfy?.(); loadWorkspace?.(); };
-$("#closeSettings").onclick = () => openDrawer(false);
-$("#scrim").onclick = () => openDrawer(false);
-addEventListener("keydown", (e) => { if (e.key === "Escape") openDrawer(false); });
-
-function renderProviders(agents) {
-  const box = $("#providers");
-  box.innerHTML = "";
-  if (!agents.length) {
-    box.innerHTML = '<p class="empty">No agent CLIs found on PATH.</p>';
-    return;
-  }
-  for (const a of agents) {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <div class="card-top">
-        <img class="logo" src="${state.shim}/assets/${a.id}" alt=""
-             onerror="this.style.visibility='hidden'">
-        <span class="card-name">${a.id}</span>
-        <span class="pill on" style="margin-left:auto">${a.models}</span>
-      </div>
-      <div class="meta" title="${a.version}">${a.version}</div>`;
-    // Cards report what is installed; they no longer select anything.
-    box.appendChild(card);
-  }
-}
-
-// The shell used to carry its own model picker, reading and writing the shim
-// while the workbench's picker read and wrote the project config. Two
-// selectors, two sources of truth, and they disagreed on screen: the shell
-// showed a model while chat refused to send for want of one. The workbench
-// owns model selection now, and the shim reads that same config.
-
-$("#refresh").onclick = () => loadShim(true).catch((e) => toast(e.message));
-
 async function loadShim(force) {
   const [status, models, cfg] = await Promise.all([
     fetch(`${state.shim}/status${force ? "?fresh=1" : ""}`).then((r) => r.json()),
@@ -90,265 +50,21 @@ async function loadShim(force) {
   state.models = models.data;
   state.model = cfg.model || null;
   state.cli = (cfg.model && cfg.model.split("/")[0]) || status.agents[0]?.id || null;
-  $("#foot").textContent = `${appVersion ? "Quire " + appVersion + " · " : ""}shim :${status.port} · ${status.agents.length} CLIs · ${status.total} models`;
-  $("#langFoot").textContent = "lang " + status.lang;
-  renderProviders(status.agents);
 }
 
 
 
-/* ------------------------------------------------------------------- images
- * ComfyUI is the one dependency Quire installs itself, so its install, its
- * hardware tier and its workflows are settings of the machine rather than of a
- * book — which is why they live in the shell's drawer and not in the workbench.
+/* ------------------------------------------------------------------ restart
+ * The workspace folder is chosen in the workbench now, but only the shell has
+ * Tauri: a webview in an iframe cannot restart the process it runs in. So the
+ * workbench asks, and this answers. Same bridge the Updates entry already uses.
  */
-const gb = (n) => (n / 1e9).toFixed(1) + " GB";
-let comfyPoll = null;
-
-function setComfyProgress(install) {
-  const bar = $("#comfyBar");
-  const line = $("#comfyStep");
-  if (!install || install.done) {
-    bar.hidden = true;
-    line.hidden = !install || !install.error;
-    if (install?.error) line.textContent = "install failed: " + install.error;
-    return;
-  }
-  bar.hidden = false;
-  line.hidden = false;
-  // Honest again: bytes fetched over bytes expected for the stage in flight.
-  // Extraction reports no total, so it says so rather than freezing at a number.
-  const frac = install.total ? install.got / install.total : 0;
-  $("#comfyFill").style.transform = `scaleX(${frac.toFixed(3)})`;
-  line.textContent = install.total
-    ? `${install.step} · ${gb(install.got)} of ${gb(install.total)} · ${Math.round(frac * 100)}%`
-    : `${install.step}…`;
-}
-
-async function renderWorkflows(status) {
-  const sel = $("#workflow");
-  let payload;
-  try {
-    payload = await fetch(`${state.shim}/comfy/workflows`).then((r) => r.json());
-  } catch { return; }
-  sel.innerHTML = "";
-  for (const w of payload.workflows) {
-    const o = document.createElement("option");
-    o.value = w.id;
-    o.textContent = w.label + (w.builtin ? " (built in)" : "");
-    sel.appendChild(o);
-  }
-  if (payload.selected) sel.value = payload.selected;
-  const current = payload.workflows.find((w) => w.id === sel.value);
-  $("#workflowField").hidden = false;
-  $("#workflowAdd").hidden = false;
-  // The built-in is what every other failure falls back to, so it has no
-  // delete button at all rather than one that reports a refusal.
-  $("#workflowDelete").hidden = !current || current.builtin;
-  const bad = payload.diagnostics?.length
-    ? ` · ${payload.diagnostics.length} file(s) ignored: ${payload.diagnostics[0].problems[0]}`
-    : "";
-  $("#workflowNote").textContent = (current?.note || "") + bad;
-  state.workflows = payload.workflows;
-}
-
-async function loadComfy() {
-  let st;
-  try {
-    st = await fetch(`${state.shim}/comfy/status`).then((r) => r.json());
-  } catch (e) {
-    $("#comfyLine").textContent = "shim unreachable";
-    return null;
-  }
-  state.comfy = st;
-  const pill = $("#comfyPill");
-  const installing = st.install && !st.install.done;
-
-  pill.textContent = st.up ? "running" : st.installed ? "installed" : installing ? "installing" : "not installed";
-  pill.classList.toggle("on", !!st.up);
-
-  $("#comfyLine").textContent = st.installed
-    ? "Images render on this machine. No API key, works offline."
-    : "Not installed. About 11 GB of runtime and model weights.";
-
-  const bench = st.benchmark
-    ? `${st.device} · benchmarked ${(st.benchmark.ms / 1000).toFixed(1)}s for a 512px test`
-    : `${st.device} · not benchmarked yet`;
-  $("#comfyDetail").textContent = st.installed ? `${bench} · ${st.dir}` : "—";
-
-  $("#comfyInstall").hidden = st.installed || installing;
-  $("#comfyInstall").textContent = st.install?.error ? "Retry install" : "Install ComfyUI";
-  // firstRun is false once the install exists or the user declined once.
-  $("#comfySkip").hidden = st.installed || installing || !st.firstRun;
-  $("#comfyStart").hidden = !st.installed || st.up;
-  $("#comfyBench").hidden = !st.installed;
-  setComfyProgress(st.install);
-  if (st.installed) await renderWorkflows(st);
-
-  // Poll only while something is moving, so an idle drawer costs nothing.
-  if (installing && !comfyPoll) comfyPoll = setInterval(() => loadComfy(), 1000);
-  if (!installing && comfyPoll) { clearInterval(comfyPoll); comfyPoll = null; }
-  return st;
-}
-
-function wireComfy() {
-  $("#comfyInstall").onclick = async () => {
-    $("#comfyInstall").hidden = true;
-    try {
-      const r = await fetch(`${state.shim}/comfy/install`, {
-        method: "POST", headers: { "content-type": "application/json" }, body: "{}",
-      }).then((x) => x.json());
-      if (!r.ok && r.error) toast(r.error);
-      // A part-file from an interrupted run is resumed, not restarted, so
-      // pressing this after a kill picks up where the download stopped.
-      else toast(`downloading ${gb(r.plan.bytes)} to ${r.plan.dir}`);
-    } catch (e) { toast("install failed: " + e.message); }
-    loadComfy();
-  };
-  $("#comfySkip").onclick = async () => {
-    await fetch(`${state.shim}/comfy/skip`, { method: "POST", body: "{}" }).catch(() => {});
-    $("#comfySkip").hidden = true;
-    toast("Skipped. Install it later from this panel.");
-  };
-  $("#comfyStart").onclick = async () => {
-    toast("starting ComfyUI…");
-    const r = await fetch(`${state.shim}/comfy/start`, { method: "POST", body: "{}" })
-      .then((x) => x.json()).catch((e) => ({ ok: false, error: e.message }));
-    toast(r.ok ? "ComfyUI is up" : "start failed: " + r.error);
-    loadComfy();
-  };
-  $("#comfyBench").onclick = async () => {
-    toast("rendering a test image — this can take a few minutes on CPU");
-    const r = await fetch(`${state.shim}/comfy/benchmark`, { method: "POST", body: "{}" })
-      .then((x) => x.json()).catch((e) => ({ ok: false, error: e.message }));
-    toast(r.error ? "benchmark failed: " + r.error
-      : `${(r.ms / 1000).toFixed(1)}s · settings locked to ${r.device}`);
-    loadComfy();
-  };
-  $("#workflow").onchange = async (e) => {
-    const r = await fetch(`${state.shim}/comfy/workflows/${e.target.value}`, { method: "PUT" })
-      .then((x) => x.json()).catch((err) => ({ error: err.message }));
-    toast(r.error ? "could not select: " + r.error : "workflow: " + e.target.value);
-    loadComfy();
-  };
-  $("#workflowDelete").onclick = async () => {
-    const id = $("#workflow").value;
-    if (!confirm(`Delete the workflow "${id}"? Its downloaded weights stay on disk.`)) return;
-    const r = await fetch(`${state.shim}/comfy/workflows/${id}`, { method: "DELETE" })
-      .then((x) => x.json()).catch((err) => ({ error: err.message }));
-    toast(r.error ? "could not delete: " + r.error : "deleted " + id);
-    loadComfy();
-  };
-  $("#workflowAdd").onclick = () => $("#workflowFile").click();
-  $("#workflowFile").onchange = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    try {
-      const body = await file.text();
-      // Validated server-side before it lands on disk, so a bad paste never
-      // becomes a workflow that fails halfway through a render instead.
-      const r = await fetch(`${state.shim}/comfy/workflows`, {
-        method: "POST", headers: { "content-type": "application/json" }, body,
-      }).then((x) => x.json());
-      toast(r.error ? r.error : "added " + r.id);
-    } catch (err) { toast("could not add: " + err.message); }
-    loadComfy();
-  };
-}
-
-/* ----------------------------------------------------------------- location
- * The workspace root is an argument to the Studio server process, not
- * something it re-reads, so changing it needs a restart. The shim owns the
- * value and runs the native folder chooser - a webview cannot turn a picked
- * folder into a real filesystem path. This only asks, explains and confirms.
- */
-let pendingWorkspace = null;
-
-/** What this folder is, in the words the user needs before committing to it. */
-function describe(w) {
-  if (!w.exists) {
-    return w.parentExists
-      ? "New folder. Quire will create it and set it up on the next launch."
-      : "The folder above it does not exist.";
-  }
-  if (!w.isDir) return "That is a file, not a folder.";
-  if (!w.writable) return "Quire cannot write there.";
-  if (w.initialized) return "An existing Quire folder. Quire will open the work already in it.";
-  return "Not a Quire folder yet. It will be set up on the next launch; anything already in it is left alone.";
-}
-
-const usable = (w) => (w.exists ? w.isDir && w.writable : w.parentExists === true);
-
-async function loadWorkspace() {
-  let w;
-  try {
-    w = await fetch(`${state.shim}/workspace`).then((r) => r.json());
-  } catch {
-    $("#locPath").textContent = "unavailable until the shim is running";
-    return null;
-  }
-  $("#locPath").textContent = w.path;
-  $("#locPill").textContent = w.initialized ? "in use" : "new";
-  $("#locPill").classList.toggle("on", w.initialized);
-  // Naming the environment variable matters: it is the only reason a folder
-  // picked here would appear not to take, and it is invisible from the app.
-  $("#locNote").textContent = w.source === "environment"
-    ? "Set by the QUIRE_WORKSPACE environment variable. Choosing a folder here overrides it."
-    : describe(w);
-  return w;
-}
-
-$("#locBrowse").onclick = async () => {
-  const btn = $("#locBrowse");
-  btn.disabled = true;
-  btn.textContent = "Choosing\u2026";
-  try {
-    const r = await fetch(`${state.shim}/workspace/pick`, {
-      method: "POST",
-      body: JSON.stringify({ start: $("#locPath").textContent }),
-    }).then((x) => x.json());
-    if (r.ok === false) throw new Error(r.error);
-    if (!r.path) return; // cancelled
-    const w = await fetch(`${state.shim}/workspace?path=${encodeURIComponent(r.path)}`)
-      .then((x) => x.json());
-    pendingWorkspace = w;
-    $("#locNext").textContent = w.path;
-    $("#locNextNote").textContent = describe(w);
-    $("#locApply").disabled = !usable(w);
-    $("#locConfirm").hidden = false;
-  } catch (e) {
-    toast("could not open the folder chooser: " + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "Change folder\u2026";
-  }
-};
-
-$("#locCancel").onclick = () => {
-  pendingWorkspace = null;
-  $("#locConfirm").hidden = true;
-};
-
-$("#locApply").onclick = async () => {
-  if (!pendingWorkspace) return;
-  const btn = $("#locApply");
-  btn.disabled = true;
-  try {
-    const r = await fetch(`${state.shim}/workspace`, {
-      method: "POST",
-      body: JSON.stringify({ path: pendingWorkspace.path }),
-    }).then((x) => x.json());
-    if (r.ok === false) throw new Error(r.error);
-    // Saved. From here the old root is still live in two running child
-    // processes, so the restart is the change taking effect, not a courtesy.
-    toast("Folder saved. Restarting\u2026");
-    setTimeout(() => invoke("plugin:process|restart"), 600);
-  } catch (e) {
-    btn.disabled = false;
-    toast("could not save: " + e.message);
-  }
-};
+addEventListener("message", (e) => {
+  if (e.source !== $("#frame")?.contentWindow) return;
+  if (e.data?.quire !== "restart") return;
+  toast("Restarting…");
+  setTimeout(() => invoke("plugin:process|restart"), 600);
+});
 
 /** One boot step: waiting, running, done or failed, plus an optional note. */
 function step(el, state, note) {
@@ -404,129 +120,112 @@ async function showVersion() {
     appVersion = await window.__TAURI__.app.getVersion();
     isDevBuild = (await window.__TAURI__.app.getName()) === "Quire-Dev";
   } catch { return; }
-  const v = "Quire " + appVersion;
-  const line = $("#verLine"); if (line) line.textContent = v;
-  const foot = $("#foot"); if (foot && foot.textContent === "—") foot.textContent = v;
-  const sub = $("#sub"); if (sub) sub.dataset.version = v;
+  const sub = $("#sub"); if (sub) sub.dataset.version = "Quire " + appVersion;
+  publishUpdate({});
 }
 let pendingUpdate = null;
+/**
+ * What the workbench renders. The shell has no panel any more, so this is the
+ * whole of the updater's UI contract: a message with everything a card needs,
+ * sent whenever it changes and on request.
+ */
+let updateState = { status: "idle", message: "", version: "", available: false, dev: false, auto: false, checkedAt: 0 };
 
-/** Say when the last check happened, so a check that finds nothing still reads
- *  as a check that ran. */
-function stamp() {
-  const line = $("#verLine");
-  if (!line) return;
-  const t = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  line.textContent = `Quire ${appVersion || ""} · checked ${t}`.replace("  ", " ");
+function publishUpdate(patch) {
+  updateState = {
+    ...updateState,
+    ...patch,
+    version: appVersion,
+    dev: isDevBuild,
+    auto: localStorage.getItem(AUTO_KEY) === "1",
+  };
+  $("#frame")?.contentWindow?.postMessage({ quire: "update:state", ...updateState }, "*");
 }
 
 async function checkUpdate({ silent } = {}) {
-  const row = $("#updateRow"), msg = $("#updateMsg"), btn = $("#updateBtn");
-  if (!row) return null;
-  if (!invoke) { msg.textContent = "Updates unavailable outside the app"; return null; }
+  if (!invoke) { publishUpdate({ status: "unavailable", message: "Updates unavailable outside the app" }); return null; }
   if (isDevBuild) {
-    msg.textContent = "Development build — updates come from a rebuild";
-    btn.hidden = true;
+    // The dev build shares this updater key with the release, so every launch
+    // found the release "newer" and reinstalled it, forever. It is deployed by
+    // build-dev.mjs, not by the updater.
+    publishUpdate({ status: "dev", message: "Development build — updates come from a rebuild", available: false });
     return null;
   }
-  row.classList.add("busy");
-  msg.textContent = "Checking for updates…";
+  publishUpdate({ status: "checking", message: "Checking for updates…" });
   try {
     const meta = await invoke("plugin:updater|check", {});
-    row.classList.remove("busy");
     localStorage.setItem(LAST_CHECK, String(Date.now()));
-    stamp();
     // `check` returns the update, or null when there is none. It has no
-    // `available` flag - that belongs to the JS binding's Update class, which
-    // this app does not use. Testing for it discarded every update that was
-    // actually found and reported "up to date" instead, so pressing Check
-    // rewrote the same sentence and looked like a dead button.
+    // `available` flag — that belongs to the JS binding's Update class, which
+    // this app does not use. Testing for it discarded every update actually
+    // found and reported "up to date" instead.
     if (!meta) {
-      msg.textContent = appVersion ? `Quire ${appVersion} is up to date` : "Quire is up to date";
-      btn.hidden = true;
+      publishUpdate({
+        status: "current", available: false, checkedAt: Date.now(),
+        message: appVersion ? `Quire ${appVersion} is up to date` : "Quire is up to date",
+      });
       return null;
     }
     pendingUpdate = meta;              // meta.rid is the handle install needs
-    msg.textContent = `Version ${meta.version} available`;
-    btn.hidden = false;
+    publishUpdate({
+      status: "available", available: true, checkedAt: Date.now(),
+      message: `Version ${meta.version} available`,
+    });
     // Automatic means the launch check installs it. It used to be gated on
-    // `!silent`, which is only the manual check - so the one path that made
-    // the setting worth having was the path it skipped.
-    if (localStorage.getItem(AUTO_KEY) === "1") installUpdate();
+    // `!silent`, which is only the manual check — the one path that made the
+    // setting worth having was the path it skipped.
+    if (localStorage.getItem(AUTO_KEY) === "1") void installUpdate();
     return meta;
   } catch (e) {
-    row.classList.remove("busy");
-    msg.textContent = silent ? "Update check unavailable" : "Update check failed: " + e;
-    btn.hidden = true;
+    publishUpdate({
+      status: "error", available: false,
+      message: silent ? "Update check unavailable" : "Update check failed: " + e,
+    });
     return null;
   }
 }
 
 async function installUpdate() {
   if (!pendingUpdate) return;
-  const msg = $("#updateMsg"), btn = $("#updateBtn");
-  btn.disabled = true;
+  publishUpdate({ status: "installing", message: "Starting download…" });
   try {
-    // Progress arrives on a Channel when the core API exposes one; without it
-    // the download still runs, it just cannot report a percentage.
     // The Rust command takes the channel by value, not as an Option, so there
     // is no version of this call without one. Failing here is better than
     // sending undefined and getting an opaque deserialization error.
     const Channel = window.__TAURI__?.core?.Channel;
     if (!Channel) throw new Error("no Channel in the Tauri core API");
-    let onEvent;
-    {
-      let got = 0, total = 0;
-      onEvent = new Channel();
-      onEvent.onmessage = (ev) => {
-        if (ev.event === "Started") total = ev.data?.contentLength || 0;
-        if (ev.event === "Progress") {
-          got += ev.data?.chunkLength || 0;
-          msg.textContent = total
-            ? `Downloading ${Math.round((got / total) * 100)}%`
-            : "Downloading…";
-        }
-        if (ev.event === "Finished") msg.textContent = "Installing…";
-      };
-    }
+    let got = 0, total = 0;
+    const onEvent = new Channel();
+    onEvent.onmessage = (ev) => {
+      if (ev.event === "Started") total = ev.data?.contentLength || 0;
+      if (ev.event === "Progress") {
+        got += ev.data?.chunkLength || 0;
+        publishUpdate({
+          status: "installing",
+          message: total ? `Downloading ${Math.round((got / total) * 100)}%` : "Downloading…",
+        });
+      }
+      if (ev.event === "Finished") publishUpdate({ status: "installing", message: "Installing…" });
+    };
     await invoke("plugin:updater|download_and_install", { rid: pendingUpdate.rid, onEvent });
     await invoke("plugin:process|restart");
   } catch (e) {
-    msg.textContent = "Update failed: " + e;
-    btn.disabled = false;
+    publishUpdate({ status: "error", message: "Update failed: " + e });
   }
 }
 
 function wireUpdates() {
-  const auto = $("#autoUpdate");
-  if (auto) {
-    auto.checked = localStorage.getItem(AUTO_KEY) === "1";
-    auto.addEventListener("change", () => {
-      localStorage.setItem(AUTO_KEY, auto.checked ? "1" : "0");
-      if (auto.checked && pendingUpdate) installUpdate();
-    });
-  }
-  $("#updateBtn")?.addEventListener("click", installUpdate);
-  // A launch-only check is not syncing: the app can sit open for days. Manual
-  // button for "why have I not got it yet", plus a slow poll while it runs.
-  $("#checkBtn")?.addEventListener("click", () => checkUpdate({ silent: false }));
-  // Integrations render inside Studio, so the drawer asks the iframe to show
-  // them rather than duplicating the view in the shell.
-  // The workbench routes on the hash, so the shell navigates it rather than
-  // posting a message — a message needs a listener on the other side, and the
-  // one this used to post had none, which is why the button did nothing.
-  $("#openPlugs")?.addEventListener("click", () => {
-    const frame = $("#frame");
-    if (frame?.contentWindow) frame.contentWindow.location.hash = "#/mcp";
-    openDrawer(false);
-  });
-  // Studio's sidebar "Updates" entry: it has no Tauri API of its own, so it
-  // asks the shell to open the drawer and run the check.
+  // The workbench owns every visible control now. Only these two calls need
+  // Tauri, so the shell keeps them and answers when asked.
   addEventListener("message", (e) => {
-    if (e.data?.quire !== "open-updates") return;
-    openDrawer(true);
-    $("#updateRow")?.scrollIntoView({ block: "nearest" });
-    checkUpdate({ silent: false });
+    if (e.source !== $("#frame")?.contentWindow) return;
+    const q = e.data?.quire;
+    if (q === "update:check") void checkUpdate({ silent: false });
+    else if (q === "update:install") void installUpdate();
+    else if (q === "update:auto") {
+      localStorage.setItem(AUTO_KEY, e.data.value ? "1" : "0");
+      publishUpdate();
+    } else if (q === "update:state") publishUpdate();
   });
   setInterval(() => checkUpdate({ silent: true }), 6 * 60 * 60 * 1000);
 }
@@ -630,16 +329,6 @@ window.addEventListener("unhandledrejection", (e) => fatal(String(e.reason)));
     } catch (e) {
       step($("#stepModels"), "fail", "unreachable");
       toast("shim unreachable: " + e.message);
-    }
-    wireComfy();
-    const comfy = await loadComfy();
-    // First run, nothing installed and never declined: show the offer once,
-    // after the workbench is already usable. An 11GB download is not something
-    // to put between the user and their work — but it is also not something to
-    // leave buried in a panel they have no reason to open.
-    if (comfy?.firstRun) {
-      openDrawer(true);
-      $("#imagesSection")?.scrollIntoView({ block: "nearest" });
     }
   }
 })().catch((e) => fatal(String(e?.message || e)));

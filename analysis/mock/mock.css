@@ -1,0 +1,88 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOCK HARNESS — the page around the mockup. Never ports.
+
+   vermilion.css is the product. This file is the gallery wall it hangs on:
+   the frame, the screen switcher, the theme toggle. Keeping them apart is
+   what makes vermilion.css copyable into the app without an edit.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.mock {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  background: var(--putty-2);
+}
+
+.mock-bar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px clamp(14px, 3vw, 26px);
+  border-bottom: 1px solid var(--line);
+  background: var(--putty);
+  position: sticky; top: 0; z-index: 30;
+}
+.mock-bar .id { display: flex; align-items: baseline; gap: 9px; min-width: 0; }
+.mock-bar .id .n {
+  font-family: var(--font-mono); font-size: 11px; color: var(--vermilion-ink);
+  font-weight: 500;
+}
+.mock-bar .id b { font-size: 14px; letter-spacing: -.02em; }
+.mock-bar .id span { font-size: 12.5px; color: var(--ink-3); }
+.mock-bar nav { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.mock-bar a { font-size: 12.5px; color: var(--ink-2); text-decoration: none; }
+.mock-bar a:hover { color: var(--vermilion); }
+
+/* A screen page is the window, so it takes the viewport and only the stage
+   inside it scrolls. Without a definite height here the grid row resolves to
+   its content and the whole app frame grows past the bottom of the page,
+   which hides the rail run pill — the one element that has to be visible
+   from everywhere. The contact sheet has no .mock-stage and keeps page
+   scroll. */
+body.mock:has(.mock-stage) { height: 100vh; overflow: hidden; }
+.mock-stage {
+  flex: 1; min-height: 0; display: flex;
+  padding: clamp(10px, 2.4vw, 26px);
+}
+.mock-stage > .screen { flex: 1; min-width: 0; min-height: 0; }
+
+/* The contact sheet. Every screen as a card, so the set is reviewable as a
+   set — which is the only way inconsistency between screens is visible. */
+.sheetwrap { padding: clamp(20px, 4vw, 52px) clamp(16px, 4vw, 52px) 90px; max-width: 1180px; margin: 0 auto; }
+.sheet-hero { padding: 18px 0 40px; position: relative; }
+.sheet-hero h1 { font-size: clamp(38px, 6vw, 66px); letter-spacing: -.045em; line-height: .98; }
+.sheet-hero p { margin-top: 16px; max-width: 52ch; color: var(--ink-2); font-size: 16px; }
+
+.sheet-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); }
+.card {
+  display: flex; flex-direction: column; gap: 0; text-decoration: none;
+  border-radius: var(--r-card); border: 1px solid var(--line);
+  background: var(--paper); overflow: hidden;
+  transition: transform var(--med) var(--ease), box-shadow var(--med) var(--ease), border-color var(--med) var(--ease);
+}
+.card:hover { transform: translateY(-4px); box-shadow: var(--e2); border-color: color-mix(in oklab, var(--vermilion) 40%, transparent); }
+.card .thumb { aspect-ratio: 16 / 10; background: var(--putty-2); position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
+.card .meta { padding: 12px 14px 14px; }
+.card .meta .n { font-family: var(--font-mono); font-size: 10.5px; color: var(--vermilion); }
+.card .meta b { display: block; font-size: 14.5px; margin-top: 3px; }
+.card .meta span { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+.card.todo { opacity: .5; }
+
+/* A miniature of the app frame, drawn in pure CSS, so the contact sheet
+   shows composition at a glance without shipping 26 screenshots. */
+.mini { position: absolute; inset: 12px; display: grid; grid-template-columns: 22px 1fr; gap: 5px; }
+.mini .r { background: var(--putty); border-radius: 3px; border: 1px solid var(--line); }
+.mini .s { display: grid; gap: 5px; align-content: start; }
+.mini .b { background: var(--paper); border: 1px solid var(--line); border-radius: 3px; min-height: 14px; }
+.mini .b.tall { min-height: 46px; }
+.mini .b.dk { background: var(--char); border-color: transparent; }
+.mini .b.ac { background: color-mix(in oklab, var(--vermilion) 30%, var(--paper)); border-color: transparent; }
+.mini .split2 { display: grid; grid-template-columns: 4fr 6fr; gap: 5px; }
+.mini .split3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
+
+.sheet-sec { margin-top: 44px; }
+.sheet-sec > h2 { font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 14px; }
+
+.mock-note {
+  margin-top: 14px; padding: 14px 16px; border-radius: var(--r-ctl);
+  border: 1px solid var(--line); background: var(--paper);
+  font-size: 13px; color: var(--ink-2); max-width: 70ch;
+}
+.mock-note b { color: var(--ink); }

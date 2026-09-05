@@ -38,6 +38,15 @@ const skipBuild = process.argv.includes("--no-build");
 if (!skipBuild) {
   console.log("building the fork…");
   sh("pnpm", ["install", "--frozen-lockfile"], SRC);
+  /*
+   * The client is bundled by vite, which does not type-check. A React file
+   * referring to a name that is not in its scope therefore built cleanly,
+   * shipped, and blanked the whole window on render — the error existed only
+   * at runtime, in front of the user, with nothing on the way there to catch
+   * it. `pnpm build` alone is not a gate; this is.
+   */
+  console.log("type-checking the client…");
+  sh("pnpm", ["--filter", "@actalk/quire-studio", "typecheck"], SRC);
   sh("pnpm", ["build"], SRC);
 }
 

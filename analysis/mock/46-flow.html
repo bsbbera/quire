@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow · Quire Vermilion</title>
+<link rel="stylesheet" href="vermilion.css">
+<link rel="stylesheet" href="mock.css">
+<script src="mock.js" defer></script>
+</head>
+<body class="mock">
+<!--
+  THESIS: The list on the graph screen answers &ldquo;what is broken&rdquo;. This
+  screen exists for the other question, &ldquo;what shape is it&rdquo;, which a
+  list cannot answer. So the canvas carries only what shape means: node kind,
+  edge condition, and the path under the cursor lit end to end, which is the
+  one thing a reader experiences and the maker never sees.
+  OWN-WORLD: Charcoal canvas so the graph reads as a different medium from
+  the paper screens; nodes as small plates; the hovered path in vermilion
+  while everything else drops back.
+  STORY: The maker hovers a node and sees which four scenes lead to it.
+  FIRST VIEWPORT: The canvas, with the opening at the left edge.
+  FORM: Inherited world. Grounded in FlowView.tsx: node types, edge labels
+  from choice text, hovered-path highlighting, node and branch counts, an
+  explicit edit mode.
+  FINISH: unreviewed and undocumented is unfinished.
+-->
+
+<header class="mock-bar">
+  <div class="id"><span class="n">46</span><b>Flow</b><span>the graph as a canvas you can edit</span></div>
+  <nav>
+    <div class="seg" data-seg>
+      <button data-theme-btn="light" aria-pressed="false">Light</button>
+      <button data-theme-btn="" aria-pressed="true">System</button>
+      <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+    <a href="45-film-studio.html">&larr; Prev</a><a href="index.html">All screens</a><a href="47-film-author.html">Next &rarr;</a>
+  </nav>
+</header>
+
+<div class="mock-stage">
+  <div class="screen">
+    <div class="titlebar">
+      <svg aria-hidden="true" width="15" height="15" style="color:var(--vermilion-ink)"><use href="#i-quire"/></svg>
+      <span>Quire</span><span class="dim mono" style="font-size:11px">shim &middot; 127.0.0.1:8788</span>
+      <div class="wincontrols">
+        <button aria-label="Minimise"><svg aria-hidden="true" width="14" height="14"><use href="#i-winMin"/></svg></button>
+        <button aria-label="Maximise"><svg aria-hidden="true" width="12" height="12"><use href="#i-winMax"/></svg></button>
+        <button class="close" aria-label="Close"><svg aria-hidden="true" width="13" height="13"><use href="#i-winClose"/></svg></button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="wordmark" data-go="index.html"><svg aria-hidden="true" width="24" height="24"><use href="#i-quire"/></svg><b>Quire</b></div>
+      <button class="railnew" data-go="28-new.html"><svg aria-hidden="true" width="16" height="16"><use href="#i-plus"/></svg><span>Start something</span></button>
+      <div class="rail-scroll">
+        <div class="rail-label"><span>Working</span></div>
+        <button class="nav" data-go="02-home.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-home"/></svg><span>Home</span><span class="tail">3</span></button>
+        <button class="nav" data-go="27-chat.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <button class="nav" aria-current="page" data-go="03-books.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-book"/></svg><span>Books</span><span class="tail">5</span></button>
+        <button class="nav" data-go="08-audit.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-pulse"/></svg><span>Audit</span><span class="tail">6</span></button>
+        <button class="nav" data-go="10-issue-brief.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-magazine"/></svg><span>Magazine</span><span class="tail">1</span></button>
+        <button class="nav" data-go="36-analytics.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-grid"/></svg><span>Analytics</span></button>
+        <div class="rail-label"><span>System</span></div>
+        <button class="nav" data-go="37-genres.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Genres</span></button>
+        <button class="nav" data-go="30-providers.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-plug"/></svg><span>Model config</span></button>
+        <button class="nav" data-go="41-project.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Project</span></button>
+        <button class="nav" data-go="33-daemon.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-cpu"/></svg><span>Daemon</span><span class="tail">on</span></button>
+        <button class="nav" data-go="34-logs.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-list"/></svg><span>Logs</span></button>
+        <div class="rail-label"><span>Tools</span></div>
+        <button class="nav" data-go="39-translation.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-type"/></svg><span>Translation</span></button>
+        <button class="nav" data-go="38-style.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-drop"/></svg><span>Style</span></button>
+        <button class="nav" data-go="40-import.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-file"/></svg><span>Import</span></button>
+        <button class="nav" data-go="35-radar.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-search"/></svg><span>Radar</span></button>
+        <button class="nav" data-go="22-doctor.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-heart"/></svg><span>Doctor</span></button>
+        <button class="nav" data-go="32-mcp.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-skill"/></svg><span>MCP</span></button>
+        <button class="nav" data-go="21-setup.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-sliders"/></svg><span>Setup</span></button>
+        <div class="rail-label"><span>Drawn, not shipped</span></div>
+        <button class="nav speculative" data-go="15-images.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-image"/></svg><span>Images</span></button>
+        <button class="nav speculative" data-go="17-library.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-layers"/></svg><span>Library</span></button>
+        <button class="nav speculative" data-go="18-worlds.html"><svg aria-hidden="true" width="17" height="17"><use href="#i-globe"/></svg><span>Worlds</span></button>
+      </div>
+      <button class="railrun" data-go="09-run.html">
+        <svg aria-hidden="true" class="ring ring-sm" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19" style="stroke-dashoffset:45"/></svg>
+        <span class="grow"><span class="what">Auditing chapter 9</span><span class="where">The Lamp Room · 62%</span></span>
+      </button>
+      <p class="attrib dim" style="margin-top:10px;font-size:11px;line-height:1.35">Workbench forked from <b style="font-weight:600">InkOS Studio</b>, AGPL-3.0.</p>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs grow"><span data-go="44-graph.html">The Quiet Hour</span><span class="sep">/</span><h1>Flow</h1></div>
+        <span class="pill mono">61 nodes &middot; 19 branches</span>
+        <button class="btn btn-quiet btn-sm"><svg aria-hidden="true" width="14" height="14"><use href="#i-plus"/></svg>Add node</button>
+        <button class="btn btn-line btn-sm">Edit</button>
+      </div>
+
+      <div class="stage">
+        <div class="dark on-char board" style="min-height:100%;display:flex;align-items:stretch;overflow:hidden">
+          <span class="disc dots dots-light" style="width:340px;height:340px;right:-110px;bottom:-130px;opacity:.16"></span>
+
+          <div class="grow" style="position:relative;min-width:0;overflow:auto;padding:30px 40px 120px">
+
+            <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" aria-hidden="true">
+              <g fill="none" stroke="var(--line-char)" stroke-width="1.5">
+                <path d="M172 92 C 230 92, 230 92, 288 92"/>
+                <path d="M172 92 C 230 92, 230 210, 288 210"/>
+                <path d="M404 92 C 462 92, 462 92, 520 92"/>
+                <path d="M404 210 C 462 210, 462 210, 520 210"/>
+                <path d="M404 210 C 462 210, 462 330, 520 330"/>
+                <path d="M636 92 C 668 92, 668 150, 690 150"/>
+                <path d="M636 330 C 668 330, 668 330, 690 330"/>
+              </g>
+              <g fill="none" stroke="var(--vermilion)" stroke-width="2">
+                <path d="M636 210 C 668 210, 668 150, 690 150"/>
+                <path d="M404 210 C 462 210, 462 210, 520 210"/>
+                <path d="M172 92 C 230 92, 230 210, 288 210"/>
+              </g>
+            </svg>
+
+            <div style="position:absolute;left:40px;top:74px"><button class="gnode" style="width:132px"><span class="label">opening</span><b>The gate</b></button></div>
+
+            <div style="position:absolute;left:288px;top:74px"><button class="gnode" style="width:116px"><b>The kitchen</b></button></div>
+            <div style="position:absolute;left:288px;top:192px"><button class="gnode on" style="width:116px"><b>The stairs</b></button></div>
+
+            <div style="position:absolute;left:520px;top:74px"><button class="gnode" style="width:116px"><b>The parlour</b></button></div>
+            <div style="position:absolute;left:520px;top:192px"><button class="gnode here" style="width:116px"><span class="label">4 choices</span><b>The door at the end</b></button></div>
+            <div style="position:absolute;left:520px;top:312px"><button class="gnode cold" style="width:116px"><span class="label">unreachable</span><b>Node 38</b></button></div>
+
+            <div style="position:absolute;left:690px;top:132px"><button class="gnode on" style="width:126px"><span class="label">ending &middot; true</span><b>The lamp room</b></button></div>
+            <div style="position:absolute;left:690px;top:312px"><button class="gnode cold" style="width:126px"><span class="label">ending &middot; bad</span><b>The house keeps her</b></button></div>
+
+
+            <div style="position:absolute;left:40px;bottom:26px">
+              <div class="panel" style="background:var(--char-2);border-color:var(--line-char)">
+                <div class="panel-body rowflex" style="gap:22px;padding:13px 18px;flex-wrap:wrap">
+                  <span class="rowflex" style="gap:8px;align-items:center"><span class="gnode" style="width:18px;height:18px;padding:0"></span><span class="dim" style="font-size:11px">scene</span></span>
+                  <span class="rowflex" style="gap:8px;align-items:center"><span class="gnode on" style="width:18px;height:18px;padding:0"></span><span class="dim" style="font-size:11px">on the hovered path</span></span>
+                  <span class="rowflex" style="gap:8px;align-items:center"><span class="gnode cold" style="width:18px;height:18px;padding:0"></span><span class="dim" style="font-size:11px">no reader reaches it</span></span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <aside style="width:300px;flex:none;border-left:1px solid var(--line-char);padding:30px 26px;overflow:auto">
+            <div class="panel" style="background:var(--char-2);border-color:var(--line-char)">
+              <div class="panel-body">
+                <span class="label">Path under the cursor</span>
+                <p class="dim" style="font-size:14px;margin-top:8px;line-height:1.65">
+                  Three scenes reach <b style="color:var(--on-char)">The door at the end</b>,
+                  and all three light the lamp on the way. That is why the fourth choice
+                  on it never appears.
+                </p>
+                <div class="rows" style="margin-top:11px">
+                  <div class="row"><span class="num">01</span><span class="grow"><span class="name">The gate</span></span></div>
+                  <div class="row"><span class="num">11</span><span class="grow"><span class="name">The stairs</span><span class="meta">lights the lamp</span></span></div>
+                  <div class="row"><span class="num">14</span><span class="grow"><span class="name">The door at the end</span></span></div>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
