@@ -45,6 +45,19 @@ if (!skipBuild) {
    * at runtime, in front of the user, with nothing on the way there to catch
    * it. `pnpm build` alone is not a gate; this is.
    */
+  /*
+   * Core first, and not because the build order is pretty.
+   *
+   * The studio resolves `@actalk/quire-core` to the workspace package, whose
+   * types are `dist/index.d.ts` — a file that does not exist until core is
+   * built. On a developer's machine it is always there from some earlier run,
+   * so the type-check below passes; on a clean checkout it is not, every import
+   * of the engine fails to resolve, and the release build dies. That is exactly
+   * how v0.1.24 failed: this gate ran before the thing it type-checks against
+   * existed.
+   */
+  console.log("building the engine…");
+  sh("pnpm", ["--filter", "@actalk/quire-core", "build"], SRC);
   console.log("type-checking the client…");
   sh("pnpm", ["--filter", "@actalk/quire-studio", "typecheck"], SRC);
   sh("pnpm", ["build"], SRC);
