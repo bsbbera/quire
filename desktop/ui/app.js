@@ -142,7 +142,7 @@ function publishUpdate(patch) {
   $("#frame")?.contentWindow?.postMessage({ quire: "update:state", ...updateState }, "*");
 }
 
-async function checkUpdate({ silent } = {}) {
+async function checkUpdate({ silent, install } = {}) {
   if (!invoke) { publishUpdate({ status: "unavailable", message: "Updates unavailable outside the app" }); return null; }
   if (isDevBuild) {
     // The dev build shares this updater key with the release, so every launch
@@ -171,10 +171,23 @@ async function checkUpdate({ silent } = {}) {
       status: "available", available: true, checkedAt: Date.now(),
       message: `Version ${meta.version} available`,
     });
-    // Automatic means the launch check installs it. It used to be gated on
-    // `!silent`, which is only the manual check — the one path that made the
-    // setting worth having was the path it skipped.
-    if (localStorage.getItem(AUTO_KEY) === "1") void installUpdate();
+    /*
+     * Launch installs it. No setting, no button, no "an update is available"
+     * that waits to be noticed.
+     *
+     * This was opt-in, and off by default, so a released version could sit in
+     * the feed for days while every launch said "available" and did nothing.
+     * That is not a choice worth offering: an app that knows it is out of date
+     * and opens anyway is just a slower way to run the old build.
+     *
+     * It is safe precisely *because* it is the launch check. Nothing has been
+     * written yet, no chapter is half-saved, the two child processes have only
+     * just started. `install` is passed only from boot for that reason — the
+     * six-hourly check still only reports, because yanking the app out from
+     * under someone mid-sentence is the thing the old setting was really
+     * protecting against, and it still is.
+     */
+    if (install || localStorage.getItem(AUTO_KEY) === "1") void installUpdate();
     return meta;
   } catch (e) {
     publishUpdate({
@@ -317,8 +330,9 @@ window.addEventListener("unhandledrejection", (e) => fatal(String(e.reason)));
   setTimeout(lift, 8000);
 
   wireUpdates();
-  // Silent on launch: a failed check must never block getting to work.
-  checkUpdate({ silent: true });
+  // Silent on launch: a failed check must never block getting to work. It
+  // installs what it finds, so opening Quire is how Quire gets up to date.
+  checkUpdate({ silent: true, install: true });
 
   if (ready.shim_ready) {
     $("#openSettings").hidden = false;
