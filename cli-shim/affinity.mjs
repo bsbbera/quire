@@ -12,6 +12,7 @@
 //  3. Text cannot flow between frames from script (verified by probe, see
 //     EDITORIAL-METHOD section 3). Body copy is therefore poured column by
 //     column, with break points found by measuring overflow rather than guessed.
+import * as events from "./events.mjs";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -377,12 +378,14 @@ export async function build(issue, { pdf, issueDir }) {
     EXPORT(deskPdf),
   ].join("\n");
 
+  events.emit("affinity:build:start", { issue: issue.id, pages: issue.pages.length });
   const out = await run(script, 1800000, { launch: true });
 
   if (out.exported && existsSync(deskPdf)) {
     mkdirSync(dirname(pdf), { recursive: true });
     copyFileSync(deskPdf, pdf);
   }
+  events.emit("affinity:build:done", { issue: issue.id, pdf: existsSync(pdf) ? pdf : null });
   return { ...out, staged: Object.keys(stage.staged).length };
 }
 
@@ -528,7 +531,10 @@ export async function buildPage(issue, page) {
     onePageScript(issue, page, world, session.stage.staged),
     INSPECT(page.n),
   ].join("\n");
-  return run(script, 600000);
+  events.emit("affinity:page:start", { issue: issue.id, page: page.n });
+  const out = await run(script, 600000);
+  events.emit("affinity:page:done", { issue: issue.id, page: page.n });
+  return out;
 }
 
 /** One page's layout. The shared helpers are restated because each script is

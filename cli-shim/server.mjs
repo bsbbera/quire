@@ -2,6 +2,7 @@
 // OpenAI-compatible shim over agent CLIs (claude / codex / devin / antigravity).
 // Adapter shapes mirror Open Design's daemon runtime defs.
 // Point InkOS at: baseUrl=http://127.0.0.1:8787/v1  apiKey=local  model=<cli>/<model>
+import * as events from "./events.mjs";
 import { createServer } from "node:http";
 import { collectMeta, newMeta, usageBody } from "./usage.mjs";
 import { spawn, execFileSync } from "node:child_process";
@@ -999,12 +1000,25 @@ createServer((req, res) => {
       ]);
       let servers = {};
       try { servers = await mcp.servers(); } catch {}
-      return preflight.doctor({ comfyStatus, affinityStatus, servers, magRoot: PUBLICATION_ROOT });
+      const report = await preflight.doctor({ comfyStatus, affinityStatus, servers, magRoot: PUBLICATION_ROOT });
+      /* Whether anything is listening to progress. A Studio that has lost the
+         event stream still serves every screen, so the only way to notice is
+         to ask. */
+      return { ...report, eventListeners: events.subscriberCount() };
     })());
   }
 
   /* Plain status never starts Affinity — the dashboard asks on every load, and
      that launched it. A caller that is about to build says so explicitly. */
+  /*
+   * What the shim is doing, as it does it.
+   *
+   * The Studio proxies this into its own stream so a browser opens one
+   * connection rather than two, and so an event coming from a render or a
+   * layout arrives beside the pipeline events about the same run.
+   */
+  if (path === "/events") return events.subscribe(req, res);
+
   if (path === "/affinity/status") {
     const launch = new URL(req.url, "http://x").searchParams.get("launch") === "1";
     return handle(affinity.status({ launch }));
