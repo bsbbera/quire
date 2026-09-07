@@ -136,8 +136,8 @@ In `api/audit.ts`:
 - `readAuditProject(root, kind, id)` — one project, with per-file audit state.
 
 State lives in two JSON files under `<workspace>/.quire/`:
-- `audit-state.json` → `files[path]: FileAudit` (`checked`, `approved`,
-  `reads`, `revisions`, `deslops`, `notes`)
+- `audit-state.json` → `files[path]: FileAudit` (`checked`, `rewritten`,
+  `approved`, `reads`, `revisions`, `deslops`, `notes`)
 - `findings.json` → `Finding[]` with `severity: blocking|warning|note` and
   `state: open|accepted|ignored`
 
@@ -176,9 +176,45 @@ belongs on Home.
 
 **The counting vocabulary, used by every screen that reports status:**
 - read = `audit.checked` is set
+- **stale** = `audit.rewritten` is later than `audit.checked`. A verdict is
+  about the text that was read, so a file rewritten after its last check is not
+  clean, it is unread: `fileState` in `pages/AuditPage.tsx` returns the
+  never-read dot with "changed since last read". Every pass that writes a file
+  records `rewritten` — the restyle job included, which for a long time
+  recorded nothing at all and left restyled chapters showing green.
 - signed off = `audit.approved` is set
 - open = findings on that path with `state === "open"`
 - blocking = those with `severity === "blocking"`
+
+**Rewriting one file rewrites the copies of it.** A short is on disk four times
+over — `final/chapters/NNNN.md`, `final/full.md`, `final/<Title>.md` and
+`final/short-story.json` — and every pass that changes a chapter has to put the
+other three back in step or the audit screen lists the same story twice, saying
+two different things. `recomposeShortFiction` in `core/pipeline/recompose.ts`
+folds the chapter files back into the draft and re-renders the long copies
+through `renderShortFictionDraftMarkdown`; `composedDirOf` says whether a path
+is a chapter of such a set, and answers `null` for work that keeps no long copy
+(a book, a storybook), which makes the call free for them. It is wired into
+every door that writes a chapter: `PUT /audit/file`, `/audit/file/revise`,
+`/audit/run` when a revise landed, `/audit/restore`, and the restyle job.
+
+## What is running
+
+The job queue (`core/pipeline/jobs.ts`) is in memory, serial, and the only
+account of a stage in flight. `GET /api/v1/jobs` lists it and every change is
+announced over SSE as `job:queued|started|progress|done|failed|cancelled`.
+
+The screens read it through `hooks/use-jobs.ts`, held in `App.tsx` **above the
+router** so a job outlives the page that started it. It seeds from `GET /jobs`
+(the stream starts empty on every load, so a reload mid-stage would otherwise
+show nothing) and follows the stream from there. The rail card and the run
+screen both render from that one list, and `POST /jobs/:id/cancel` is reachable
+from either.
+
+Before this, a restyle was tracked by a `setInterval` inside `StyleManager`:
+walking to another screen tore it down, and fourteen chapters were rewritten
+with nothing anywhere saying so. Anything that enqueues a job gets the rail
+card for free — do not add a second, page-local tracker.
 
 ## Sessions
 
