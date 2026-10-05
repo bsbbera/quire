@@ -36,7 +36,8 @@ favour neither.
 
 ## Positioning
 
-Quire ships no model and holds no credentials. The shim finds the agent CLIs
+Quire ships no model and needs no credentials (an API key is optional, see
+below). The shim finds the agent CLIs
 already installed and signed in on the machine (Claude Code, Codex, Devin,
 Antigravity) and exposes every model they offer through one local
 OpenAI-compatible endpoint. MCP servers are read from where Claude Desktop,
@@ -63,9 +64,11 @@ subscriptions the user already pays for, with nothing to sign up for.
 
 Confirmed and binding, each verified in the code:
 
-- **No credentials of its own.** No API key field exists anywhere, and none may
-  be added. Provider failure is resolved by installing or signing into a CLI.
-  The launcher states this in its own copy: "No API key, works offline."
+- **Three ways to a model, none required.** (Changed 2026-10-05 by the user; was
+  "no API key field may exist".) A model is reached through an installed CLI, a
+  local/offline server, or an API key the user enters. Each connection is tested
+  before its models can be chosen. CLIs and local models stay the default, so the
+  app still works with no key at all; keys never leave this machine.
 - **Local and offline.** Every runtime call is to `127.0.0.1`. There is no
   cloud account, no telemetry, no remote runtime dependency. Nothing in the
   interface may imply a network round trip that does not exist, and no asset

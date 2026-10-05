@@ -70,4 +70,8 @@ and that is the test surface:
 `node desktop/quire-ctl.mjs <dev|prod> <path> [json]` is the wrapper — it
 resolves the port, so nothing has to remember which build is on which.
 
+No InkOS names in anything Quire writes or reads: `.quire/`, `quire.json`,
+`QUIRE_*`, `research/`. The only exceptions are the licence credit, the
+upstream URL, and the two migration spots named in ARCHITECTURE.md "Names".
+
 Never commit or push `.env` or the API keys it holds, under any circumstances.

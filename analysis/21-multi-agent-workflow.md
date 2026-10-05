@@ -1,5 +1,21 @@
 # 21 — Multi-Agent Workflow: Roster, Per-Agent Models, Coordination
 
+## Status (2026-09-07)
+
+| Piece | State |
+|---|---|
+| Canonical roster (26 agents, aliases) + 7 jobs (Planner, Writer, Reviewer, Reviser, De-AI, Designer, Researcher) | **done** — `llm/agent-roster.ts:40-213` |
+| Per-agent / per-job model pins, resolver, UI | **done** — `llm/model-routing.ts`, `pages/ModelRouting.tsx`, `inkos.json#modelOverrides` |
+| Per-production overrides in `pipeline.json` | not started |
+| Capability tiers / needs-based default routing | not started → now specified in **20 §4** (this file defers routing to 20) |
+| ArtDirector, ImageSmith, DesignAuditor, AffinityBuilder as named agents | **not found**; `design.artplan` is a cover-prompt passthrough, `design.review` an existence check |
+| Destyler as an executor (`content.destyle`, book only) | partial |
+| Agent + model pill on run transcript blocks | not started |
+
+The ArtDirector contract now lives in **08 §4** (what it decides), the surface policy in
+**08 §1**, and the Researcher procedure in **22 §3**. This file keeps the roster and
+coordination; per-agent prompts are specified where their domain is.
+
 > Verified 2026-08-31: the engine is ALREADY multi-agent. `core/src/agents/` has 36
 > files of class agents extending `BaseAgent` (`agents/base.ts`): Architect, Planner,
 > Composer, Writer, ContinuityAuditor, Reviser, Polisher, StateValidator,

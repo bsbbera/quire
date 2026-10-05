@@ -1,107 +1,278 @@
-# 08 — A Buildable Design System: Worlds = Movement × Technique × Props
+# 08 — Design System: Auto-Generated Design Language per Work, per Type
 
-## Can a design system be built? Yes — as data, not as vibes
+> Rewritten 2026-09-07; absorbs the former `06-design-style.md` (page rules, cutout
+> grammar, golden rules). Verified against source: `pipeline/publication-design.ts:21-55`
+> (`DesignSpec {palette, type, grid, imageDirection, pages}`), `:129-162`
+> (`DEFAULT_DESIGN_PROMPT`, one global spec), `:175-205` (`designReferences()`),
+> `pipeline/publication-runner.ts:158-168` (`DesignWorld {n, register, technique,
+> idiom, paper, ink, hue, field, devices}` — **defined, never populated**), `:548`
+> (`worldFor()` always null), `:1034-1039` (`artPage` sends `brief.prompt` raw —
+> `imageDirection` is never injected), `publications/styles.ts` (50-style vocabulary),
+> `pipeline/executors.ts:160-198` (`design.artplan` = cover-prompt passthrough),
+> `cli-shim/workflows/z-image-turbo.json:26` (the only negative prompt in the system).
 
-The trap is treating "design system" as an infinite creative space. It isn't. It's a
-**finite set of named, versioned spec files** ("design worlds") that the planner picks
-from and the page spec (06) references. `TK_CFG.worlds` already hints at this — this
-file makes it real.
+## Status
 
-## The three axes (exactly as the user framed them)
+| Piece | State |
+|---|---|
+| `DesignSpec` (palette/type/grid/imageDirection/pages) generated per magazine | done |
+| `DesignWorld` per section | **done (2026-09-11)** — `runDesign` writes `design.sections` (imagePrompt/negative per section) |
+| Design references (mood board from `design-references/*.md`) | done, magazine only |
+| Design system for books / storybooks / shorts | **done (2026-09-11)** — one world per work, `design/world.json`, chosen from the text on the first art plan (`ensureWorld`, server.ts) |
+| Illustration-vs-photo policy per type | **done** — `artPolicyOf()` in `registry.ts` |
+| Any design-system fragment reaching the image prompt | **done** — `composeImagePrompt()` in every render path |
+| ArtDirector brief contract (§4) | **done (2026-09-11)** — `core/pipeline/art-director.ts`, run by the art plan for book/short/interactive-film; one cover per book, "none" is an answer |
+| World card (§6) | **done (2026-09-11)** — on the design desk (Gallery): keep, or re-world with a note; older pictures marked stale |
+| Cast Sheet (§9) | **done (2026-09-11), prompt-only** — sheets read off the text, 3 candidates per character, choose or upload; trait line in every brief the character is in. Reference conditioning waits on a workflow that can take one |
+| World library, golden rules | not started |
+| Golden-rule validator (`checkDesign`) | contrast + section-world validity only |
 
-A **world** is one coordinate in a 3-axis space:
+The single most valuable fact above: the app already generates a design spec and
+already has a world type — it just never *uses* them where images are made. Wiring
+beats inventing.
 
-| Axis | What it controls | Examples |
-|---|---|---|
-| **System** (design movement) | grid discipline, type scale, color logic, spacing, composition rules | Bauhaus, Swiss/International, Utilitarian/brutal, Art Deco, Memphis, Mid-century editorial, Constructivism, Zen/Ma |
-| **Technique** (image & mark making) | how artwork is produced/treated | watercolor, pixel art, surrealist collage, risograph, hatching/engraving, gouache, photo-duotone, paper-cut |
-| **Props** (world flavor) | subject dressing, ornaments, icon vocabulary, texture set | Mystical Western, Nautical, Nordic field-notes, Retro-futurist lab, Botanical archive, Cosmic folklore |
+## 1. The central object: `ArtPolicy` per production type
 
-Not all combinations work — and that's fine. Ship a **compatibility matrix**: each
-system lists techniques it tolerates (Swiss + risograph ✓, Swiss + surrealist collage ⚠
-only as the 10% accent, Bauhaus + watercolor ✗). Curated combos get names and become
-the shipped worlds (12–20 at launch); users can compose new ones, validator warns on ✗.
+The user's rule — *books and stories are illustrated, never photographed; magazines
+mix real photographs, illustration, infographics and type* — is a **type-level
+policy**, so it lives in the one place types are defined: `productions/registry.ts`.
 
-## World spec format
-
-```
-workspace/design/worlds/<id>/
-  world.json          — the machine spec (below)
-  references/*.jpg    — 4–8 reference images (moodboard; also few-shot for image gen)
-  rules.jsonl         — taste-loop accretions (06)
-  preview.png         — auto-built sample spread
-```
-
-```json
-{
-  "id": "nordic-fieldnotes",
-  "system": { "base": "swiss",
-    "grid": { "cols": 6, "baseline": 13.5, "margins": "generous" },
-    "typeScale": { "ratio": 1.333, "display": "Haettenschweiler", "body": "Lora", "caption": "Franklin Gothic Book" },
-    "color": { "ground": "bone", "ink": "#1a1a1a", "accents": ["olive","clay"], "rule": "60-30-10" },
-    "composition": ["one-dominant", "asymmetric", "whitespace>=18%"] },
-  "technique": { "primary": "watercolor", "treatment": "cutout-forward",
-    "imagePrompt": "loose watercolor, visible paper grain, muted nordic palette, isolated on white",
-    "postProcess": ["rembg", "grain(0.15)"] },
-  "props": { "theme": "field-notes", "icons": "thin-line-specimen",
-    "ornaments": ["wave-rule-03", "brackets-01"],       // component library ids (07)
-    "textures": ["paper-cold-press"], "motifLexicon": ["compass", "leaf", "twine"] },
-  "breakBudget": { "perSpread": 1, "perIssueRatio": 0.2 },   // ties into 06
-  "math": { "dominantRatio": 2.0, "maxSizesPerPage": 4 }
+```ts
+// registry.ts — one field per ProductionSpec
+artPolicy: {
+  surfaces: ["illustration"],                       // what kinds of image may exist
+  // magazine: ["photo","illustration","infographic","typographic","texture"]
+  mix?: { photo: 0.4, illustration: 0.35, infographic: 0.15, typographic: 0.1 }, // targets, not quotas
+  techniques: "pool:narrative",                      // which technique pool the world may draw from
+  imagesPerUnit: { min: 0, max: 1 },                 // book: per chapter; magazine: per page {1,3}; storybook {1,1}
+  slots: ["opener","tailpiece","plate"],             // allowed slot kinds (09 taxonomy)
+  realism: "forbidden" | "allowed" | "preferred",    // drives the negative prompt
+  worldScope: "work" | "section",                    // one world per book; one per magazine section
 }
 ```
 
-Note what this unifies: the **image prompt fragment** (feeds Comfy recipes, 09), the
-**TK palette/faces** (feeds Affinity, 07), the **validator constants** (feeds 06), and
-the **reference images** (feed both the moodboard UI and image-gen conditioning). One
-world file drives text-adjacent visuals, generated art, and layout — that's the whole
-point of a design system.
+| Type | surfaces | realism | worldScope | imagesPerUnit |
+|---|---|---|---|---|
+| book, short, translation | illustration | forbidden | work | 0–1 (opener/tailpiece/plate) |
+| storybook | illustration | forbidden | work | 1 per spread |
+| script | none (typographic cover only) | — | work | cover |
+| storyboard | illustration (line/tonal) | forbidden | work | 1 per panel |
+| interactive-film | illustration, photo(optional) | allowed | work | 1 per node |
+| publication | photo, illustration, infographic, typographic, texture | allowed | **section** | 1–3 per page |
 
-## Reference images & math — "no nonsense"
+`realism: forbidden` appends the anti-photo block to every negative prompt
+(`photorealistic, photo, photograph, 3d render, cgi, stock photo, dslr, bokeh`).
+`allowed` appends nothing; `preferred` appends the anti-illustration block only for
+`surface: photo` briefs. Nothing else in the system decides this — not the
+ArtDirector, not the world, not the user's brief text.
 
-- References are curated by the user (drag-drop into the world), not generated. They
-  anchor image-gen (IPAdapter/style conditioning in the Comfy workflow) and human review.
-- Math lives in the spec as *checkable numbers*: grid, ratio, whitespace %, dominant
-  ratio, contrast minimums (quire-core's `checkDesign` already checks contrast — extend).
-- Every rule is either **a number the validator checks** or **a sentence the LLM reads**.
-  Anything that is neither gets deleted from the spec. That's the no-nonsense filter.
+## 2. The world: one schema, populated for every type
 
-## Breaking rules like an artist (system level)
+Keep `DesignWorld` and finish it. Rename nothing; add the fields the image side needs:
 
-06 covers per-page breaks. At the *system* level:
+```ts
+interface DesignWorld {
+  n: number; register: string; idiom: string;           // existing
+  technique: string;                                      // existing — from styles.ts vocabulary
+  paper: string; ink: string; hue: string; field: string; // existing — colours
+  devices: string[];                                      // existing — layout devices
+  // added:
+  surfaceDefaults: Record<Surface, { technique: string; palette: string[] }>; // per surface, how it looks here
+  imagePrompt: string;      // the fragment prepended to every brief in this world (≤ 60 words)
+  negative: string;         // world-specific avoid list (beyond the policy block)
+  props: string[];          // recurring objects/motifs (from Setting Bible §1/§6 when present — 22)
+  type: { display: string; text: string };
+  mood: string[];
+  sources: string[];        // design-reference ids used
+}
+```
 
-- Each world declares its own sacred rules (`composition[]`) and its **break budget**.
-- A "shock spread" archetype in the flatplan is the sanctioned place where the world's
-  technique axis flips (e.g. the watercolor issue gets one photographic spread). One
-  per issue, never on the cover, always content-motivated.
-- Worlds can define a **counter-world** (`shockWorld: "duotone-photo"`) so even the
-  rebellion is art-directed.
+Where it lives:
+- magazine: `issue.design.sections[]` (the field that exists) — **populate it** in
+  `runDesign`, one world per section, sharing `palette.paper/ink` for coherence.
+- every other type: `<outDir>/<id>/design/world.json` — one world per work.
+- library: `<workspace>/design/worlds/<id>/` for reuse (`@world:riso-fable`), mirroring
+  the style library; ships with ~12 curated worlds spanning the technique pool.
 
-## In-app UI before main design? Yes — three screens, high value
+### How a world is generated (the "auto" part)
 
-1. **World Gallery** — card per world: preview spread, reference strip, system/technique
-   /prop chips. Pick one when creating an issue/book. (This is the "choose your look"
-   moment — make it gorgeous; it sells the product in screenshots.)
-2. **World Composer** — three-column picker (System | Technique | Props) with the
-   compatibility matrix live-validating; right side renders a *sample page* using the
-   template + a stock cutout, via the renderPage pipeline (07). Save-as-new-world.
-3. **World Detail / Taste tab** — the rules.jsonl approval queue (06), reference
-   management, "rebuild preview".
+A `design.system` sub-stage runs **once per work, before `artplan`**, for every type
+with a design stage (today only magazine has `runDesign`):
 
-These are plain CRUD + one render call — cheap to build once 07's render works, and
-they make the whole design engine *visible*, which matters for sellability.
+```
+inputs:  type + artPolicy · content synopsis/section map · genre · audience
+         · Setting Bible §1/§6 (22) if present · designReferences() mood board
+         · the user's designPrefs (free text) · library world if the user picked one
+prompt:  "Choose ONE design world for this <type> ... technique from <pool> ...
+          return JSON DesignWorld[]" (per section for magazine, single for others)
+check:   checkDesign() extended: technique ∈ vocabulary, contrast ≥ 4.5, surfaceDefaults
+         cover every surface in artPolicy, imagePrompt has no forbidden realism words
+         when realism=forbidden, ≤ 3 techniques per issue, adjacent sections differ
+gate:    part of the design gate — shown as a "World card" (swatches, type sample,
+         one test render) with keep / re-world / pick-from-library
+```
 
-## Works for novels and storybooks too
+Technique pools (data file `design/technique-pools.json`, from `styles.ts`):
+`narrative` (watercolor, gouache, ink-and-wash, linocut, riso, coloured pencil,
+paper-cut, woodcut, pastel, digital-painterly), `editorial` (adds photo-documentary,
+studio-still, collage, vector-flat, isometric, data-viz, typographic), `children`
+(gouache, crayon, paper-cut, felt, soft-digital), `technical` (line, blueprint,
+cross-hatch).
 
-Worlds are not magazine-only. A novel uses the same spec with a reduced surface:
-type scale, page geometry, chapter-opener ornament, cover art technique/props. A
-children's storybook uses a picture-dominant archetype set. Add a `surface` field
-(`magazine | book | storybook | cover-only`) so the validator knows which rules apply.
+### 2b. World + Kit = the approved design (added 2026-09-10)
 
-## Build order
+A world says *how things look*; the **Design Kit** (07 §1b) is the world made
+concrete — named gradients, patterns, text styles, FX set, ornaments, masks,
+infographic components, `template.afdesign`. `DesignWorld` gains `kit: "<worldId>@<v>"`.
+The design gate approves both at once on the **World card** (magazine: per section on
+the Section board, 13 §2): swatches, type sample, gradient/pattern strip, ornament row,
+one test render. Approval is the moment "this colour scheme for this section, these
+illustrations, this grid" is fixed — the user's requirement that design is finalised
+before anything is built. Re-world after approval marks kit assets and images stale
+through the existing `withdraw` path (14).
 
-1. World schema + loader + 3 hand-written worlds. — M
-2. Wire world → TK config + Comfy prompt fragment (replace ad-hoc TK_CFG). — M
-3. World Gallery UI. — S
-4. Composer + compatibility matrix. — M
-5. Taste tab (with 06's loop). — M
+**Prompt implication per type** — why magazine and book prompts must differ:
+- *Magazine*: `worldScope: section` → `composeImagePrompt()` reads a **different**
+  world fragment, palette and technique for each section, and the kit's mascot /
+  ornament ids for reuse. Infographics are block kinds first (kit components), images
+  second.
+- *Book / short / storybook*: `worldScope: work` → one fragment for the whole work,
+  stable across chapters; variety comes from **treatment** (09 §1), and **cutouts are
+  the attention device** — a storybook spread that alternates full-bleed with a
+  white-ground cutout reads as designed, not generated. Illustrations are
+  storytelling-heavy: the brief's `subject` is a *beat* sensed from the approved text
+  (a moment, an action, a face), never a mood.
+
+Canva Brand Kit mirrors the approved kit palette/assets (23 §5) so derivatives stay
+on-world; it is never the source of truth.
+
+## 3. One function composes every image prompt
+
+Today two call sites build prompts differently and both drop the design system.
+Replace with a single `composeImagePrompt(brief, world, policy, setting?)` in core,
+used by `artPage`, `design.generate`, the MCP tool, and the gallery's redesign:
+
+```
+positive = [ world.imagePrompt,
+             world.surfaceDefaults[brief.surface].technique,
+             brief.subject,                      // what the ArtDirector wants shown
+             TREATMENT_SUFFIX[brief.treatment],  // e.g. cutout: "isolated on plain white, full figure, no ground shadow"
+             world.props (2–4 relevant), setting cues ].join(", ")
+negative = [ workflow.negative, POLICY_NEGATIVE[policy.realism][brief.surface],
+             world.negative, setting.anachronisms ].join(", ")
+```
+
+Recorded whole in the sidecar (`recipe.json`, 04) so a regeneration is exact and a
+"redesign" edits one component and re-composes.
+
+## 4. The ArtDirector decides *what*, the world decides *how*
+
+`design.artplan` becomes the ArtDirector (21) with per-type behaviour and this
+contract per unit:
+
+```json
+// art/briefs/<unit>-<k>.json
+{ "unit": "ch07", "k": 1,
+  "surface": "illustration",              // ∈ policy.surfaces
+  "slot": "opener",                        // ∈ policy.slots — where on the page (09 taxonomy)
+  "treatment": "half-bleed-top",           // how it sits: full-bleed | half-bleed | vignette | cutout | plate | spot | ornament | texture
+  "subject": "…",                          // sensed from the unit's content: the beat, not a caption
+  "aspect": "3:2", "size": [1536,1024],
+  "mustNot": ["faces of real people"],
+  "reference": null | { "kind": "web", "query": "…", "license": "cc" },   // magazine photo briefs
+  "reason": "chapter ends on the empty station — tailpiece, small, quiet" }
+```
+
+Sensing rules the ArtDirector prompt encodes (per type):
+- **Books**: read the chapter; ≤1 image; opener if a new location/character enters,
+  tailpiece if the chapter ends on an image-able beat, plate only for set-pieces;
+  many chapters get **none** — restraint is the design.
+- **Storybook**: one per spread, the spread's art note is the subject, treatment
+  alternates full-bleed / vignette-with-white-space so the book breathes.
+- **Magazine**: per page from the page bundle; surface chosen by content kind
+  (reportage → photo; explanation → infographic; essay → illustration; opener →
+  typographic or photo), honouring `mix` over the issue and the flatplan archetype
+  (13); adjacent pages never share treatment.
+- **Storyboard**: line/tonal panels, no colour unless world says so.
+
+## 5. Page rules (from the former 06) — now validators the design gate runs
+
+Kept as the seven golden rules, implemented in `checkDesign` on the page spec + brief:
+
+1. One dominant element per page (largest image or headline ≥ 40% of the visual weight).
+2. 60-30-10 colour distribution from the world (paper/ink/hue) — measured on the render.
+3. Whitespace ≥ 25% on editorial pages; storybook text never over busy image regions.
+4. Type: one display + one text face per world; sizes from `type.scale`.
+5. Grid: every block snaps; images bleed only when treatment says so.
+6. Adjacent pages differ in treatment; no three consecutive full-bleeds.
+7. Rule-breaking is allowed once per section and must be declared (`spec.breaks:`),
+   which the gate shows as a badge rather than a warning.
+
+**Cutout & placement grammar** (needs the rembg workflow, 09): a cutout may overlap a
+text column by ≤ 12 mm with text wrap; cutouts sit on the outer edge; a cutout never
+faces off-page; watercolor-bleed edges get 6 mm clearance from text. `tk.js` gets
+`T.cutout()` and `T.wrapAround()`; the validator checks the geometry from the spec.
+
+## 6. UI
+
+- **World card** in the design gate (keep / re-world / pick from library / edit
+  swatches). Re-world regenerates all briefs of the scope and marks images stale.
+- **Design page** per creation (Tools rail): the world(s), the policy readout ("this
+  is a book: illustration only"), technique pool, references list, and the surface
+  mix meter for magazines (target vs actual).
+- **World library** page: gallery of curated + saved worlds with a test render each.
+- The policy is *shown*, not editable per work — a book that wants photos is a
+  different type, not a toggle. (Interactive-film's `photo(optional)` is the one
+  per-work switch.)
+
+## 7. Learning (18)
+
+Every design-gate verdict (keep / re-world / redesign with note) and every gallery
+redesign note is a taste event with `scope: "world"`. Distillation proposes deltas to
+the world's `imagePrompt`/`negative`/`surfaceDefaults`, and — for library worlds —
+promotes them. This is how "the user never picks realism for storybooks" becomes a
+rule without anyone typing it.
+
+## 9. Cast Sheet: the same character on every page (added 2026-09-07; 11 #4)
+
+The visible failure of every AI-made picture book is that the protagonist's face
+changes between spreads. The fix is a per-character reference the generator is
+conditioned on, kept in the work's design folder and approved once:
+
+```
+<outDir>/<id>/design/cast/<characterId>/
+  sheet.json      { name, age, species, wardrobe[], palette[], traits[], approvedAt }
+  ref-front.png   ref-side.png   ref-expressions.png     (approved renders, world technique)
+  recipe.json     how the refs were made (same sidecar as every image)
+```
+
+- **Source**: the cast truth file (`roles`) already names characters; a `design.cast`
+  sub-stage after `design.system` renders 3 candidate sheets per named character in
+  the work's world (neutral pose, plain ground, full figure) and shows them in the
+  design gate as a **Cast card** — pick one, redo with a note, or upload your own
+  drawing. Nothing downstream runs until every recurring character has a sheet.
+- **Use**: the ArtDirector brief gains `characters: [id]` (sensed from the unit text);
+  `composeImagePrompt()` appends the sheet's trait line, and the render seam attaches
+  the refs as IPAdapter / reference-conditioning inputs (09 §3b). Wardrobe changes are
+  explicit (`wardrobe: "raincoat"` in the brief), so continuity is a choice, not luck.
+- **Verify**: the image↔text coherence audit (19 §5c) checks each placed image against
+  the sheet (a vision model asked "same character? list differences") and raises a
+  design finding with a one-click regenerate.
+- **Series** (22 §8): sheets live at series scope when a series exists, so book 3 draws
+  the same child as book 1 — aged, if the series bible says so.
+
+## 8. Implementation order
+
+| # | Task | Test |
+|---|---|---|
+| 1 | `artPolicy` in registry for all 8 types; `POLICY_NEGATIVE` table | book brief negative contains "photorealistic" |
+| 2 | `composeImagePrompt()` in core; `artPage` and `generate` both use it; sidecar records components | magazine image recipe shows world fragment |
+| 3 | Finish `DesignWorld`; `runDesign` writes `design.sections`; `design.system` stage for non-magazine types writes `design/world.json` | `worldFor()` returns non-null; a book has a world |
+| 4 | Technique pools + world library dir + 12 curated worlds | `@world:` picker lists them |
+| 5 | ArtDirector brief contract (`surface/slot/treatment/subject/reason`) replacing cover-prompt passthrough | book with 10 chapters → ≤10 briefs, mixed slots |
+| 6 | `checkDesign` golden rules + world card in design gate | three full-bleeds in a row → warning |
+| 7 | Cutout grammar in `tk.js` (after 09 rembg) | cutout page renders with wrap |
+| 8 | Design page + world library UI | — |
+| 9 | Taste scope `world` (after 18) | — |
+| 10 | **Cast Sheet** (§9): `design.cast` stage, Cast card, `characters[]` in briefs, refs into the render seam (needs 09 `ipadapter-style`), coherence audit hook | 12-spread storybook: protagonist judged "same" on ≥ 11 spreads by the vision check |
+| 11 | `DesignWorld.kit` + World card shows kit strip; `design.system` proposes kit from nearest library kit (07 §1b); sensing prompt for book briefs = beat from text | approving a section fixes world + kit; a storybook brief names an action from the spread text |
