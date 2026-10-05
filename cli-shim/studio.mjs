@@ -1,6 +1,6 @@
-// Starts the InkOS Studio server WITHOUT the browser.
+// Starts the Quire Studio server WITHOUT the browser.
 //
-// `inkos studio` unconditionally spawns `cmd /c start "" <url>`, which throws
+// `quire studio` unconditionally spawns `cmd /c start "" <url>`, which throws
 // the workbench into the user's default browser — the whole app then lives in
 // Chrome and the desktop window is left holding only the settings. There is no
 // flag to suppress it, so this reuses the CLI's own resolver + bootstrap and
@@ -25,7 +25,7 @@ const { root } = await import("./workspace.mjs");
 const ROOT = root();
 
 /**
- * Locate the InkOS runtime. Quire ships its own build of the fork in
+ * Locate the Quire runtime. Quire ships its own build of the fork in
  * ./engine (staged by desktop/vendor-studio.mjs, and carried into the
  * installer because Tauri bundles all of cli-shim as a resource), so that is
  * preferred. The global npm package stays as a fallback for a dev tree where
@@ -34,30 +34,45 @@ const ROOT = root();
 const BUNDLED = join(dirname(fileURLToPath(import.meta.url)), "engine");
 const isBundled = () => existsSync(join(BUNDLED, "studio", "dist", "api", "index.js"));
 
-function inkosRoot() {
+function quireRoot() {
   if (isBundled()) return BUNDLED;
   const guesses = [
-    process.env.APPDATA && join(process.env.APPDATA, "npm/node_modules/@actalk/inkos"),
-    join(homedir(), "AppData/Roaming/npm/node_modules/@actalk/inkos"),
-    "/usr/local/lib/node_modules/@actalk/inkos",
+    process.env.APPDATA && join(process.env.APPDATA, "npm/node_modules/@actalk/quire"),
+    join(homedir(), "AppData/Roaming/npm/node_modules/@actalk/quire"),
+    "/usr/local/lib/node_modules/@actalk/quire",
   ].filter(Boolean);
   for (const g of guesses) if (existsSync(join(g, "package.json"))) return g;
   // Last resort: ask npm. Slow (~1s) but only runs when the guesses miss.
   try {
     const prefix = execFileSync("npm", ["root", "-g"], { encoding: "utf8", shell: true }).trim();
-    const p = join(prefix, "@actalk/inkos");
+    const p = join(prefix, "@actalk/quire");
     if (existsSync(join(p, "package.json"))) return p;
   } catch {}
   return null;
 }
 
-const pkg = inkosRoot();
+const pkg = quireRoot();
 if (!pkg) {
   console.error("engine runtime not found — run: node desktop/vendor-studio.mjs");
   process.exit(1);
 }
 
 const load = (rel) => import(pathToFileURL(join(pkg, rel)).href);
+
+// Before the engine reads the workspace: a folder an older build wrote still
+// has its state under the InkOS names. Only an engine that reads the new names
+// may move them; this file runs from source, so a restart before the engine is
+// rebuilt would otherwise hide every session from the engine still running.
+// See migrate-names.mjs.
+const engineName = JSON.parse(readFileSync(join(pkg, "package.json"), "utf-8")).name;
+if (engineName === "quire-runtime" || engineName === "@actalk/quire") {
+  try {
+    const { migrateNames } = await import("./migrate-names.mjs");
+    for (const line of migrateNames(ROOT)) console.log("names: " + line);
+  } catch (e) {
+    console.warn("names: migration skipped: " + e.message);
+  }
+}
 const { ensureProjectDirectoryInitialized } = await load("dist/project-bootstrap.js");
 
 await ensureProjectDirectoryInitialized(ROOT, { language: "en" });
@@ -73,7 +88,7 @@ const launch = isBundled()
     }
   : await (await load("dist/commands/studio.js")).resolveStudioLaunch(ROOT);
 if (!launch) {
-  console.error("InkOS Studio build not found next to the inkos CLI");
+  console.error("Quire Studio build not found next to the quire CLI");
   process.exit(1);
 }
 
@@ -83,7 +98,7 @@ installStudioPatch(launch.studioEntry);
  * Copy the Quire patch into Studio's own dist and reference it from its
  * index.html. All that is left in it is English for the ~415 Chinese strings
  * Studio hardcodes outside its i18n table. Re-run on every launch so an
- * `inkos update` that replaces the bundle gets re-patched instead of quietly
+ * `quire update` that replaces the bundle gets re-patched instead of quietly
  * reverting.
  */
 function installStudioPatch(entry) {
@@ -146,10 +161,10 @@ const child = spawn(launch.command, launch.args, {
   // parser drops them before they become events, so they never reset the
   // deadline. These are the documented overrides.
   env: {
-    INKOS_LLM_FIRST_EVENT_TIMEOUT_MS: "900000",
-    INKOS_LLM_STREAM_IDLE_TIMEOUT_MS: "900000",
+    QUIRE_LLM_FIRST_EVENT_TIMEOUT_MS: "900000",
+    QUIRE_LLM_STREAM_IDLE_TIMEOUT_MS: "900000",
     ...process.env,
-    INKOS_STUDIO_PORT: PORT,
+    QUIRE_STUDIO_PORT: PORT,
   },
 });
 child.on("exit", (code) => process.exit(code ?? 0));

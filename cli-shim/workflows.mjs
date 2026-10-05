@@ -98,7 +98,80 @@ export function saveConfig(patch) {
 /** The workflow in force: the selected one, else the first builtin. */
 export function selected() {
   const all = list().workflows;
-  return all.find((w) => w.id === config().workflow) || all.find((w) => w.builtin) || all[0];
+  // `default` rather than "first builtin": a second builtin sorting earlier by
+  // name must not silently become every fresh machine's renderer.
+  return all.find((w) => w.id === config().workflow)
+    || all.find((w) => w.builtin && w.default)
+    || all.find((w) => w.builtin) || all[0];
+}
+
+/* ------------------------------------------------------------------- LoRAs */
+// A technique the base model cannot draw on its own comes from a LoRA (09 §2B).
+// The pack is data: `loras.json` beside this file, plus the workspace's own
+// `workflows/loras.json`. An entry is used only when its file is actually in
+// ComfyUI's models/loras — nothing here downloads weights.
+
+const LORA_FILE = join(HERE, "loras.json");
+const USER_LORAS = join(USER_DIR, "loras.json");
+
+export function loraPack() {
+  const read = (file) => { try { return JSON.parse(readFileSync(file, "utf-8")).loras || []; } catch { return []; } };
+  const byId = new Map(read(LORA_FILE).map((l) => [l.id, l]));
+  for (const l of read(USER_LORAS)) byId.set(l.id, l);
+  return [...byId.values()];
+}
+
+/** LoRAs for a technique on a base, installed ones only, strongest match first. */
+export function pickLoras({ base, technique, installed }) {
+  const want = String(technique || "").toLowerCase();
+  if (!base || !want) return [];
+  return loraPack()
+    .filter((l) => l.base === base && (l.techniques || []).some((t) => want.includes(String(t).toLowerCase())))
+    .filter((l) => installed(l.file))
+    .slice(0, 2)
+    .map((l) => ({ id: l.id, file: l.file, strength: Number(l.strength) || 0.8, trigger: l.trigger || "" }));
+}
+
+/**
+ * Splice LoRA loaders between a workflow's model/clip source and whatever
+ * consumed them. `spec` is the workflow's `lora` block: where model and clip
+ * come from, and which inputs read them.
+ */
+export function withLoras(graph, spec, picks) {
+  if (!spec || !picks.length) return graph;
+  const next = JSON.parse(JSON.stringify(graph));
+  let model = spec.model;
+  let clip = spec.clip;
+  picks.forEach((p, i) => {
+    const id = `lora${i + 1}`;
+    next[id] = {
+      class_type: "LoraLoader",
+      inputs: { model, clip, lora_name: p.file, strength_model: p.strength, strength_clip: p.strength },
+    };
+    model = [id, 0];
+    clip = [id, 1];
+  });
+  for (const [node, input] of spec.into?.model || []) if (next[node]) next[node].inputs[input] = model;
+  for (const [node, input] of spec.into?.clip || []) if (next[node]) next[node].inputs[input] = clip;
+  return next;
+}
+
+/**
+ * A workflow that wants a style reference, run without one.
+ *
+ * The reference nodes come out and whatever they fed is rewired back to the
+ * plain model, so one workflow covers both cases instead of the user having to
+ * keep two that differ by three nodes. `spec` is the workflow's `reference`
+ * block: which nodes go, and where the model came from before they existed.
+ */
+export function withoutReference(graph, spec) {
+  if (!spec) return graph;
+  const next = JSON.parse(JSON.stringify(graph));
+  for (const id of spec.strip || []) delete next[id];
+  for (const [node, input] of spec.model?.into || []) {
+    if (next[node]) next[node].inputs[input] = spec.model.from;
+  }
+  return next;
 }
 
 export function select(id) {

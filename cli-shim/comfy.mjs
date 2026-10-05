@@ -5,10 +5,12 @@
 // right runner for the hardware, filling a graph and waiting on a render.
 import * as events from "./events.mjs";
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 import * as wf from "./workflows.mjs";
+import * as postprocess from "./postprocess.mjs";
 
 export const COMFY_URL = process.env.COMFY_URL || "http://127.0.0.1:8188";
 
@@ -42,6 +44,12 @@ function findComfy() {
 }
 const COMFY_DIR = findComfy();
 const dirNow = () => (existsSync(COMFY_DIR) ? COMFY_DIR : findComfy());
+
+/** A LoRA file in ComfyUI's models folder, portable layout or plain. */
+const loraInstalled = (file) => {
+  const dir = dirNow();
+  return Boolean(dir && file) && [join(dir, "ComfyUI", "models", "loras", file), join(dir, "models", "loras", file)].some(existsSync);
+};
 
 /** Model file names of the workflow in force. Kept for preflight's model check. */
 export const models = () => Object.fromEntries(
@@ -157,10 +165,43 @@ async function startBat(bat, timeoutMs) {
  * bytes as base64 so a caller that wants the image in hand (cover generation)
  * does not have to read a file back off disk.
  */
+/**
+ * Put a reference picture where ComfyUI's LoadImage can see it.
+ *
+ * Named for its contents rather than its origin, so the same reference used on
+ * forty pages is copied once and every later render finds it already there.
+ */
+function stageReference(file) {
+  if (!existsSync(file)) throw new Error("no reference image at " + file);
+  const dir = COMFY_DIR ? join(COMFY_DIR, "ComfyUI", "input") : "";
+  if (!dir || !existsSync(dir)) throw new Error("ComfyUI's input folder is not where this expected it");
+  const name = "quire-ref-" + createHash("sha1").update(readFileSync(file)).digest("hex").slice(0, 12) + ".png";
+  const target = join(dir, name);
+  if (!existsSync(target)) copyFileSync(file, target);
+  return name;
+}
+
 export async function generate({
   prompt, negative, width, height, steps,
   seed = Math.floor(Math.random() * 2 ** 32), outFile, prefix = "quire",
   workflow: workflowId, timeoutMs = 600000,
+  // What the caller knows about the picture (work, unit, slot, prompt parts),
+  // written into the recipe beside it.
+  recipe = null,
+  // The treatment's post-process (09 §1): cutout, vignette, duotone, …
+  post: ops = null,
+  // The world's technique, which picks a LoRA when the workflow's base has one (09 §2B).
+  technique = null,
+  /*
+   * One picture in the style every element should come back in.
+   *
+   * A style reference does what a trained LoRA does without the training: the
+   * section's own reference image goes through IP-Adapter and the subject is
+   * drawn in that style. Absent, the reference nodes are removed and the
+   * workflow runs as a plain one, so the same file serves both.
+   */
+  reference = null,
+  referenceWeight = 0.8,
 }) {
   if (!prompt) throw new Error("prompt required");
   if (!(await ping())) throw new Error("ComfyUI is not running — start it first");
@@ -171,20 +212,35 @@ export async function generate({
   const s = wf.settingsFor(w, dev);
   const values = {
     prompt,
-    negative: negative ?? w.negative ?? "",
+    // The workflow's avoid-list is the floor and a caller's adds to it. It used
+    // to replace it, which dropped the only negative prompt in the system the
+    // moment anyone sent one of their own.
+    negative: mergeNegative(w.negative, negative),
     width: width ?? s.width ?? 1024,
     height: height ?? s.height ?? 1024,
     steps: steps ?? s.steps ?? 8,
     seed,
     prefix,
+    referenceWeight,
     ...wf.modelsBySlot(w),
   };
+  // ComfyUI's LoadImage reads its own input folder by name, so a reference
+  // anywhere else is copied in under a stable name first.
+  if (reference && w.reference) values.reference = stageReference(reference);
+
+  // A technique LoRA, only when the workflow says where one plugs in and the
+  // weights are actually on disk. Its trigger word leads the prompt.
+  const loras = w.lora ? wf.pickLoras({ base: w.lora.base, technique, installed: loraInstalled }) : [];
+  const triggers = loras.map((l) => l.trigger).filter(Boolean);
+  if (triggers.length) values.prompt = `${triggers.join(", ")}, ${values.prompt}`;
+  const base = (reference && w.reference) ? w.graph : wf.withoutReference(w.graph, w.reference);
+  const graph = wf.withLoras(wf.fill(base, values), w.lora, loras);
 
   const started = Date.now();
   const r = await fetch(`${COMFY_URL}/prompt`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ prompt: wf.fill(w.graph, values) }),
+    body: JSON.stringify({ prompt: graph }),
   });
   const queued = await r.json();
   if (!r.ok || !queued.prompt_id) {
@@ -220,19 +276,59 @@ export async function generate({
     const img = images[0];
     const q = new URLSearchParams({ filename: img.filename, subfolder: img.subfolder || "", type: img.type });
     const buf = Buffer.from(await (await fetch(`${COMFY_URL}/view?${q}`)).arrayBuffer());
+    let recipeFile = null;
     if (outFile) {
       mkdirSync(dirname(outFile), { recursive: true });
       writeFileSync(outFile, buf);
+      // The treatment runs on the file just written; the untouched render is
+      // kept beside it so a different treatment later starts clean. A failed
+      // post-process leaves the plain render and says so in the recipe.
+      let treated = { applied: [], raw: null };
+      if (Array.isArray(ops) && ops.length) {
+        try { treated = postprocess.apply(outFile, ops); }
+        catch (e) { treated = { applied: [], raw: null, error: String(e?.message || e) }; }
+      }
+      // The recipe beside the picture, written here so every caller gets one
+      // (04 §1): without it an image cannot be regenerated, redesigned or even
+      // traced back to what asked for it. The caller's facts go first; what
+      // actually ran is written over them.
+      recipeFile = recipeFileOf(outFile);
+      writeFileSync(recipeFile, JSON.stringify({
+        ...(recipe && typeof recipe === "object" ? recipe : {}),
+        engine: "comfy", workflow: w.id,
+        prompt: values.prompt, negative: values.negative,
+        seed, width: values.width, height: values.height, steps: values.steps,
+        ...(loras.length ? { loras: loras.map(({ id, strength }) => ({ id, strength })) } : {}),
+        ...(treated.applied.length ? { postProcess: treated.applied, raw: treated.raw } : {}),
+        ...(treated.error ? { postProcessError: treated.error } : {}),
+        ms: Date.now() - started, at: new Date().toISOString(),
+      }, null, 2) + "\n");
     }
     events.emit("comfy:generate:done", { id, bytes: buf.length, outFile: outFile || null });
     return {
-      ok: true, seed, file: outFile, bytes: buf.length, comfyFile: img.filename,
+      ok: true, seed, file: outFile, recipe: recipeFile, bytes: buf.length, comfyFile: img.filename,
       workflow: w.id, device: dev, ms: Date.now() - started,
       width: values.width, height: values.height,
       b64: buf.toString("base64"),
     };
   }
   throw new Error("ComfyUI render timed out after " + Math.round(timeoutMs / 1000) + "s");
+}
+
+/** Two comma lists as one, first occurrence kept, case-insensitive. */
+function mergeNegative(...lists) {
+  const seen = new Set();
+  const out = [];
+  for (const term of lists.map((l) => String(l ?? "")).join(",").split(",")) {
+    const t = term.trim();
+    if (t && !seen.has(t.toLowerCase())) { seen.add(t.toLowerCase()); out.push(t); }
+  }
+  return out.join(", ");
+}
+
+/** `art/07.png` → `art/07.recipe.json`: the name every reader of recipes expects. */
+function recipeFileOf(outFile) {
+  return outFile.replace(/\.(png|jpe?g|webp)$/i, "") + ".recipe.json";
 }
 
 /**

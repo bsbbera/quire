@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "engines": [
+    {
+      "id": "comfy",
+      "kind": "image",
+      "label": "ComfyUI (this machine)",
+      "auth": "none",
+      "surfaces": ["illustration", "photo", "typographic", "diagram"],
+      "caps": {
+        "maxSide": 4096,
+        "transparent": false,
+        "styles": true,
+        "refs": true,
+        "inpaint": true,
+        "seed": true,
+        "loras": true
+      },
+      "quota": null,
+      "cost": { "unit": "gpu-second", "perImage": 0 }
+    },
+    {
+      "id": "canva",
+      "kind": "image",
+      "label": "Canva AI",
+      "auth": "token-canva",
+      "surfaces": ["illustration", "typographic"],
+      "caps": {
+        "maxSide": 2048,
+        "transparent": true,
+        "styles": true,
+        "refs": false,
+        "inpaint": false,
+        "seed": false,
+        "loras": false
+      },
+      "quota": { "period": "month", "premiumUses": 200, "resetUtc": "month-start", "track": "local" },
+      "cost": { "unit": "premium-use", "perImage": 1 }
+    }
+  ],
+  "plans": {
+    "free": { "premiumUses": 20, "lifetimeImages": 50 },
+    "pro": { "premiumUses": 200 },
+    "business": { "premiumUses": 400 }
+  }
+}

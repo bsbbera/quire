@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "note": "Technique LoRAs by base. An entry is used only when its file is in ComfyUI/models/loras. Add your own in <workspace>/workflows/loras.json with the same shape; record the licence from the model card before using a LoRA for work you sell.",
+  "example": {
+    "id": "paper-cut-flux",
+    "base": "flux-schnell",
+    "file": "paper-cut.safetensors",
+    "techniques": ["paper-cut", "papercut", "cut paper"],
+    "trigger": "",
+    "strength": 0.8,
+    "licence": "see the model card",
+    "url": ""
+  },
+  "loras": []
+}

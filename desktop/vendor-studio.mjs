@@ -1,6 +1,6 @@
-// Builds the Quire fork of InkOS in vendor/studio and stages a *runtime-only* copy into
+// Builds Quire (a fork of InkOS) in vendor/studio and stages a *runtime-only* copy into
 // cli-shim/studio, which Tauri already ships as a resource. Quire no longer
-// needs `npm i -g @actalk/inkos` on the user's machine.
+// needs `npm i -g @actalk/quire` on the user's machine.
 //
 // Why not `pnpm deploy --prod`: Studio lists its client build tooling
 // (mermaid, streamdown, lucide-react, shadcn, typescript, msw) under
@@ -126,7 +126,7 @@ const need = (name) => {
   return v;
 };
 writeFileSync(join(STAGE, "package.json"), JSON.stringify({
-  name: "quire-inkos-runtime",
+  name: "quire-runtime",
   version: studioPkg.version,
   private: true,
   type: "module",
@@ -151,12 +151,13 @@ sh("npm", ["install", "--omit=dev", "--no-audit", "--no-fund", "--install-strate
 const coreOut = join(STAGE, "node_modules", "@actalk", corePkg.name.split("/")[1]);
 mkdirSync(coreOut, { recursive: true });
 cpSync(coreDist, join(coreOut, "dist"), { recursive: true });
-// core's package.json ships "files": ["dist","genres","skills","publications"]
-// - the builtin skills, genre profiles and publication definitions are data
-// files, not compiled output.
+// core's package.json ships "files": ["dist","audit-packs","genres","skills","publications"]
+// - the builtin skills, genre profiles, audit packs and publication definitions
+// are data files, not compiled output.
 // Copying only dist left the skills API returning 500 on every request:
-// ENOENT stat .../inkos-core/skills.
-for (const data of ["skills", "genres", "publications"]) {
+// ENOENT stat .../quire-core/skills. The same omission left the audit catalogue
+// and every per-type pack empty in a built app while passing every test.
+for (const data of ["skills", "genres", "publications", "audit-packs"]) {
   cpSync(join(SRC, "packages", "core", data), join(coreOut, data), { recursive: true });
 }
 writeFileSync(join(coreOut, "package.json"), JSON.stringify({

@@ -21,7 +21,7 @@
 
 /**
  * @typedef {"cancelled"|"timeout"|"rate-limit"|"upstream"|"auth"
- *   |"model-unavailable"|"cli-missing"|"cli-exit"} ErrorCode
+ *   |"model-unavailable"|"cli-missing"|"cli-exit"|"quota"} ErrorCode
  */
 
 /** Every code, with what it means and whether running the same call again could help. */
@@ -42,6 +42,14 @@ export const CODES = {
   "cli-missing": { retry: false, http: 503 },
   /** It failed and did not say why. The honest default. */
   "cli-exit": { retry: false, http: 502 },
+  /**
+   * A paid allowance is spent for this period (Canva AI, 23 §3).
+   *
+   * Distinct from `rate-limit` because waiting does not help — only the next
+   * billing period or a different engine does, which is why the image router
+   * treats it as a routing signal rather than a failure.
+   */
+  quota: { retry: false, http: 402 },
 };
 
 /** Whether the same call is worth making again. Unknown codes are not retried. */
@@ -69,6 +77,11 @@ export function classify({ exitCode = 0, cliError = false, stderr = "", stdout =
   if (spawnError?.code === "ENOENT") return "cli-missing";
 
   const text = `${stderr}\n${stdout}`.toLowerCase();
+
+  // agy's own deadline: it exits 0 and says so only on stderr ("print timeout
+  // after 5m0s with turn in progress; returning partial output"), usually with
+  // nothing at all on stdout. Partial output is not an answer.
+  if (/print timeout after/.test(text)) return "timeout";
 
   // A spawn failure does not always arrive as an object with a `code`: the ACP
   // transport turns it into a rejected promise whose message is the only
@@ -101,8 +114,10 @@ export function classify({ exitCode = 0, cliError = false, stderr = "", stdout =
     || /(econnrefused|econnreset|etimedout|enotfound|socket hang up|fetch failed|bad gateway|service unavailable|connection error|unable to connect)/.test(text)) {
     return "upstream";
   }
-  if (exitCode !== 0 || cliError) return "cli-exit";
-  return "cli-exit";
+  if (exitCode !== 0 || cliError || spawnError) return "cli-exit";
+  // A clean exit only reaches here with nothing said, which is what a CLI does
+  // when its own upstream gave it nothing. Worth another try.
+  return "upstream";
 }
 
 /**
@@ -158,6 +173,9 @@ function demo() {
   eq(classify({ exitCode: 0, cliError: true, stdout: "something went wrong" }), "cli-exit",
     "claude exits 0 and still fails; is_error is enough");
   eq(classify({ spawnError: { code: "ENOENT" } }), "cli-missing", "a missing binary says so");
+  eq(classify({ stderr: "[agy] print timeout after 5m0s with turn in progress; returning partial output" }),
+    "timeout", "agy's own deadline is a timeout, even though it exits 0");
+  eq(classify({ exitCode: 0 }), "upstream", "a clean exit with an empty reply is worth retrying");
   // The ACP transport loses the error object and keeps only the message; before
   // this was read, "ENOENT" fell through to the socket patterns and a missing
   // binary was reported as an upstream outage the user could only wait out.

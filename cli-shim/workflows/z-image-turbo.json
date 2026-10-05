@@ -3,6 +3,7 @@
   "label": "Z-Image Turbo",
   "note": "Eight-step turbo diffusion. ~11GB of weights, runs in 6GB of VRAM and, slowly, on CPU.",
   "builtin": true,
+  "default": true,
   "models": [
     {
       "slot": "unet",

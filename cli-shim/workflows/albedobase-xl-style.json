@@ -1,0 +1,63 @@
+{
+  "id": "albedobase-xl-style",
+  "label": "albedoBase XL + style reference",
+  "note": "SDXL with an IP-Adapter style reference: one picture in the style you want, and every element comes back in that style. What Midjourney calls --sref. Needs the comfyui_ipadapter_plus node pack (installed) plus the two model files below.",
+  "builtin": true,
+  "models": [
+    {
+      "slot": "ckpt",
+      "sub": "checkpoints",
+      "file": "albedobaseXL_v21.safetensors",
+      "url": "https://huggingface.co/frankjoshua/albedobaseXL_v21/resolve/main/albedobaseXL_v21.safetensors"
+    },
+    {
+      "slot": "ipadapter",
+      "sub": "ipadapter",
+      "file": "ip-adapter_sdxl_vit-h.safetensors",
+      "url": "https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter_sdxl_vit-h.safetensors"
+    },
+    {
+      "slot": "clipvision",
+      "sub": "clip_vision",
+      "file": "CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors",
+      "url": "https://huggingface.co/h94/IP-Adapter/resolve/main/models/image_encoder/model.safetensors"
+    }
+  ],
+  "negative": "text, watermark, signature, logo, letters, words, caption, ugly, blurry, lowres, jpeg artifacts, deformed, extra limbs, stock photo",
+  "settings": {
+    "gpu": { "width": 1024, "height": 1536, "steps": 26 },
+    "lowvram": { "width": 832, "height": 1216, "steps": 22 },
+    "cpu": { "width": 768, "height": 1024, "steps": 18 }
+  },
+  "reference": {
+    "node": "8",
+    "input": "image",
+    "strip": ["8", "9", "10"],
+    "model": { "from": ["1", 0], "into": [["5", "model"]] }
+  },
+  "lora": {
+    "base": "sdxl",
+    "model": ["1", 0],
+    "clip": ["1", 1],
+    "into": { "model": [["9", "model"]], "clip": [["2", "clip"], ["3", "clip"]] }
+  },
+  "graph": {
+    "1": { "class_type": "CheckpointLoaderSimple", "inputs": { "ckpt_name": "{{model.ckpt}}" } },
+    "2": { "class_type": "CLIPTextEncode", "inputs": { "clip": ["1", 1], "text": "{{prompt}}" } },
+    "3": { "class_type": "CLIPTextEncode", "inputs": { "clip": ["1", 1], "text": "{{negative}}" } },
+    "4": { "class_type": "EmptyLatentImage", "inputs": { "width": "{{width}}", "height": "{{height}}", "batch_size": 1 } },
+    "8": { "class_type": "LoadImage", "inputs": { "image": "{{reference}}" } },
+    "9": { "class_type": "IPAdapterUnifiedLoader", "inputs": { "model": ["1", 0], "preset": "PLUS (high strength)" } },
+    "10": { "class_type": "IPAdapterAdvanced", "inputs": {
+      "model": ["9", 0], "ipadapter": ["9", 1], "image": ["8", 0],
+      "weight": "{{referenceWeight}}", "weight_type": "style transfer", "combine_embeds": "concat",
+      "start_at": 0, "end_at": 1, "embeds_scaling": "V only"
+    } },
+    "5": { "class_type": "KSampler", "inputs": {
+      "model": ["10", 0], "positive": ["2", 0], "negative": ["3", 0], "latent_image": ["4", 0],
+      "seed": "{{seed}}", "steps": "{{steps}}", "cfg": 6, "sampler_name": "dpmpp_2m", "scheduler": "karras", "denoise": 1
+    } },
+    "6": { "class_type": "VAEDecode", "inputs": { "samples": ["5", 0], "vae": ["1", 2] } },
+    "7": { "class_type": "SaveImage", "inputs": { "images": ["6", 0], "filename_prefix": "{{prefix}}" } }
+  }
+}

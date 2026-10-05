@@ -185,7 +185,7 @@ fn claim_port(port: u16, ident: &str, label: &str, notes: &mut Vec<String>) -> b
 }
 
 
-/// Windows will not spawn a `.cmd` shim (npm installs `inkos.cmd`) directly, so
+/// Windows will not spawn a `.cmd` shim (npm installs `quire.cmd`) directly, so
 /// those must go through `cmd /C`. A real `.exe` must not, or quoting breaks.
 fn command_for(program: &str, args: &[&str]) -> Command {
     #[cfg(windows)]
@@ -288,7 +288,7 @@ fn boot(app: tauri::AppHandle, children: State<Children>) -> Boot {
         notes.push(format!("shim not found at {}", shim.display()));
     }
 
-    // Deliberately NOT `inkos studio`: that command also spawns the user's
+    // Deliberately NOT `quire studio`: that command also spawns the user's
     // default browser, which drags the workbench out of this window.
     let studio_launcher: PathBuf = app
         .path()
@@ -315,11 +315,11 @@ fn boot(app: tauri::AppHandle, children: State<Children>) -> Boot {
         // A directory that does not exist is reported as a diagnostic, not an
         // error, so naming it unconditionally is safe.
         if let Ok(home) = app.path().home_dir() {
-            c.env("INKOS_SKILL_DIRS", home.join(".claude").join("skills"));
+            c.env("QUIRE_SKILL_DIRS", home.join(".claude").join("skills"));
         }
         match spawn_child(c, log_dir.as_deref(), "studio") {
             Some(ch) => children.0.lock().unwrap().push(ch),
-            None => notes.push("could not start Quire Studio — is `inkos` installed?".into()),
+            None => notes.push("could not start Quire Studio — is `quire` installed?".into()),
         }
     } else {
         notes.push(format!("studio launcher not found at {}", studio_launcher.display()));
@@ -354,7 +354,7 @@ fn status() -> Boot {
 fn reap(children: &Children) {
     if let Ok(mut list) = children.0.lock() {
         for mut child in list.drain(..) {
-            // `inkos.cmd` runs under cmd.exe, which spawns node as a grandchild;
+            // `quire.cmd` runs under cmd.exe, which spawns node as a grandchild;
             // killing only the direct child would leave the port held. taskkill
             // /T is the one reliable way to take the whole tree down on Windows.
             #[cfg(windows)]

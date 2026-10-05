@@ -11,8 +11,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const CORE = process.env.INKOS_CORE
-  || join(process.cwd(), "inkos", "node_modules", "@actalk", "quire-core");
+const CORE = process.env.QUIRE_CORE
+  || join(process.cwd(), "quire", "node_modules", "@actalk", "quire-core");
 const load = (rel) => import(pathToFileURL(join(CORE, rel)).href);
 
 let failures = 0;
@@ -285,7 +285,7 @@ try {
     assert.ok(runner.outstanding(after, "write", false).length > 0, "a stopped queue wrote everything");
   });
 
-  // Selecting a cover provider writes it into inkos.json, and the schema that
+  // Selecting a cover provider writes it into quire.json, and the schema that
   // reads that file back used to name the three providers again by hand. A
   // fourth one therefore produced a config the workbench refused to load — it
   // would not start at all until the file was edited by hand. Cheap to check,

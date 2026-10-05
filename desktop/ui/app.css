@@ -18,14 +18,14 @@
 }
 :root {
   --bg:#E7DFD7; --panel:#FAF7F3; --panel-2:#DDD3C9;
-  --ink:#23201D; --muted:#665E57; --line:#D2C7BC;
+  --ink:#23201D; --muted:#635B55; --line:#D2C7BC;
   --accent:#DE5140; --accent-ink:#FFFFFF;
-  --ok:#4B7A4E; --warn:#8A6220;
+  --ok:#3E6541; --warn:#7A551E;
   /* The disc, as a gradient. Only the boot cover and the drawer use it, and
      only in one corner: this is the geometry, not a wash over everything. */
   --aurora:radial-gradient(30rem 30rem at 100% 0%, #DE5140 0%, transparent 58%);
   --shadow:0 1px 2px rgba(35,32,29,.07),0 10px 26px -12px rgba(35,32,29,.30);
-  --radius:12px; --radius-sm:8px; --gap:clamp(.6rem,1.6vw,1.1rem);
+  --radius:18px; --radius-sm:6px; --gap:clamp(.6rem,1.6vw,1.1rem);
   --pad:clamp(.85rem,2.4vw,1.5rem);
   --font:"Geist Variable","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
   --display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,ui-serif,serif;
@@ -34,13 +34,13 @@
   --fs-sm:clamp(.74rem,.25vw + .69rem,.83rem);
   --fs-lg:clamp(1.15rem,1.1vw + .9rem,1.6rem);
   --card-min:min(230px,100%);       /* the only "column" knob: grid auto-fits */
-  --speed:.18s;
+  --speed:150ms;
 }
 :root[data-theme="dark"], :root:not([data-theme="light"]) {
   @media (prefers-color-scheme: dark) {
   --bg:#181513; --panel:#221E1B; --panel-2:#2A2522;
-  --ink:#EFE8E1; --muted:#A79D95; --line:#332D29;
-  --accent:#EF6551; --accent-ink:#1A0B08;
+  --ink:#EFE8E1; --muted:#8D847D; --line:#332D29;
+  --accent:#EF6551; --accent-ink:#1A1614;
   --ok:#6FA872; --warn:#D2A055;
   --aurora:radial-gradient(30rem 30rem at 100% 0%, #EF6551 0%, transparent 58%);
   --shadow:0 1px 2px rgba(0,0,0,.55),0 10px 26px -12px rgba(0,0,0,.7);
@@ -48,8 +48,8 @@
 }
 :root[data-theme="dark"] {
   --bg:#181513; --panel:#221E1B; --panel-2:#2A2522;
-  --ink:#EFE8E1; --muted:#A79D95; --line:#332D29;
-  --accent:#EF6551; --accent-ink:#1A0B08;
+  --ink:#EFE8E1; --muted:#8D847D; --line:#332D29;
+  --accent:#EF6551; --accent-ink:#1A1614;
   --ok:#6FA872; --warn:#D2A055;
   --aurora:radial-gradient(30rem 30rem at 100% 0%, #EF6551 0%, transparent 58%);
   --shadow:0 1px 2px rgba(0,0,0,.55),0 10px 26px -12px rgba(0,0,0,.7);

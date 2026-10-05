@@ -1,0 +1,38 @@
+{
+  "id": "albedobase-xl",
+  "label": "albedoBase XL",
+  "note": "SDXL finetune. 6.5GB of weights, fits 8GB of VRAM at 1024x1536. Follows a named style far better than an eight-step turbo model, and takes any SDXL LoRA.",
+  "builtin": true,
+  "models": [
+    {
+      "slot": "ckpt",
+      "sub": "checkpoints",
+      "file": "albedobaseXL_v21.safetensors",
+      "url": "https://huggingface.co/frankjoshua/albedobaseXL_v21/resolve/main/albedobaseXL_v21.safetensors"
+    }
+  ],
+  "negative": "text, watermark, signature, logo, letters, words, caption, ugly, blurry, lowres, jpeg artifacts, deformed, extra limbs, stock photo",
+  "settings": {
+    "gpu": { "width": 1024, "height": 1536, "steps": 26 },
+    "lowvram": { "width": 832, "height": 1216, "steps": 22 },
+    "cpu": { "width": 768, "height": 1024, "steps": 18 }
+  },
+  "lora": {
+    "base": "sdxl",
+    "model": ["1", 0],
+    "clip": ["1", 1],
+    "into": { "model": [["5", "model"]], "clip": [["2", "clip"], ["3", "clip"]] }
+  },
+  "graph": {
+    "1": { "class_type": "CheckpointLoaderSimple", "inputs": { "ckpt_name": "{{model.ckpt}}" } },
+    "2": { "class_type": "CLIPTextEncode", "inputs": { "clip": ["1", 1], "text": "{{prompt}}" } },
+    "3": { "class_type": "CLIPTextEncode", "inputs": { "clip": ["1", 1], "text": "{{negative}}" } },
+    "4": { "class_type": "EmptyLatentImage", "inputs": { "width": "{{width}}", "height": "{{height}}", "batch_size": 1 } },
+    "5": { "class_type": "KSampler", "inputs": {
+      "model": ["1", 0], "positive": ["2", 0], "negative": ["3", 0], "latent_image": ["4", 0],
+      "seed": "{{seed}}", "steps": "{{steps}}", "cfg": 6, "sampler_name": "dpmpp_2m", "scheduler": "karras", "denoise": 1
+    } },
+    "6": { "class_type": "VAEDecode", "inputs": { "samples": ["5", 0], "vae": ["1", 2] } },
+    "7": { "class_type": "SaveImage", "inputs": { "images": ["6", 0], "filename_prefix": "{{prefix}}" } }
+  }
+}

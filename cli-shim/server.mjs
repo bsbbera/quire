@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 // OpenAI-compatible shim over agent CLIs (claude / codex / devin / antigravity).
 // Adapter shapes mirror Open Design's daemon runtime defs.
-// Point InkOS at: baseUrl=http://127.0.0.1:8787/v1  apiKey=local  model=<cli>/<model>
+// Point Quire at: baseUrl=http://127.0.0.1:8787/v1  apiKey=local  model=<cli>/<model>
 import * as events from "./events.mjs";
+import * as postprocess from "./postprocess.mjs";
 import { createServer } from "node:http";
 import { collectMeta, newMeta, usageBody } from "./usage.mjs";
 import { spawn, execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { join, dirname, extname } from "node:path";
+import { join, dirname, extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
 // The one tool channel. Its own file so it can be run directly for its
@@ -28,6 +29,7 @@ const STUDIO_URL = process.env.STUDIO_URL || `http://localhost:${process.env.STU
 // stack, not at 3am inside a request handler.
 const mcp = await import("./mcp.mjs");
 const comfy = await import("./comfy.mjs");
+const engines = await import("./engines.mjs");
 const affinity = await import("./affinity.mjs");
 const preflight = await import("./preflight.mjs");
 const comfyInstall = await import("./comfy-install.mjs");
@@ -47,7 +49,7 @@ const PUBLICATION_ROOT = join(WORKSPACE, "Magazine");
 // now a real provider there (claudeCli, devinCli, ...) and Studio's Model
 // Config is the one place a model gets picked.
 //
-// It used to live in ~/.inkos/.env, which Studio deliberately ignores — so a
+// It used to live in the global .env, which Studio deliberately ignores — so a
 // save reached the CLI but not the workbench, and a second call had to poke
 // Studio's import-env route to copy the value across. One selection, one
 // home, no copy step.
@@ -242,7 +244,7 @@ function acp(bin, args, handler) {
     child.on("error", (e) => { clearTimeout(timer); if (!done) { done = true; reject(e); } });
     child.on("close", () => { clearTimeout(timer); if (!done) { done = true; resolve([]); } });
     send(1, "initialize", { protocolVersion: 1, clientCapabilities: { terminal: false },
-      clientInfo: { name: "inkos-shim", version: "1" } });
+      clientInfo: { name: "quire-shim", version: "1" } });
   });
 }
 
@@ -254,7 +256,7 @@ function acp(bin, args, handler) {
  * harness.mjs for what that cost and why it is paid.
  *
  * MCP is still how Quire reaches those tools — but it reaches them itself, in
- * InkOS's tool table, and offers them to the model through the one channel.
+ * Quire's tool table, and offers them to the model through the one channel.
  */
 const agentServers = (agentId) => launchServers(agentId, () => mcp.servers());
 const acpServers = (agentId) => launchServersAcp(agentId, () => mcp.servers());
@@ -342,7 +344,11 @@ const AGENTS = [
       "claude-sonnet-4-6", "claude-opus-4-6-thinking", "gpt-oss-120b-medium"],
     // agy takes a literal "-" as the prompt and drops the pipe, so pass no
     // prompt flag at all: bare stdin. Flags must precede any positional arg.
-    args: (m) => [...(m && m !== "default" ? ["--model", m] : []), "--dangerously-skip-permissions"],
+    // agy gives up after 5 minutes by default and exits 0 with nothing. Its
+    // deadline sits a minute inside the shim's own idle limit instead, so a
+    // slow turn can finish and a stuck one is still reported by agy itself.
+    args: (m) => [...(m && m !== "default" ? ["--model", m] : []), "--dangerously-skip-permissions",
+      "--print-timeout", `${Math.max(1, Math.floor(RUN_IDLE_MS / 60_000) - 1)}m`],
     stream: "plain",
   },
 ];
@@ -795,8 +801,12 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
   stopBeat();
   if (run.aborted) return fail("cancelled", "the run was cancelled");
   if (run.timedOut) return fail("timeout", `no output for ${RUN_IDLE_MS}ms`);
-  if (exitCode !== 0 || cliError || spawnError) {
-    const detail = (err.trim() || got.trim() || "no output").slice(0, 1000);
+  // A clean exit is not a clean answer. agy exits 0 when its own deadline cuts
+  // a turn off, and the empty 200 reached the runner as "model returned no
+  // JSON": twice, five minutes each, and a 50-page fact-check was lost.
+  const cutOff = /print timeout after/i.test(err);
+  if (exitCode !== 0 || cliError || spawnError || cutOff || !got.trim()) {
+    const detail = (err.trim() || got.trim() || "the CLI exited cleanly with an empty reply").slice(0, 1000);
     return fail(classify({ exitCode, cliError, spawnError, stderr: err, stdout: got }), detail);
   }
   done();
@@ -973,7 +983,7 @@ createServer((req, res) => {
   }
   if (path === "/mcp/toggle" && req.method === "POST") {
     return handle(bodyOf().then((b) => {
-      const f = join(HOME, ".inkos", "mcp.json");
+      const f = join(HOME, ".quire", "mcp.json");
       const cfg = existsSync(f) ? JSON.parse(readFileSync(f, "utf8")) : {};
       // Two lists, not one: a server the source app ships disabled needs an
       // explicit opt-in, so clearing `disabled` alone would not switch it on.
@@ -1075,6 +1085,43 @@ createServer((req, res) => {
   if (path === "/comfy/start" && req.method === "POST") return handle(comfy.start());
   if (path === "/comfy/generate" && req.method === "POST") {
     return handle(bodyOf().then((b) => comfy.generate(b)));
+  }
+  // Every picture the pipeline asks for comes through here rather than
+  // /comfy/generate: the body is the same, plus what the brief needs, and the
+  // answer says which engine actually drew and why (23 §3, 09 §5).
+  if (path === "/image/render" && req.method === "POST") {
+    return handle(bodyOf().then((b) => engines.render(b)));
+  }
+  // Four numbers about a rendered page for the beauty pre-screen (13 §9).
+  // Read-only, PNG only.
+  if (path === "/image/inspect" && req.method === "POST") {
+    return handle(bodyOf().then(async (b) => {
+      const file = String(b?.file || "");
+      if (!/\.png$/i.test(file) || !existsSync(file)) throw new Error("a rendered PNG path is required");
+      return postprocess.inspect(file);
+    }));
+  }
+  if (path === "/image/engines" && req.method === "GET") return handle(Promise.resolve(engines.status()));
+  if (path === "/image/engines" && req.method === "POST") {
+    return handle(bodyOf().then((b) => ({ ok: true, prefs: engines.savePrefs(b) })));
+  }
+  // Re-treat a picture already on disk — the gallery's treatment switch —
+  // from its kept original, so treatments never stack (09 §1). Workspace only:
+  // this writes the file it is given.
+  if (path === "/image/post" && req.method === "POST") {
+    return handle(bodyOf().then((b) => {
+      const file = resolve(String(b.file || ""));
+      if (!b.file || !file.startsWith(resolve(workflows.WORKSPACE) + sep)) throw new Error("file must be a picture in the workspace");
+      return { ok: true, ...postprocess.apply(file, b.ops || [], { fresh: false }) };
+    }));
+  }
+  // The masks and paper tile a new Design Kit starts with (07 §1b).
+  if (path === "/image/kit" && req.method === "POST") {
+    return handle(bodyOf().then((b) => {
+      const dir = resolve(String(b.dir || ""));
+      if (!b.dir || !dir.startsWith(resolve(workflows.WORKSPACE) + sep)) throw new Error("dir must be a kit folder in the workspace");
+      return { ok: true, files: postprocess.drawKit(dir, { paper: b.paper }) };
+    }));
   }
   // Measured on this machine, not guessed from a spec sheet: one small render,
   // timed, and the device tier it implies written down as the locked default.

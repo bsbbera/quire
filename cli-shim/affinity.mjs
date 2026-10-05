@@ -192,6 +192,19 @@ function stageAssets(issue, issueDir, desktop) {
       staged[f] = win(join(dest, f));
     }
   }
+  // Each page's own picture — the one chosen in the gallery, else the first
+  // rendered — from where the art stage writes it. Only `_assets/` was ever
+  // staged and nothing writes there now, so a generated issue was built with
+  // every picture frame empty.
+  for (const p of issue.pages || []) {
+    const file = p.image || (p.images || []).find(Boolean);
+    if (!file || !/\.png$/i.test(file)) continue;
+    const from = existsSync(file) ? file : join(issueDir, file);
+    if (!existsSync(from)) continue;
+    const name = String(p.n).padStart(2, "0") + ".png";
+    copyFileSync(from, join(dest, name));
+    staged[name] = win(join(dest, name));
+  }
   return { dir: dest, staged };
 }
 
@@ -214,24 +227,67 @@ const CREATE = (pages) => `
   globalThis.TK_DOC = Document.createFromOptions(_o);`;
 
 /**
+ * The Map's data, from the issue's web and its flatplan (13 rev. A).
+ *
+ * Each ring of the web with the pages that look through it, and every pair of
+ * rings a page's bridge ties together. Drawn by tk.js `webMap`; computed here
+ * because the layout script has no way to read the issue but what it is handed.
+ */
+export function mapData(issue) {
+  const pages = issue.pages || [];
+  const key = (s) => String(s || "").trim().toLowerCase();
+  const names = issue.web?.rings?.length
+    ? issue.web.rings
+    : [...new Set(pages.map((p) => p.ring).filter(Boolean))];
+  const index = new Map(names.map((name, i) => [key(name), i]));
+  const rings = names.map((name) => ({
+    name,
+    pages: pages.filter((p) => key(p.ring) === key(name) && p.type !== "map").map((p) => p.n),
+  }));
+  const ringOf = new Map(pages.map((p) => [p.n, index.get(key(p.ring))]));
+  const seen = new Set();
+  const pairs = [];
+  for (const p of pages) {
+    for (const l of p.links || []) {
+      const a = ringOf.get(p.n), b = ringOf.get(l.to);
+      if (a === undefined || b === undefined || a === b) continue;
+      const pair = a < b ? [a, b] : [b, a];
+      if (!seen.has(pair.join("-"))) { seen.add(pair.join("-")); pairs.push(pair); }
+    }
+  }
+  return {
+    centre: issue.web?.centre || issue.title || issue.subject || "",
+    rings,
+    pairs,
+    accent: issue.design?.spec?.palette?.accent || issue.web?.accent?.hex || null,
+  };
+}
+
+/** The page a page is tied to, for the note beside its folio. */
+const linkOf = (p) => (p.links || []).map((l) => Number(l.to)).find((n) => n && n !== p.n) || null;
+
+/**
  * The layout, as one script. Runs after tk.js has defined globalThis.TK.
  *
  * Archetypes come from EDITORIAL-METHOD section 4: having them is the whole
  * point, because "big picture + big word" on every spread is the exact failure
  * the method was written to fix.
  */
-function layoutScript(issue, staged) {
+export function layoutScript(issue, staged) {
   const pages = issue.pages.map((p) => ({
     n: p.n, type: p.type, density: p.density, section: p.section,
     title: p.title || "", deck: p.deck || "", body: p.body || "",
     pull: p.pullQuote || "", furniture: (p.furniture || []).slice(0, 4),
     image: staged[String(p.n).padStart(2, "0") + ".png"] || null,
+    treatment: (p.briefs && p.briefs[0] && p.briefs[0].treatment) || null,
+    link: linkOf(p),
   }));
 
   return `(function () {
   const T = globalThis.TK;
   if (!T) throw new Error("toolkit not loaded");
   const PAGES = ${JSON.stringify(pages)};
+  const MAP = ${JSON.stringify(mapData(issue))};
   const TITLE = ${JSON.stringify(issue.title || issue.subject)};
   const C = T.C, F = T.F, FACE = T.FACE;
   const log = [];
@@ -260,10 +316,29 @@ function layoutScript(issue, staged) {
     T.text(p.n, L.recto ? L.x1 - 20 : L.x0, 277, 20, 6,
       [{ t: String(p.n), fam: F.sans, size: 8, color: T.tint(p.n) }],
       { tag: "mag", align: L.recto ? "Right" : "Left" });
+    // The page it is tied to, in the accent: the brand's connection line.
+    if (p.link) T.linkNote(p.n, p.link, { tag: "mag" });
   }
 
   PAGES.forEach(function (p) {
     var L = T.live(p.n);
+
+    // The Map: the whole web on a spread, drawn once from its left-hand page.
+    if (p.type === "map") {
+      var prev = PAGES.find(function (q) { return q.n === p.n - 1; });
+      var next = PAGES.find(function (q) { return q.n === p.n + 1; });
+      if (p.n % 2 === 1 && prev && prev.type === "map") { folio(p); return; }
+      var spread = p.n % 2 === 0 && next && next.type === "map";
+      T.rect(p.n, 0, 0, spread ? 420 : 210, 297, { tag: "mag", fill: C.bone });
+      if (p.title) T.text(p.n, L.x0, T.bl(0), T.gw(4), 20,
+        [{ t: p.title, fam: F.disp, face: FACE.dispReg, size: 26, color: C.ink }], { tag: "mag", lead: 28 });
+      if (p.deck) T.text(p.n, L.x0, T.bl(0) + 22, T.gw(4), 15,
+        [{ t: p.deck, fam: F.cond, size: 12, color: C.inkSoft }], { tag: "mag", lead: 15 });
+      pour(p.n, L.x0, T.bl(0) + 40, T.gw(3), 30, String(p.body).split(/\\s+/).filter(Boolean));
+      T.webMap(p.n, MAP, { tag: "mag", spread: !!spread });
+      folio(p);
+      return;
+    }
 
     if (p.type === "cover" || p.type === "plate" || p.type === "photo-spread") {
       if (p.image) T.img(p.n, 0, 0, 210, 297, p.image, { tag: "mag", cover: true });
@@ -305,25 +380,31 @@ function layoutScript(issue, staged) {
     // four of the C pages in this issue.
     var IMG_H = p.density === "C" ? 58 : 92;
     var top = T.bl(0);
-    if (p.image) {
+    // Cutout: outer edge, stepped columns (see the per-page builder).
+    var cut = p.image && p.treatment === "cutout"
+      ? T.cutout(p.n, top, T.gw(2), IMG_H + 24, p.image, { tag: "mag" }) : null;
+    var headX = cut && !L.recto ? L.x0 + T.gw(2) + T.GUT : L.x0;
+    if (p.image && !cut) {
       T.img(p.n, L.x0, top, T.gw(6), IMG_H, p.image, { tag: "mag", contain: true });
       top += IMG_H + 8;
     }
     if (p.title) {
-      T.text(p.n, L.x0, top, T.gw(4), 20,
+      T.text(p.n, headX, top, T.gw(4), 20,
         [{ t: p.title, fam: F.disp, face: FACE.dispReg, size: 26, color: C.ink }],
         { tag: "mag", lead: 28 });
       top += 22;
     }
     if (p.deck) {
-      T.text(p.n, L.x0, top, T.gw(5), 15,
+      T.text(p.n, headX, top, cut ? T.gw(4) : T.gw(5), 15,
         [{ t: p.deck, fam: F.cond, size: 12, color: C.inkSoft }], { tag: "mag", lead: 15 });
       top += 18;
     }
 
-    var colW = T.gw(3), h = 266 - top;
-    var rest = pour(p.n, L.x0, top, colW, h, String(p.body).split(/\\s+/).filter(Boolean));
-    rest = pour(p.n, L.x0 + colW + T.GUT, top, colW, h, rest);
+    var colW = T.gw(3);
+    var below = cut ? Math.max(top, cut.y + cut.h + 6) : top;
+    var leftTop = cut && !L.recto ? below : top, rightTop = cut && L.recto ? below : top;
+    var rest = pour(p.n, L.x0, leftTop, colW, 266 - leftTop, String(p.body).split(/\\s+/).filter(Boolean));
+    rest = pour(p.n, L.x0 + colW + T.GUT, rightTop, colW, 266 - rightTop, rest);
     if (rest.length) log.push("p" + p.n + ": " + rest.length + " words overset");
 
     folio(p);
@@ -539,18 +620,26 @@ export async function buildPage(issue, page) {
 
 /** One page's layout. The shared helpers are restated because each script is
  *  a fresh context — there is nowhere to keep them between calls. */
-function onePageScript(issue, page, world, staged) {
+export function onePageScript(issue, page, world, staged) {
   const p = {
     n: page.n, type: page.type, density: page.density, section: page.section,
     title: page.title || "", deck: page.deck || "", body: page.body || "",
     pull: page.pullQuote || "", furniture: (page.furniture || []).slice(0, 4),
     image: staged[String(page.n).padStart(2, "0") + ".png"] || null,
+    treatment: (page.briefs && page.briefs[0] && page.briefs[0].treatment) || null,
+    link: linkOf(page),
+    // Whether this map page is the left half of a two-page map.
+    spread: page.type === "map" && page.n % 2 === 0
+      && (issue.pages || []).some((q) => q.n === page.n + 1 && q.type === "map"),
+    mapRight: page.type === "map" && page.n % 2 === 1
+      && (issue.pages || []).some((q) => q.n === page.n - 1 && q.type === "map"),
   };
 
   return `(function () {
   const T = globalThis.TK;
   if (!T) throw new Error("toolkit not loaded");
   const P = ${JSON.stringify(p)};
+  const MAP = ${JSON.stringify(mapData(issue))};
   const W = ${JSON.stringify(world)};
   const TITLE = ${JSON.stringify(issue.title || issue.subject)};
   const C = T.C, F = T.F, FACE = T.FACE;
@@ -589,11 +678,25 @@ function onePageScript(issue, page, world, staged) {
     T.text(P.n, L.recto ? L.x1 - 20 : L.x0, 277, 20, 6,
       [{ t: String(P.n), fam: F.sans, size: 8, color: FIELD }],
       { tag: TAG, align: L.recto ? "Right" : "Left" });
+    // The page it is tied to, in the accent: the brand's connection line.
+    if (P.link) T.linkNote(P.n, P.link, { tag: TAG });
   }
 
   var L = T.live(P.n);
 
-  if (P.type === "cover" || P.type === "plate" || P.type === "photo-spread") {
+  if (P.type === "map") {
+    // The right half of a two-page map is drawn with its left; it keeps its folio.
+    if (!P.mapRight) {
+      T.rect(P.n, 0, 0, P.spread ? 420 : 210, 297, { tag: TAG, fill: PAPER });
+      if (P.title) T.text(P.n, L.x0, T.bl(0), T.gw(4), 20,
+        [{ t: P.title, fam: F.disp, face: FACE.dispReg, size: 26, color: INK }], { tag: TAG, lead: 28 });
+      if (P.deck) T.text(P.n, L.x0, T.bl(0) + 22, T.gw(4), 15,
+        [{ t: P.deck, fam: F.cond, size: 12, color: INK }], { tag: TAG, lead: 15 });
+      pour(L.x0, T.bl(0) + 40, T.gw(3), 30, String(P.body).split(/\\s+/).filter(Boolean));
+      T.webMap(P.n, MAP, { tag: TAG, spread: P.spread });
+    }
+    folio();
+  } else if (P.type === "cover" || P.type === "plate" || P.type === "photo-spread") {
     if (P.image) T.img(P.n, 0, 0, 210, 297, P.image, { tag: TAG, cover: true });
     else T.rect(P.n, 0, 0, 210, 297, { tag: TAG, fill: FIELD });
     if (P.type === "cover") {
@@ -619,24 +722,34 @@ function onePageScript(issue, page, world, staged) {
     // A content-heavy page earns a smaller picture, or the body oversets.
     var IMG_H = P.density === "C" ? 58 : 92;
     var top = T.bl(0);
-    if (P.image) {
+    // A cutout sits on the outer edge beside the type, not in a band above it
+    // (08 §5). The script API cannot create a text wrap, so the wrap is
+    // stepped: the outer column starts below the cutout, the inner at the head.
+    var cut = P.image && P.treatment === "cutout"
+      ? T.cutout(P.n, top, T.gw(2), IMG_H + 24, P.image, { tag: TAG }) : null;
+    var headX = cut && !L.recto ? L.x0 + T.gw(2) + T.GUT : L.x0;
+    if (P.image && !cut) {
       T.img(P.n, L.x0, top, T.gw(6), IMG_H, P.image, { tag: TAG, contain: true });
       top += IMG_H + 8;
     }
     if (P.title) {
-      T.text(P.n, L.x0, top, T.gw(4), 20,
+      T.text(P.n, headX, top, T.gw(4), 20,
         [{ t: P.title, fam: F.disp, face: FACE.dispReg, size: 26, color: INK }],
         { tag: TAG, lead: 28 });
       top += 22;
     }
     if (P.deck) {
-      T.text(P.n, L.x0, top, T.gw(5), 15,
+      T.text(P.n, headX, top, cut ? T.gw(4) : T.gw(5), 15,
         [{ t: P.deck, fam: F.cond, size: 12, color: INK }], { tag: TAG, lead: 15 });
       top += 18;
     }
-    var colW = T.gw(3), h = 266 - top;
-    var rest = pour(L.x0, top, colW, h, String(P.body).split(/\s+/).filter(Boolean));
-    rest = pour(L.x0 + colW + T.GUT, top, colW, h, rest);
+    var colW = T.gw(3);
+    var below = cut ? Math.max(top, cut.y + cut.h + 6) : top;
+    var leftTop = cut && !L.recto ? below : top, rightTop = cut && L.recto ? below : top;
+    // Backslash doubled: this is a template string, and a single one reached
+    // Affinity as /s+/ — the body was being split on the letter s.
+    var rest = pour(L.x0, leftTop, colW, 266 - leftTop, String(P.body).split(/\\s+/).filter(Boolean));
+    rest = pour(L.x0 + colW + T.GUT, rightTop, colW, 266 - rightTop, rest);
     if (rest.length) log.push(rest.length + " words overset");
     folio();
   }
