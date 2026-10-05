@@ -391,6 +391,8 @@ const fingerprint = (agents) => agents
   .sort().join("|");
 
 let modelCache = { at: 0, key: null, data: null, ttl: 0 };
+/** Sign-in answers per CLI binary, for a minute (see GET /agents). */
+const authCache = new Map();
 const MODELS_TTL = 300000;
 // A fallback is a guess, and a guess must not sit in the cache for as long as
 // an answer. Devin's catalogue arrives over an ACP session that can be slow or
@@ -918,6 +920,16 @@ createServer((req, res) => {
   // fact; permission is the user's, so the two are reported separately and
   // only the second is writable.
   if (path === "/agents" && req.method === "GET") {
+    // Asking a CLI whether it is signed in runs it synchronously, up to 12s
+    // each, and the shim answers nothing else meanwhile. Kept for a minute so a
+    // page that asks often cannot stall every other request behind it.
+    const authed = (a) => {
+      const hit = authCache.get(a.bin);
+      if (hit && Date.now() - hit.at < 60000) return hit.value;
+      const value = a.auth ? a.auth(a.bin) : null;
+      authCache.set(a.bin, { at: Date.now(), value });
+      return value;
+    };
     return handle(Promise.resolve().then(() => ({
       agents: detect().map((a) => ({
         id: a.id,
@@ -926,7 +938,7 @@ createServer((req, res) => {
         version: a.version,
         // null where the CLI offers no way to ask — reported as unknown
         // rather than guessed at.
-        authed: a.auth ? a.auth(a.bin) : null,
+        authed: authed(a),
         enabled: agentState.isEnabled(a.id),
         // What to offer if the live probe fails. Deliberately aliases the CLI
         // keeps stable across releases — "opus", "sonnet", "adaptive" — never

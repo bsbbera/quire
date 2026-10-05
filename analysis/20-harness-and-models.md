@@ -44,6 +44,18 @@ Rules:
    catalogue lists a short default set plus "Custom". The files can stay behind pi.
 6. The old Services page is folded into Connections and its route removed.
 
+**Status 2026-10-05 — built (dev):** `core/providers.json` (+ `~/.quire/providers.json`);
+Settings → Connections with API · CLI · Local tabs, Test connection, models found,
+last tested, custom URL; one "connected" = a passed test (`studio/src/api/connections.ts`),
+stored in `~/.quire/connections.json`, re-tested in the background, a stopped
+connection greyed with its reason in the model pickers; keys moved to
+`~/.quire/secrets.json`; `#/services` pages removed (links land on Connections).
+Checked over the HTTP API: wrong key → error, nothing saved, no models; right key →
+models in the picker, key only in `~/.quire`; Ollama stopped → row kept with reason
+and `lastOk`, out of the picker; no key at all → the four CLIs connected on a fresh
+launch. **Not done:** the shim still keeps its own CLI list in code (it does not
+read `providers.json`); §5 needs-based routing.
+
 **Build order** (replaces §6 rows 1 and 4; rows 2, 3, 5–8 unchanged):
 1. `providers.json` with `kind`, read by shim + engine + Setup.
 2. Connections screen (three tabs) built from the Services page's test logic, in the

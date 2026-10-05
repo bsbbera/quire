@@ -157,7 +157,9 @@ cpSync(coreDist, join(coreOut, "dist"), { recursive: true });
 // Copying only dist left the skills API returning 500 on every request:
 // ENOENT stat .../quire-core/skills. The same omission left the audit catalogue
 // and every per-type pack empty in a built app while passing every test.
-for (const data of ["skills", "genres", "publications", "audit-packs"]) {
+// Read from core's own "files" list rather than repeated here: a hand-kept copy
+// is how providers.json was built, tested and then not shipped.
+for (const data of corePkg.files.filter((f) => !f.includes("dist"))) {
   cpSync(join(SRC, "packages", "core", data), join(coreOut, data), { recursive: true });
 }
 writeFileSync(join(coreOut, "package.json"), JSON.stringify({

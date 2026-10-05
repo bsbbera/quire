@@ -11,6 +11,7 @@
 // that error correctly is what makes the fallback in engines.mjs honest —
 // everything else about Canva is optional, this part is not.
 import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { WORKSPACE } from "./workflows.mjs";
 
@@ -27,12 +28,16 @@ const API_URL = process.env.CANVA_API_URL || "https://api.canva.com/rest/v1";
  */
 export function token() {
   if (process.env.CANVA_TOKEN) return process.env.CANVA_TOKEN.trim();
-  const file = join(WORKSPACE, ".quire", "secrets.json");
-  if (!existsSync(file)) return "";
-  try {
-    const all = JSON.parse(readFileSync(file, "utf8"));
-    return String(all?.services?.canva?.apiKey || "").trim();
-  } catch { return ""; }
+  // Keys live on the machine now (~/.quire); a workspace that has not been
+  // opened by the new Studio yet still holds them in its own .quire.
+  for (const file of [join(homedir(), ".quire", "secrets.json"), join(WORKSPACE, ".quire", "secrets.json")]) {
+    if (!existsSync(file)) continue;
+    try {
+      const key = String(JSON.parse(readFileSync(file, "utf8"))?.services?.canva?.apiKey || "").trim();
+      if (key) return key;
+    } catch { /* unreadable: try the next */ }
+  }
+  return "";
 }
 
 export const connected = () => Boolean(token());

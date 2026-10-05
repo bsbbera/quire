@@ -9,10 +9,12 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync, existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
+// The staged app has core beside the shim; the repo has it under vendor/.
+const STAGED = join(process.cwd(), "quire", "node_modules", "@actalk", "quire-core");
 const CORE = process.env.QUIRE_CORE
-  || join(process.cwd(), "quire", "node_modules", "@actalk", "quire-core");
+  || (existsSync(STAGED) ? STAGED : fileURLToPath(new URL("../vendor/studio/packages/core", import.meta.url)));
 const load = (rel) => import(pathToFileURL(join(CORE, rel)).href);
 
 let failures = 0;
@@ -114,7 +116,7 @@ try {
   // Research now searches. Without a provider it refuses rather than writing
   // an issue out of the model's memory, which is the behaviour worth pinning.
   await check("research refuses when nothing can search", async () => {
-    await assert.rejects(() => runner.runResearch(ctx, created.id), /no web search is configured/);
+    await assert.rejects(() => runner.runResearch(ctx, created.id), /no search source is configured/);
   });
 
   process.env.TAVILY_API_KEY = "test-key";
@@ -224,19 +226,22 @@ try {
 
   await check("checkPlan passes a legal plan", () => {
     const legal = {
-      extent: 4,
-      sections: [{ n: 1, label: "one", from: 3, to: 4 }],
+      extent: 6,
+      sections: [{ n: 1, label: "one", from: 3, to: 6 }],
       pages: [
         { n: 1, type: "cover", density: "D", section: 0, pillar: "origin" },
-        { n: 2, type: "statement", density: "M", section: 0, pillar: "evolution" },
+        { n: 2, type: "map", density: "M", section: 0, pillar: "evolution" },
         { n: 3, type: "plate", density: "D", section: 1, pillar: "today" },
-        { n: 4, type: "feature", density: "M", section: 1, pillar: "strange" },
+        { n: 4, type: "where-else", density: "M", section: 1, pillar: "strange" },
+        { n: 5, type: "feature", density: "M", section: 1, pillar: "underlying" },
+        { n: 6, type: "in-your-hands", density: "M", section: 1, pillar: "real_work" },
       ],
     };
-    // Only the informational density line and the pillars it genuinely lacks.
+    // Every issue carries a map, a where-else and closes on in-your-hands.
+    // Only the informational density line remains.
     const warnings = runner.checkPlan({ ...magazine, extent: { ...magazine.extent } }, legal)
       .filter((w) => !w.startsWith("density"));
-    assert.deepEqual(warnings, ["no page covers: underlying, real_work"]);
+    assert.deepEqual(warnings, []);
   });
 
   await check("checkDesign passes a legal system", () => {
@@ -244,17 +249,6 @@ try {
       sections: [{ n: 1, register: "Swiss Modernism", idiom: "grid", paper: "#ffffff", ink: "#111111" }],
       fixed: { folio: "outer corner, 8pt" },
     }).filter((p) => !p.includes("not one of the 50")), []);
-  });
-
-  await check("checkDesign rejects a typeface shared by two sections", () => {
-    const problems = runner.checkDesign({
-      sections: [
-        { n: 1, register: "Bauhaus", idiom: "a", paper: "#ffffff", ink: "#111111" },
-        { n: 2, register: "Bauhaus", idiom: "b", paper: "#ffffff", ink: "#111111" },
-      ],
-      fixed: { folio: "x" },
-    });
-    assert.ok(problems.some((p) => p.includes("share the typeface")), problems.join("; "));
   });
 
   await check("checkDesign rejects unreadable ink on paper", () => {

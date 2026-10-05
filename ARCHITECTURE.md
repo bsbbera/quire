@@ -27,10 +27,11 @@ Under Git Bash a leading `/` is rewritten to a Windows path — prefix with
 ## Names
 
 Quire's own names only: `<workspace>/.quire/` for app state (sessions,
-tasks, secrets, the search index), `<workspace>/quire.json` for config,
+tasks, the search index), `<workspace>/quire.json` for config,
 `<workspace>/research/` for gathered pages, `~/.quire/` for machine
-settings (`.env`, `mcp.json`, the workspace pointer), `QUIRE_*` for
-environment settings, `quire` for the CLI.
+settings (`.env`, `mcp.json`, the workspace pointer, API keys in
+`secrets.json`, connection results in `connections.json`, extra providers in
+`providers.json`), `QUIRE_*` for environment settings, `quire` for the CLI.
 
 The InkOS names (`.inkos/`, `inkos.json`, `INKOS_*`) survive in two
 places and nowhere else:
@@ -84,6 +85,34 @@ One place: `<workspace>/quire.json`, key `llm.model` / `llm.service`.
 Machine-level, **not** workspace-level, so changing folders never changes it:
 - which CLIs are allowed — `~/.quire/agents.json`, via `cli-shim/agents.mjs`
 - which models exist — probed live per CLI in `cli-shim/server.mjs`
+- API keys — `~/.quire/secrets.json` (`core/src/llm/secrets.ts`). A workspace's
+  old `.quire/secrets.json` is moved there on first load. Under vitest the store
+  stays in the test's temp root, so tests never touch the real home.
+
+## Connections: what "connected" means
+
+One rule, in `studio/src/api/connections.ts` + `serviceAvailability()` in
+`studio/src/api/server.ts`: a connection is connected when a test made a real
+call and the provider listed at least one model. The result is stored with its
+time in `~/.quire/connections.json` (pass trusted 5 min, failure 1 min, then
+re-tested in the background). Only connected providers reach the model list
+(`/api/v1/services/models`), the routing snapshot, or a run.
+
+- What is offered: `core/providers.json` (kinds `api | cli | local`, ids name
+  endpoints in `core/src/llm/providers`), plus `~/.quire/providers.json` over it,
+  plus any provider holding a key, plus custom services from `quire.json`
+  (a custom URL on loopback counts as local).
+- How each kind is tested: API — `probeServiceCapabilities` with the key; CLI —
+  shim `/agents` (installed, enabled, not signed out) then its `/<cli>/v1/models`;
+  local — its `/v1/models`. Never-tested rows are tested on the first list; CLIs
+  one at a time.
+- `POST /api/v1/connections/:id/test {apiKey?}` keeps a key only if it passes.
+- A failure after a pass keeps `lastOk`; `stoppedAnswering()` shows those greyed
+  with the reason in `ModelCombo`. Never-set-up ones are not shown there.
+- The screen: Settings → Connections (`pages/Connections.tsx`). `#/services`
+  and `#/services/<id>` land there; the old Services pages are gone.
+- The shim's `/agents` runs each CLI's sign-in check synchronously and blocks
+  the shim; it caches answers for 60 s, and Studio shares one ask per minute.
 
 ## The model catalogue
 
@@ -729,6 +758,24 @@ colours. The style guide (`#/styleguide`) renders all of it.
 
 Don't name a component class after a Tailwind utility: utilities win the
 cascade. The progress ring is `.arc` for that reason, since `ring` is Tailwind's.
+
+Names on screen are what a person says, never what the disk or the API calls
+them. Three helpers own that, and a screen showing a slug or a raw id is a bug:
+
+- `lib/title-of.ts` — a creation's folder slug as its title
+  (`the-lamp-room` → "The Lamp Room"); the slug stays in the tooltip.
+- `lib/model-name.ts` — a model as "Gemini 3.8 Flash High · Antigravity"
+  rather than `antigravityCli · antigravity/gemini-3.8-flash-high` (top bar,
+  Chat, Settings → Agents); the raw pair stays in the tooltip.
+- `lib/manuscript-md.ts` — the Audit reader draws a manuscript's markdown
+  (headings, quotes, rules, emphasis, and the pipeline's `*visual brief*`
+  notes as quiet notes) by hiding the syntax as runs. The text is never
+  rewritten, so finding offsets still point into the raw file and paragraph
+  numbers still match the reader map. Edit mode shows the raw markdown.
+
+The disc ornaments (`.disc`, the geometry layer) appear only on the Start page
+and the style guide. Scattered across every panel, each one slightly
+different, they read as decoration rather than identity.
 
 ## Sessions
 
