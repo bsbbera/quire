@@ -1,5 +1,88 @@
 # 17 — Skills & Tools: Localization Fix + Upgrade Plan
 
+## Status (2026-09-11) — §1.1, §2, §3 built; §1.2 deliberately partial
+
+**Built and verified live over HTTP on the dev build.**
+
+- **§1.1 frontmatter.** All 15 skills that carried a Chinese `description:` now
+  carry an English one derived from their own body, plus `version: 1.0.0`.
+  Descriptions are double-quoted because several contain `": "`, which YAML
+  would otherwise read as a nested mapping. The `inkos-*` mirrors named in the
+  old plan no longer exist, so the dedupe step was already done.
+- **§1.1 lint** is `core/src/__tests__/skills-lint.test.ts`, not a standalone
+  script: it runs in the suite that already runs, checks frontmatter parses
+  through the real loader, that `name` matches its folder, that a `version` is
+  present, and that no description contains Han. It also asserts the catalogue
+  is non-empty, because a loader pointed at the wrong folder passes every other
+  check on nothing.
+- **§2 upgrades.** `quire-story-review` and `quire-story-deslop` gained the
+  **real** output contract — the one `parseStoryFindings` actually parses
+  (`dimension`/`severity`/`title`/`quote`/`fix`/`description`/`suggestion`), not
+  the `{para,span,issue,rewrite}` shape this plan guessed at before the audit
+  screen existed. deslop also gained the humanizer list, split into what the
+  deterministic pass already catches (so it stops re-reporting it) and what only
+  a reader can see. `quire-long-writing` and `quire-short-writing` gained the
+  style-block section (`# Style Guide` wins over genre defaults; the fingerprint
+  is a range, not a quota) and long-writing gained the scene-ledger stub.
+  `references/` already existed for every skill.
+- **§2 #5 `quire-magazine-page`** — new, written against the built checker:
+  the five audience bars from `magazine-bar.ts` verbatim, the furniture kinds
+  the code recognizes, and the page-bundle contract as `PublicationPage`
+  actually declares it.
+- **New `quire-research-setting`** (22) — written against `setting.ts`'s fixed
+  `BIBLE_SECTIONS` and `setting-research.ts`'s lexicon shape.
+- **§3 user skills.** The loader, the override precedence, `GET /api/v1/skills`,
+  create/update/import/delete were already there. **`GET /api/v1/skills/:id` was
+  not** — the list route carries every body, so asking about one skill cost a
+  megabyte. Added. Override proved live: a skill dropped into
+  `<workspace>/skills/` replaced the builtin of the same id and reverted when
+  removed.
+- **Role folders.** New books get `roles/major` and `roles/minor`. A book that
+  already has `主要角色`/`次要角色` keeps them — `roleDirFor()` resolves per
+  tier, so nothing on disk moves and no book grows a second empty folder. Every
+  write site now goes through it (`architect.ts`, `state/manager.ts`,
+  `pipeline/runner.ts`), the character-matrix shim names the folder the book
+  actually has, and `design-desk.ts` — which read only the Chinese name and so
+  cast half the library as unknown — reads both.
+
+**One thing found that was not in the plan, and is worth knowing.**
+`magazine.json` pointed `voiceSkill` at `mag-content`, your own skill. Quire
+*does* load it (75 skills come back from the live API, most of them yours), so
+repointing that field at the new builtin would have quietly swapped the voice of
+every magazine you have already made. Instead `voiceSkill` now takes a
+**preference order** — `["mag-content", "quire-magazine-page"]` — and the first
+one actually installed wins. Verified against the built engine: your machine
+picks `mag-content`; a machine without it picks the builtin; a machine with
+neither falls back to the definition's own voice with a diagnostic. `voiceClaims`
+claims **every** candidate, not just the winner, so the "don't hand-write a
+magazine, call `publication_create`" door stays shut on both.
+
+**Not done, and why.** §1.2's prompt extraction — 166 non-test files in
+`core/src` contain Han, led by `architect.ts` (258 matches), `runner.ts` (149)
+and `continuity.ts` (139). Nearly all of it is the **zh half of a parallel zh/en
+prompt**, which this plan's own §Status calls language support rather than
+leakage. Extracting all of it to `prompts/<agent>.<lang>.md` is a multi-week
+refactor of a working pipeline for no user-visible gain. What *did* leak into an
+English user's world — the role folder names, and one English architect prompt
+that pointed at `roles/主要角色/<protagonist>.md` — is fixed. §4 (tool envelope)
+belongs to 20 and is excluded.
+
+Core 2436 pass / 2 fail (both pre-existing and unrelated: config-loader localhost
+auth, model-card override). Studio 823/823. Typecheck clean.
+
+## Status (2026-09-07)
+
+Skill **bodies** are English. CJK remains in the `description:` frontmatter of all 15
+`packages/core/skills/quire-*/SKILL.md` (e.g. `quire-long-writing/SKILL.md:3`) — one
+line per file, and it is the line that reaches the model in the skill catalogue. No
+`check-skills` lint. Tool registry: not unified (shim `mcp.mjs`/`tool-calls.mjs` vs
+engine `agent-tools.ts`/`mcp-tools.ts`) — now folded into **20 §5** (tool scopes per
+stage on the engine list; shim MCP paths retired with the CLI transports). The Architect
+and Auditor prompts still carry parallel zh/en bodies (`architect.ts`, `continuity.ts`)
+— keep, that is language support, not leakage. New skills needed by other plans:
+`quire-research-setting` (22), `quire-art-direction` (08), a publication skill (the
+gap ARCHITECTURE.md names).
+
 > Verified state (2026-08-30): SOURCE lives at
 > `Quire-Dev/vendor/studio/packages/core/skills/` (15 skill dirs, 31 files) and the
 > engine ALREADY has a skill system at `core/src/skills/` — `registry.ts`,
@@ -83,8 +166,25 @@ Priority upgrades (highest impact first):
 5. **NEW `quire-magazine-page`** — the page-bundle authoring method from 13 (content
    + spec + art briefs in one turn); the publication definition's `voiceSkill`
    mechanism already supports pointing at it (types.d.ts §prompts.voiceSkill).
-6. **NEW `quire-design-layout`** — the golden rules + break catalogue from 06, as the
-   spec-authoring skill.
+6. **NEW `quire-editorial-design`** (replaces the planned `quire-design-layout`) —
+   draft is `analysis/design-skill.md` v2.1: a **portable, math-first** layout skill
+   (margins, 12-col grid, baseline `u`, modular scale, spacing, colour selection in
+   OKLCH + 60/30/10 + contrast arithmetic, coloured boxes and rules, image-frame
+   snapping, archetypes/pacing, a 7-entry break catalogue, and a per-type mapping
+   table for book/short/storybook/storyboard/script/magazine/cover). Bound to
+   `design.system` + `design.review` for page-shaped types and `build.layout` for
+   reflow types. It owns *where*; it never writes an art brief.
+6b. **NEW `quire-illustration`** — draft is `analysis/illustration-skill.md`: sensing
+   subjects from approved text, surface/technique, engine-agnostic brief, a distinct
+   process per type (magazine per-section prompts; storybook cutout rhythm; book
+   restraint; storyboard; cover), post-processing per treatment, cast sheet, reuse,
+   review checklist. Bound to `design.artplan` (ArtDirector) + `design.review`.
+   The two skills exchange `slot` → `asset` (design-skill §11); neither calls the
+   engine directly. `quire-story-cover` (#4) folds into `quire-illustration` §5.5.
+7. **`quire-magazine-page`** (#5) absorbs the writing bar from 13 §4b (five-year-old
+   clarity, example over definition, did-you-know per spread, no subject labels,
+   3-beat section spine) as its DO/DON'T checklist; the checks live in the
+   `magazine-readability` audit pack (19).
 
 ## 3. User skills + skill loading (extend what exists)
 

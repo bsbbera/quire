@@ -1,0 +1,38 @@
+{
+  "id": "flux-schnell",
+  "label": "FLUX.1 schnell (LoRA-capable)",
+  "note": "Apache-2.0 base with a large LoRA ecosystem, for techniques Z-Image cannot draw on its own. Four steps; ~17GB checkpoint, wants 12GB+ of VRAM.",
+  "builtin": true,
+  "licence": "Apache-2.0",
+  "models": [
+    {
+      "slot": "ckpt",
+      "sub": "checkpoints",
+      "file": "flux1-schnell-fp8.safetensors",
+      "url": "https://huggingface.co/Comfy-Org/flux1-schnell/resolve/main/flux1-schnell-fp8.safetensors"
+    }
+  ],
+  "negative": "text, watermark, signature, logo, letters, words, caption, blurry, lowres, deformed",
+  "settings": {
+    "gpu": { "width": 1344, "height": 896, "steps": 4 },
+    "lowvram": { "width": 1024, "height": 704, "steps": 4 }
+  },
+  "lora": {
+    "base": "flux-schnell",
+    "model": ["1", 0],
+    "clip": ["1", 1],
+    "into": { "model": [["6", "model"]], "clip": [["2", "clip"], ["3", "clip"]] }
+  },
+  "graph": {
+    "1": { "class_type": "CheckpointLoaderSimple", "inputs": { "ckpt_name": "{{model.ckpt}}" } },
+    "2": { "class_type": "CLIPTextEncode", "inputs": { "clip": ["1", 1], "text": "{{prompt}}" } },
+    "3": { "class_type": "CLIPTextEncode", "inputs": { "clip": ["1", 1], "text": "{{negative}}" } },
+    "5": { "class_type": "EmptySD3LatentImage", "inputs": { "width": "{{width}}", "height": "{{height}}", "batch_size": 1 } },
+    "6": { "class_type": "KSampler", "inputs": {
+      "model": ["1", 0], "positive": ["2", 0], "negative": ["3", 0], "latent_image": ["5", 0],
+      "seed": "{{seed}}", "steps": "{{steps}}", "cfg": 1, "sampler_name": "euler", "scheduler": "simple", "denoise": 1
+    } },
+    "7": { "class_type": "VAEDecode", "inputs": { "samples": ["6", 0], "vae": ["1", 2] } },
+    "8": { "class_type": "SaveImage", "inputs": { "images": ["7", 0], "filename_prefix": "{{prefix}}" } }
+  }
+}

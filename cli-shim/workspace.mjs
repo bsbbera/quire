@@ -82,14 +82,14 @@ export function root() {
 }
 
 /**
- * True once `inkos.json` is there — the marker the CLI's own bootstrap writes.
+ * True once `quire.json` is there — the marker the CLI's own bootstrap writes.
  *
  * This is the whole signal. A count of books used to sit beside it and read 0
  * on a workspace holding a finished magazine, four worlds and a storyboard,
  * because only `books/` was counted; enumerating every kind of work instead
  * would be a list that goes stale every time Quire learns a new one.
  */
-const initialized = (p) => existsSync(join(p, "inkos.json"));
+const initialized = (p) => existsSync(join(p, "quire.json"));
 
 function writable(p) {
   try { accessSync(p, constants.W_OK); return true; } catch { return false; }

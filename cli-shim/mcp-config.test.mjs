@@ -22,20 +22,20 @@ const check = (name, fn) => {
 };
 
 check("mcp.json is not tracked by git", () => {
-  const tracked = execFileSync("git", ["ls-files", "--", "*.inkos/mcp.json", ".inkos/"], {
+  const tracked = execFileSync("git", ["ls-files", "--", "*.quire/mcp.json", ".quire/"], {
     cwd: repo, encoding: "utf8",
   }).trim();
   assert.equal(tracked, "", `these are committed and hold API keys:\n${tracked}`);
 });
 
 check("mcp.json is ignored, so it cannot be added by accident", () => {
-  const out = execFileSync("git", ["check-ignore", "-q", ".inkos/mcp.json"], {
+  const out = execFileSync("git", ["check-ignore", "-q", ".quire/mcp.json"], {
     cwd: repo, encoding: "utf8",
   });
   assert.equal(out, "");   // exit 0 means ignored; a non-zero exit throws
 });
 
-// A child process with its own home, so the real ~/.inkos is never touched.
+// A child process with its own home, so the real ~/.quire is never touched.
 const run = (home, script) => execFileSync(process.execPath, ["--input-type=module", "-e", script], {
   encoding: "utf8",
   env: { ...process.env, HOME: home, USERPROFILE: home },
@@ -58,7 +58,7 @@ check("discovery is copied in once, then the file is the only source", () => {
     assert.ok(first.borrowed, "the configured server was not picked up");
     assert.equal(first.borrowed.imported, true, "it was not marked as imported");
 
-    const written = JSON.parse(readFileSync(join(home, ".inkos", "mcp.json"), "utf8"));
+    const written = JSON.parse(readFileSync(join(home, ".quire", "mcp.json"), "utf8"));
     assert.equal(written.mcpServers.borrowed.env.API_KEY, "sk-test",
       "the credential was not copied, so the server would need reconnecting");
 

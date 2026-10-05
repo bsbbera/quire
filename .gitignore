@@ -15,7 +15,7 @@ node_modules/
 *.afpub~lock~
 *.png
 *.jpg
-.inkos/
+.quire/
 
 # Secrets and browser/agent profile state — never versioned.
 .env

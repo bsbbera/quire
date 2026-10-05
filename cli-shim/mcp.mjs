@@ -3,7 +3,7 @@
 // Every MCP server on this machine is already configured for some other agent
 // (Claude Desktop extensions, Claude Code, Codex). Asking the user to declare
 // them a second time is pointless, so on first run those configs are read
-// where they live and copied into ~/.inkos/mcp.json — credentials included, so
+// where they live and copied into ~/.quire/mcp.json — credentials included, so
 // nothing needs reconnecting. From then on that file is the only source and
 // Quire owns its own tool list.
 //
@@ -16,7 +16,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HOME = homedir();
-const OVERRIDES = join(HOME, ".inkos", "mcp.json");
+const OVERRIDES = join(HOME, ".quire", "mcp.json");
 
 const readJson = (p) => { try { return JSON.parse(readFileSync(p, "utf8")); } catch { return null; } };
 
@@ -193,13 +193,13 @@ function discovered() {
  * really Claude Desktop's: edit that app's config and Quire's capabilities
  * changed underneath it, with nothing in Quire recording what it was supposed
  * to have. So the discovered entries — command, args, cwd and env, API keys
- * included, so nothing needs reconnecting — are written to ~/.inkos/mcp.json
+ * included, so nothing needs reconnecting — are written to ~/.quire/mcp.json
  * the first time and read from there forever after. After this Quire spawns
  * its servers from its own configuration and another app's settings are that
  * app's business.
  *
  * The written file holds live credentials. It sits under the user's home, not
- * the repo, and .inkos/ is gitignored; mcp-config.test.mjs fails if it is ever
+ * the repo, and .quire/ is gitignored; mcp-config.test.mjs fails if it is ever
  * tracked.
  *
  * Provenance is kept on each entry's `source` — where it originally came from

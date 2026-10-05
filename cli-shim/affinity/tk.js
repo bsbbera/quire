@@ -94,7 +94,11 @@
   // three-act map — an issue may have two sections or nine, and the section is
   // what decides a page's colour world and folio tint.
   const SECTIONS = CFG.sections || [];
-  const WHEEL = [C.actLight, C.actStuff, C.actFeel, C.pG, C.clay, C.slate, C.olive];
+  // One accent speaks for the whole issue (13 rev. A). When the design has
+  // chosen one, every section's tint is that colour; the wheel of seven is
+  // what an issue with no decided accent still falls back to.
+  const ACCENT = SPEC && SPEC.palette ? hex6(SPEC.palette.accent) : null;
+  const WHEEL = ACCENT ? [ACCENT] : [C.actLight, C.actStuff, C.actFeel, C.pG, C.clay, C.slate, C.olive];
   const ACT = Object.fromEntries(SECTIONS.map((s, i) => [s.n, WHEEL[i % WHEEL.length]]));
   function actOf(P) { const s = SECTIONS.find((x) => P >= x.from && P <= x.to); return s ? s.n : 0; }
   function tint(P) { return ACT[actOf(P)] || C.inkFaint; }
@@ -553,6 +557,21 @@
     return n;
   }
 
+  // A cutout (08 §5): an alpha picture, whole and unframed, on the outer edge
+  // of the live area. Returns its box in page mm so the caller can step the
+  // text round it — the script API cannot create a text wrap.
+  function cutout(P, y, w, h, file, o) {
+    const L = live(P), g = pg(P);
+    const n = img(P, L.recto ? L.x1 - w : L.x0, y, w, h, file, Object.assign({}, o || {}, { contain: true }));
+    const b = n.getSpreadBaseBox(false), k = 25.4 / DPI;
+    return { node: n, x: b.x * k - g.ox, y: b.y * k, w: b.width * k, h: b.height * k };
+  }
+
+  // A kit pattern behind the type, faint (07 §1b: ≤ 20 %).
+  function pattern(P, x, y, w, h, file, opacity, o) {
+    return img(P, x, y, w, h, file, Object.assign({}, o || {}, { atBack: true, opacity: Math.min(opacity || 0.16, 0.2) }));
+  }
+
   // ---- v2 primitives ------------------------------------------------------
   // FPO placeholder. There is NO image generation in this SDK build (verified:
   // /ai, /generativeai, /imagegen all fail to resolve; the only "diffuse" nodes
@@ -636,14 +655,64 @@
     return SPREADS[pg(P).si].layers.toArray().map(n => n.userDescription).filter(x => x);
   }
 
+  // ---- connection language (13 rev. A) -----------------------------------
+  // The brand's visual signature: a page says which page it is tied to, beside
+  // its folio, in the accent — a short rule and "→ p.14".
+  function linkNote(P, to, o) {
+    o = o || {};
+    const L = live(P), colour = o.color || tint(P);
+    const x = L.recto ? L.x1 - 52 : L.x0 + 22;
+    hr(P, L.recto ? x + 4 : x, 279.5, 8, { fill: colour, t: .35, tag: o.tag });
+    return text(P, L.recto ? x - 20 : x + 10, 277, 30, 6,
+      [{ t: '→ p.' + to, fam: F.sans, size: 8, color: colour }],
+      { tag: o.tag, align: L.recto ? 'Right' : 'Left' });
+  }
+
+  // The Map: the issue's whole web on one spread (or one page). The centre in
+  // the middle, each ring a node around it with the pages that look through it,
+  // a spoke to each, and a thin line wherever two rings are tied by a page.
+  // `web` = { centre, rings: [{ name, pages: [n] }], pairs: [[i, j]], accent }.
+  function webMap(P, web, o) {
+    o = o || {};
+    const spread = P % 2 === 0 && o.spread !== false;
+    const L = live(P), colour = web.accent || tint(P);
+    const cx = spread ? 210 : L.x0 + L.w / 2, cy = 168;
+    const rx = spread ? 150 : 70, ry = 82;
+    const n = Math.max(web.rings.length, 1);
+    const at = web.rings.map(function (_, i) {
+      const a = -Math.PI / 2 + (i / n) * Math.PI * 2;
+      return { x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a) };
+    });
+    (web.pairs || []).forEach(function (p) {
+      const a = at[p[0]], b = at[p[1]];
+      if (a && b) line(P, a.x, a.y, b.x, b.y, { fill: C.line, t: .25, tag: o.tag });
+    });
+    at.forEach(function (pt) { line(P, cx, cy, pt.x, pt.y, { fill: colour, t: .4, tag: o.tag }); });
+    circle(P, cx, cy, 40, { fill: C.bone, stroke: colour, weight: 1.2, tag: o.tag });
+    text(P, cx - 19, cy - 7, 38, 16,
+      [{ t: web.centre, fam: F.disp, face: FACE.dispReg, size: 13, color: C.ink }],
+      { tag: o.tag, align: 'Centre', lead: 14 });
+    web.rings.forEach(function (ring, i) {
+      const pt = at[i];
+      dot(P, pt.x, pt.y, 5, { fill: colour, tag: o.tag });
+      label(P, pt.x - 28, pt.y + 4, 56, ring.name, { align: 'Centre', color: C.ink, tag: o.tag });
+      if (ring.pages.length) {
+        text(P, pt.x - 28, pt.y + 10, 56, 6,
+          [{ t: ring.pages.map(function (p) { return 'p.' + p; }).join('  '), fam: F.sans, size: 7.5, color: colour }],
+          { tag: o.tag, align: 'Centre' });
+      }
+    });
+  }
+
   globalThis.TK = {
+    linkNote, webMap,
     doc, DPI, MM, PT, SPREADS, ROOT, IMG, TEXT, C, F, FACE, ACT, actOf, tint, col, font,
     pg, live, gx, gw, bl, lines, BASE, LINES, Y0, Y1, NCOL, COLW, GUT,
     W_FULL, W_TWOTHIRD, W_HALF, W_THIRD,
     useSpread, add, toBack, paint, rot,
     shp, rect, circle, ring, dot, hr, vr, line,
     curveNode, smooth, blob, polyline, beam, gradFill, gradMulti, tripleRule, wave,
-    text, label, img, ph, brackets, buildStory, overflows, kill, tags,
+    text, label, img, cutout, pattern, ph, brackets, buildStory, overflows, kill, tags,
     guides, guideV, guideH, masterSpread, masterInstance, masterToBack, masterAbove,
     Shape, ShapeType, Rectangle, Transform, Selection, FillDescriptor, BlendMode, File
   };

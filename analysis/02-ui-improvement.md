@@ -1,5 +1,82 @@
 # 02 — UI: Vermilion Implementation Plan (Mock → App)
 
+## Revision 2026-10-05 — one generic UI, nothing hardcoded (supersedes the waves' order)
+
+**User decision:** the app has one generic UI. Every page is built from the same
+components and tokens; nothing is styled by hand per page. One motion language
+everywhere. The only "extra" animations are the working states: searching,
+planning, thinking/writing, generating.
+
+**Where it stands (measured 2026-10-05, `packages/studio/src`)**
+- 39 pages; 11 use the Vermilion classes. Two stylesheets: `index.css` (1,513 lines,
+  legacy + tokens) and `vermilion.css` (2,257 lines).
+- Hand styling in pages: **593** inline `style={{…}}`, **246** arbitrary `[NNpx]`
+  sizes, 13 raw hex colours.
+- Motion: 24 `@keyframes` split across the two files, durations scattered (100,
+  120, 200, 240, 260, 300, 480 ms…); the `motion` package is used in one file.
+- Shared components exist but are thin: `components/ui/` has button, input, select,
+  dialog, badge, states, `vermilion.tsx` — no Card, Row, Rail item, Gate, Verdict,
+  Progress, Empty/Error/Loading as one set.
+- The motion grammar is already written (`design/vermilion-redesign-plan.md` §5:
+  one easing, 150/300 ms, 640 ms reveals, reduced-motion = jump to end). It is law;
+  it was never built as code.
+
+**The rule set**
+1. **Tokens only.** Colour, space, radius, type size, shadow, duration and easing come
+   from CSS variables. No hex, no `[NNpx]`, no inline `style` for anything a token
+   covers (inline style stays allowed only for computed geometry, e.g. a measured width).
+2. **Components only.** Pages compose shared parts; a page never defines its own card,
+   row, button look or empty state. The set (build once, in `components/ui/`):
+   Page shell · Section · Card · List row · Toolbar · Tabs · Field · Status dot ·
+   Gate · Verdict · Progress (ring + bar) · Job card · Drawer · Toast ·
+   Empty / Loading / Error states.
+3. **One motion file.** `motion.css` (+ a tiny hook if React needs it) holds the
+   tokens `--ease`, `--t-fast` 150 ms, `--t-move` 300 ms, `--t-reveal` 640 ms and the
+   §5 patterns. Transform/opacity only. `prefers-reduced-motion` ends every animation
+   at its final state.
+4. **Working-state animations** — the only ones beyond the grammar, each one
+   component, used everywhere the state occurs:
+   *Searching* (sweep), *Planning* (steps filling), *Thinking/writing* (word stream +
+   caret), *Generating* (ring progress). Never in or beside the reading column
+   (`PRODUCT.md`, Accessibility).
+5. **One stylesheet.** `vermilion.css` becomes the system; `index.css` is reduced to
+   resets and deleted when the last page has moved.
+6. **A guard, not a promise.** One check script (run with the tests) counts inline
+   styles, `[NNpx]` and hex in `pages/`; the count may only go down. Target 0.
+
+**Status 2026-10-05: done (code), awaiting your look.**
+- Guard: `ui-guard.test.ts`, which bans literal inline styles, `[Npx]`, hex and
+  Tailwind palette colours in `pages/` and `components/`. All four counts are 0.
+  At the start there were 593 inline styles, 246 `[px]` and 13 hex.
+- Tokens: one palette (the shadcn names point at vermilion), a type lock of
+  11 steps, three radii, one motion set. Tailwind's own scales are snapped onto them.
+- `motion.css`: the grammar plus the four working states, and reduced motion
+  ends every animation where it was going. Keyframes are down from 24 to 9;
+  ~40 spinners drawn three different ways are now one `Spinner`.
+- Components: `components/ui/working.tsx` (Working, Spinner, Ring, Bar). Card,
+  row, tabs, gate, drawer, toast, field and the message bars stay classes, not
+  React wrappers. A wrapper would add nothing a class does not.
+- Pages: 22 shadcn-era pages are moved onto the system's `panel`, `btn`, `input`,
+  `label`, `pill`, `well` and the message bars (about 280 elements). The `q-`
+  kit and the unused `.aud` block are deleted.
+- `index.css` cannot be deleted, because it is Tailwind's entry. It is now
+  wiring only (~120 lines, from 1,513).
+- Checked: computed styles of 27 pages diffed before/after at 1280×720, plus
+  screenshots in light and dark at desktop and narrow widths. Studio suite: 843 pass.
+- Left for segment 3: Setup/Services/Model routing are restyled but not
+  restructured, because the Connections screen (plan 20) replaces them.
+
+**Order** — foundation first, then pages by time on screen:
+1. Tokens audit + `motion.css` + the component set above, with a style-guide page
+   (`StyleGuide.tsx` exists — make it the living catalogue).
+2. Home/Dashboard, Run, Audit, Chapter reader, Publication detail, Gallery.
+3. Setup → Connections (plan 20 revision), Model routing, Taste, Settings.
+4. Everything left; delete `index.css`; guard at 0.
+
+Done when: every page renders only shared components, the guard reads 0, and the
+same action (approve, rerun, open drawer, finish a job) looks and moves the same on
+every screen.
+
 > This file replaced the original "UI improvement" analysis in place: the Vermilion
 > mock decided the direction, so improvement == implementing the mock. **This is the
 > FIRST plan to implement** (then 14 workflow, then 15 model).
@@ -19,6 +96,54 @@
 > React app to the mock**, plus new screens the app lacks. The old plan's
 > "rebuild frontend from scratch / quire-ui package" is dead; the design system lives in
 > `src/index.css` (vermilion.css merged into it) and that is fine.
+
+## Status (2026-09-07) and the screens the other plans now need
+
+Landed since 2026-08-30 (engine commits 2026-09-05..07): Home counts creations
+(`Dashboard.tsx`, "Waiting on you" gates), run screen with gate sign-off + withdraw,
+jobs rail card fed by `use-jobs.ts` above the router, audit screen rebuilt (reading
+column sized to the pane, findings queue, per-file voice pill, restyle control), voice
+library, Model Routing page, Settings with workspace picker. Still ui.html-era: setup/
+connection, image review, design, worlds, reader.
+
+**New screens/controls required by the updated plans** (each is specified in its
+plan; listed here so the UI sequence stays one list):
+
+| Screen / control | Plan | Why it is the next UI |
+|---|---|---|
+| **Connections** page (provider connected/sign-in/connect-via) replacing CLI toggles | 20 §3 | "open app → pick models → done" |
+| Models page: preset knob (Best/Balanced/Frugal) + resolved table with reasons | 20 §4 | make routing invisible by default |
+| **Gallery** tab per creation: approve / redesign-with-note / delete / trash; inline images in audit | 04 | the design gate is blind without it |
+| **World card** in the design gate; Design page; World library | 08 §6 | show the design language, allow re-world |
+| Finding row **Fix (rewrite)** with span preview + inline diff | 19 §5b | the audit's missing verb |
+| Style mixer (≤5 rows, weights, facets, "hear a sample"); distance before/after pill | 05 §3–4 | authenticity made visible |
+| "Where and when" intake block; `setting` clarification card; Setting tab; Settings library | 22 §5 | the main sauce of writing |
+| Engine settings (Comfy install/benchmark visible), workflow & LoRA manager, per-surface default engine + fallback sentence | 09 §6, 23 §8 | the 11 GB download is invisible today |
+| **Section board** = unit of approval: world swatch strip, **Kit card** (gradients/patterns/ornaments/FX/type specimen), opener thumbnail, beats, first copy proof; keep / re-world / pick from library / lock | 13 §2, §4b; 07 §1b | design is finalised before anything is built |
+| **`<Verdict>`** component everywhere (keep / redo / tweak / reject) with **"what went wrong?" cause chips** per surface | 04 §7, 18 §1 | one feedback gesture on every artefact |
+| **Final folder** card on every creation: drop zone / "open final/" + **Learn from final** button + last-ingest summary ("12 edits, 3 kit assets, 2 palette shifts") | 04 §6 | the compounding loop, one manual trigger |
+| **Canva connection card** (OAuth, plan, allowance estimate, plain-language "what Canva does here"); fallback notice on gate cards and job rows; "Make promo set" on the build gate | 23 §8 | second image engine, derivatives |
+| Kit library page (browse kits, previews, promote drafts) beside World library | 07 §1b | reuse instead of re-create |
+
+**Simplest possible integration of all of the above** (the user's ask): three
+surfaces only — (1) the **Section board / World card** is where design is decided,
+(2) the **gates** are where it is judged, with the same `<Verdict>` control on every
+card, (3) the **Final folder card** is where the user's finished work comes back in.
+Nothing else is new chrome; Canva, kits and engines surface only as pills, notices and
+one Settings card.
+
+**Status & feedback suggestions** (cheap, high trust):
+- Every transcript block and job row shows **agent · model** pill (roster + resolver
+  already know both).
+- **Cost meter** per run from `usage.x_quire` (exists, unused in UI) — tokens and $ so
+  far, budget ceiling from 20 §4.
+- Gate cards say *what happens next* ("approving starts art for 12 spreads, ~6 min").
+- Degraded-mode banners from preflight ("ComfyUI not running — design stage will
+  wait"), with the fix action inline.
+- Desktop notification when a gate opens (core has `notify/`); the app is left
+  running for long stages and the user should not have to watch it.
+- RunPage renders from `pipeline.json` (units done/failed/stale per stage), not from
+  SSE replay — a reload then shows the truth.
 
 ## 0. Ground rules (from the mock's own contracts — keep as law)
 

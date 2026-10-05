@@ -36,12 +36,12 @@ async function nodeCheck() {
         "Install Node.js 18 or newer from nodejs.org, then restart Quire.");
 }
 
-async function inkosCheck() {
-  const p = (await which("inkos")) || (await which("inkos.cmd"));
+async function quireCheck() {
+  const p = (await which("quire")) || (await which("quire.cmd"));
   return p
-    ? ok("inkos", "InkOS CLI", p)
-    : bad("inkos", "InkOS CLI", "not on PATH",
-        "npm i -g inkos — Studio and the writing pipeline both call it.");
+    ? ok("quire", "Quire CLI", p)
+    : bad("quire", "Quire CLI", "not on PATH",
+        "npm i -g @actalk/quire — Studio and the writing pipeline both call it.");
 }
 
 /** At least one agent CLI must exist; the shim serves whichever are present. */
@@ -123,7 +123,7 @@ function mcpCheck(servers) {
 export async function doctor({ comfyStatus, affinityStatus, servers, magRoot }) {
   const checks = [
     await nodeCheck(),
-    await inkosCheck(),
+    await quireCheck(),
     await agentCheck(),
     writableCheck(magRoot),
     comfyCheck(comfyStatus),
