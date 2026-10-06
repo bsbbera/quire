@@ -237,13 +237,28 @@ Home reads it in four places, all in `pages/Dashboard.tsx`:
   Before this, a folder of shorts with 3 blocking findings and 22 unread files
   reported "clear", because none of those files was a chapter of a book.
   A creation's title comes from the folder name, so where the app already knows
-  the real one (a book, an issue) that wins — otherwise a gate is raised
+  the real one (a book, an issue) that wins — `hooks/use-titles.ts` is that
+  lookup for any screen (Audit, Gallery, Taste, Chat's rail) — otherwise a gate is raised
   against a slug read back as prose.
 - "Back to work" — one tile per creation of **any** kind. Books and issues keep
   their own rows because they carry a real title and progress in chapters and
-  pages; everything else comes from the folder walk. `MARKS` maps a kind to its
-  `mark-*` silhouette, of which vermilion.css ships one per form.
+  pages; everything else comes from the folder walk. Each is a `WorkTile`, the
+  same lettered cover the shelves draw, its glow tinted by the kind.
 - the "In this folder" panel beside the machine.
+
+**One ranking for every badge.** `lib/standing.ts` → `standingOf(counts,
+stoppedAtGate)` is the order Home's gates use — blocked → stopped at a gate /
+ready to sign → needs a read → signed off, `drafting` only while there is
+nothing to read — and the Books and Magazines shelves and Home's "Back to
+work" tiles all call it. Before, the shelf ranked on its own and called three
+issues Home listed as waiting "drafting, none waiting". The shelves also read
+`GET /productions/waiting`, so a run stopped at a gate counts there too.
+`components/ui/work-tile.tsx` is the one tile all three draw.
+
+Audit can be opened on a work: `#/audit/<kind>/<id>` (route `{page: "audit",
+kind, id}`, `nav.toAudit(kind, id)`). Shelf tiles for folder-only kinds and
+every folder gate on Home open it that way; without it the screen opened on
+whatever it last had.
 
 Setup names the folder and says nothing about what is in it — that question
 belongs on Home.
@@ -562,7 +577,10 @@ furthest-apart features in words a rewrite can act on. Stored as `v2` inside
 ## What is running
 
 The job queue (`core/pipeline/jobs.ts`) is in memory, serial, and the only
-account of a stage in flight. `GET /api/v1/jobs` lists it and every change is
+account of a stage in flight. Its start, finish and failure lines, and every
+pipeline logger line, are also appended to `<workspace>/.quire/quire.log`
+(set aside once at start past 4 MB), which is what the Logs screen reads —
+the screen used to read a `quire.log` nothing wrote. `GET /api/v1/jobs` lists it and every change is
 announced over SSE as `job:queued|started|progress|done|failed|cancelled`.
 
 The screens read it through `hooks/use-jobs.ts`, held in `App.tsx` **above the
@@ -739,9 +757,8 @@ Three stylesheets in `vendor/studio/packages/studio/src`, three jobs:
   `fail`/`caution`/`notice`/`pass`, `well`, `pill`, `arc`, `bar`, …) and the
   app shell. The shadcn names (`--primary`, `--card`, …) are pointed at these
   tokens on `:root`, so there is one palette with two vocabularies.
-- `motion.css` is the whole motion language plus the four working states
-  (searching, planning, thinking/writing, generating). Reduced motion ends
-  every animation where it was going.
+- `motion.css` is the whole motion language and the placement of the working
+  states. Reduced motion ends every animation where it was going.
 - `index.css` only wires things together: fonts, Tailwind, and Tailwind's
   theme pointed at the tokens (`text-cap`, `text-body`, `rounded-xl` = card,
   `max-w-measure`, one easing). It cannot be deleted: it is Tailwind's entry.
@@ -750,7 +767,18 @@ Both system files are imported into the `components` layer, so a Tailwind
 utility on an element beats the component class beside it, which used to be
 the job of inline `style={{}}`. Pages use component classes plus layout
 utilities. The working states and progress are React components in
-`components/ui/working.tsx` (`Working`, `Spinner`, `Ring`, `Bar`).
+`components/ui/working.tsx` (`Working`, `Orb`, `Spinner`, `Ring`, `Bar`).
+The working shapes are thought-orbs from the `thinking-orbs` package (MIT,
+canvas, no dependencies): `Orb` maps searching → searching, planning →
+shaping, thinking → composing, checking → solving, connecting → connecting,
+building → weaving, generating → working, a gate waiting on you →
+breathing; `orbForStage()` picks one from a pipeline stage id or label.
+Writing stays a caret. `Ring` with `orb` draws the orb inside the progress
+ring (rail run card, Run page). `Spinner` is the working orb. An orb reads its
+tint from `--vermilion` (or `--ok`, or none for `tone="quiet"`) off its own
+element, draws light ink inside `.on-char`/`.dark`, and pauses while off
+screen or while the window is hidden; the package stops itself under reduced
+motion.
 
 `src/__tests__/ui-guard.test.ts` holds pages and components to zero literal
 inline styles, zero `[12px]` sizes, zero hex colours and zero Tailwind palette
@@ -772,6 +800,63 @@ them. Three helpers own that, and a screen showing a slug or a raw id is a bug:
   notes as quiet notes) by hiding the syntax as runs. The text is never
   rewritten, so finding offsets still point into the raw file and paragraph
   numbers still match the reader map. Edit mode shows the raw markdown.
+
+More helpers that own a sentence on screen:
+
+- `lib/when.ts` — every date: relative inside a day, "16 Sep" this year, the
+  year only when it differs; `whenExact` adds "15:53". No screen formats a date
+  with the locale any more ("9/16/2026" beside "11 hours ago").
+- `lib/error-copy.ts` → `plainError`, and `briefly(detail)` for a one-line
+  status (the stage strips) that may be carrying a provider's raw error.
+- `components/ui/page-head.tsx` — the one page header: a sentence title, a
+  lede, actions on the right. Every screen uses it except Start, which keeps
+  its front-door hero.
+
+Colour rules the sweep of October 2026 settled:
+
+- Vermilion is for what needs you (an action, a blocker, a count that asks).
+  A state — the chosen segment, a pressed filter, the selected row — is ink or
+  `--select`, never the accent. Approved counts are `--ok`.
+- `--work*` tokens are the ground the work is read and talked on: charcoal in
+  the dark theme, paper in the light one. The chat conversation, the Audit
+  reader and the fullscreen editor re-point their `--char*` tokens at them, so
+  a light window no longer has a black slab in the middle.
+- A disabled filled button goes neutral, not 40% accent.
+
+Spacing rules (the second sweep, October 2026):
+
+- `--inset` (20px, 16px inside `.cols-audit`) is the one side inset for
+  `.panel`, `.panel-head`, `.panel-body`, `.empty` and `.desk-card`. Pages do
+  not override a panel's side padding with utilities; a narrow workbench
+  lowers the token instead.
+- `.row` has no side padding, so a row's name starts on the same edge as the
+  panel heading above it. The current row's ground is a `::before` reaching 8px
+  past the row (the bar sits at its left edge), so selecting a row never moves
+  its text. The chat switcher (`.grp-switch`) uses the same ground and bar; its
+  old in-flow disc is gone.
+- A mark in place of a number (`TypeMark` in the Audit list) sits in
+  `.mark-slot`, the width of `.row .num`, so every name in a list lines up.
+- `.tabs` space tabs with the strip's gap, not tab padding: the first tab
+  starts on the page edge and the underline is the word's width.
+- Page sections are `.stack-lg` (26px); grids of panels, tiles and desk cards
+  use 16px gaps.
+- A form field's label is one style (`.field > label`, `.field > .label`,
+  `.field-label`): sentence case, caption size. Tracked capitals are for
+  section eyebrows outside fields.
+- `.stats` is a five-column grid so a second row of figures shares the first
+  row's columns. The Audit status block's stage list drops its side rule and
+  indent by a container query on the row itself, not the window.
+- The Audit reader head names the place ("Page 1") instead of the title when
+  the page opens on its own heading, and its tools sit in `.readtools`: text
+  tools in one group, the page's state in another that stays on the right
+  when it wraps.
+
+Motion (`motion.css`): a screen's sections settle top to bottom (keyed on the
+page in `Shell`, `.route-enter`), lists/tiles/chips arrive in 30ms steps
+(`.stagger`, `.tiles`), folds and menus grow from where they were opened, the
+segmented control's thumb slides (`Seg` measures the pressed button), covers
+glow on hover, live states breathe. All under 250ms, all off under
+`prefers-reduced-motion`.
 
 The disc ornaments (`.disc`, the geometry layer) appear only on the Start page
 and the style guide. Scattered across every panel, each one slightly

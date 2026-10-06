@@ -1,5 +1,7 @@
 # 21 — Multi-Agent Workflow: Roster, Per-Agent Models, Coordination
 
+> **Correction 2026-10-06 (checked against the code):** The 2026-09-07 table is stale. The ArtDirector exists (`pipeline/art-director.ts`). `content.destyle` and `content.audit` are registered for short, script, storyboard, translation and interactive film, not only for books. Still open: model overrides per production, the agent·model pill, and ImageSmith, DesignAuditor and AffinityBuilder.
+
 ## Status (2026-09-07)
 
 | Piece | State |

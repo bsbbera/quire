@@ -1,5 +1,7 @@
 # 22 — Setting & Research: Time, Place, Culture as First-Class Inputs
 
+> **Correction 2026-10-06 (checked against the code):** `speech` exists only for the whole setting (`Setting.speech` in `pipeline/setting.ts`), not per character in the roles truth file. Per-character speech is still open.
+
 > New plan (2026-09-07). Verified against `vendor/studio/packages/core/src`:
 > `models/book-rules.ts:20-24` (`eraConstraints {enabled, period, region}`),
 > `models/genre-profile.ts:12` (`eraResearch` flag), `agents/architect.ts:141,438,570`

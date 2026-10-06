@@ -1,5 +1,7 @@
 # 19 — Audit Evolution: Per-Type Improvements + Continuous Learning
 
+> **Correction 2026-10-06 (checked against the code):** The 2026-09-07 table is stale. Audit packs were built on 2026-09-11 (see the status above it). Still open: gates reading `blocking`, reader-map personas from the audience field, the image↔text coherence check, and the whole-work repetition scan.
+
 > Grounded in source (verified 2026-08-31), `vendor/studio/packages/core/src`:
 > `pipeline/chapter-review-cycle.ts` (assess→revise loop, PASS_SCORE_THRESHOLD=85,
 > maxReviewIterations default **1**), `agents/continuity.ts` (ContinuityAuditor, 37

@@ -1,5 +1,7 @@
 # 09 — Image Generation: Variety, Treatments, LoRAs, Engines
 
+> **Correction 2026-10-06 (checked against the code):** The status table is stale. The recipe sidecar is written for every render (`comfy.mjs`). The gallery, treatments and post-process, the seeded roll, `engines.json` and the router are all built (04, 23). Still open: everything in §0 (Qwen, asset graph, GPU safety, alpha steps), rembg, inpaint and Tweak, IPAdapter references, Openverse, the engine/LoRA UI, and upscale. `loras.json` is still empty.
+
 > Updated 2026-09-07. Verified: `cli-shim/comfy.mjs:160-233` (`generate()` — returns
 > seed/workflow, writes **no sidecar**), `cli-shim/workflows/z-image-turbo.json` (the only
 > workflow: Z-Image-Turbo fp8 + Qwen3-4B text encoder, no LoRA, 8 steps, negative at

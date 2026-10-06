@@ -1,5 +1,7 @@
 # 14 — Pipeline Fix: Implementation Spec
 
+> **Correction 2026-10-06 (checked against the code):** The 2026-09-11 status says per-unit cancel is not done. It was built on 2026-09-17 (`cancelUnit`). Still open: the SQLite index, which is deliberately not done until Home is slow. The Affinity reflow script is dropped, because Typst covers reflow.
+
 ## Status (2026-09-17) — one spine, and the magazine on it
 
 `SPINE` in `registry.ts` is the whole list — research, plan, write, factcheck,

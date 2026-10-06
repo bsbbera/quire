@@ -1,114 +1,174 @@
-# Quire — Architecture Overview & Master Plan
+# Quire — Execution Plan
 
-> First analysis 2026-08-28. **Re-baselined 2026-09-07** against Quire 0.1.26
-> (`Quire-Dev` + `vendor/studio` @ `8b564ff2`, ~28k lines added since the plans were
-> written). Source of truth for what exists: `Quire-Dev/ARCHITECTURE.md`.
+> Re-baselined **2026-10-06** against the code (`vendor/studio` @ `74b8f3fd`,
+> `cli-shim`, `desktop`), every claim checked by reading source, not the plans.
+> Source of truth for what exists: `Quire-Dev/ARCHITECTURE.md`. The numbered
+> plan files hold the design detail; this file holds the **order**.
+> Parked, not in this plan: 23 (Canva — see `debt.md`), 10 (Reader),
+> 11 (macOS, mobile, extras).
 
-## What Quire is today
+## How to run it
 
-```
-quire.exe (Tauri shell)
-  ├── cli-shim (Node, 8787 prod / 8788 dev)
-  │     • OpenAI-compatible API over agent CLIs (claude / codex / devin / antigravity)
-  │     • error taxonomy · usage envelope · /events SSE · preflight
-  │     • ComfyUI adapter + installer · Affinity bridge · MCP hub
-  └── Studio engine (Hono + React, 4567 / 4568) — vendor/studio, branch quire
-        • 9 production types, one pipeline: CONTENT → gate → DESIGN → gate → BUILD → gate
-        • pipeline.json state machine (approve / reject / withdraw, append-only history)
-        • serial job queue + SSE · executors (artplan → Comfy → review; layout/export)
-        • audit with located findings + memory · voice library + restyle
-        • 26-agent roster, per-agent model pins · pi-ai for direct API providers
-  Workspace: ~/Quire (books/, shorts/, storybooks/, Magazine/, styles/, .quire/)
-```
+- One phase at a time, on `dev`. Build every step of a phase, then **one live
+  test pass** over the HTTP API (layout in a real browser). Not a test per step.
+- A phase is done when its "Done when" line is true on the dev build, not when
+  the code compiles.
+- Update `ARCHITECTURE.md` and the plan file's status in the same change.
 
-The idea is unchanged and still unusual: the user's existing agent subscriptions as the
-LLM engine of a publishing studio, local image generation, real print layout.
+## Built (verified 2026-10-06)
 
-## Where the build stands (verified 2026-09-07)
+Pipeline: one `SPINE` for every type, skips, three gates, withdraw → cancel,
+per-unit cancel, resume, Typst reflow build, print profile + preflight (14, 07).
+Audit: packs, resolver, editor, bench guard, slop score, reader map, rewrite one
+finding / all accepted (19). Style: fingerprint v2, exemplars, chunked verified
+restyle, blends, style drift (05). Design: ArtPolicy, worlds per work and per
+section, ArtDirector, World card, Cast Sheet (prompt-only), Design Kit (08, 07).
+Images: recipe beside every picture, gallery, Verdict + cause chips, treatments,
+seeded roll, engine router (04, 09). Setting: bible, research on every type,
+anachronism pass, Setting card, Series (22). Taste: capture, distill, rules,
+trial, Taste Packs; rules reach book, short, script, storyboard, storybook and
+magazine writers (18). Models: Connections (API · CLI · Local), validated-only
+picker, keys in `~/.quire` (20). UI: guard at 0, tokens, `motion.css`, working
+states (02, 03, 04-ease). Magazine: brand book, connection web, signature pages,
+writing bar, surface mix, personal sources (Markdown + Zotero), recurring (13).
 
-| Area | Built | Not yet |
-|---|---|---|
-| Pipeline (14) | **one spine for every type with declared skips + auto-signed empty gates, magazine mirrored onto it, magazine `design` stage finally called, per-unit cancel** (2026-09-17); stage graph per type, gates reversible, jobs, resume, storybook type, withdraw→cancel, audit/destyle stages for short/script/storyboard/translation/film, Typst reflow build + print folder, RunPage on pipeline.json | SQLite index, bilingual imposition |
-| Audit (19) | offsets, memory, settle-with-fix, restyle awareness, **rewrite one finding**, iterations=2, **reader map**, **packs (catalogues, resolver, per-type, editor page, preview), beat scope, batch rewrite, never-flag-again, bench guard, local slop score** (2026-09-11) | gates reading `blocking`; bench seeding proven live |
-| Style (05) | voice library, **fingerprint v2 + distance**, **exemplars**, **chunked verified restyle**, **blends ≤5**, **style-drift dimension** (2026-09-11) | style packs, per-facet guide merge |
-| Design system (08) | DesignSpec, **ArtPolicy per type**, worlds (per work + per section), `composeImagePrompt()`, **ArtDirector briefs**, **World card**, **Cast Sheet** (prompt-only) (2026-09-11) | world library, golden rules, reference conditioning |
-| Images (09) | Comfy adapter, one workflow, **recipe beside every image**, **gallery**, **treatments + post-process**, **seeded roll**, **engine router + Canva with quota fallback** (2026-09-11) | model rembg, LoRA base, refs, inpaint, fal/Replicate |
-| Models/harness (20) | CLIs as endpoints, pins, errors, usage | **pi as seam**, Connections screen, capability routing |
-| Setting/research (22) | **Setting Bible**, `content.research` on every type, **Setting Card**, **deterministic anachronism pass**, ask-once card, library, **Series** (2026-09-11) | character `speech` per role, taste scope `setting` |
-| Affinity (07) | page-shaped magazine build, `tk.js` motifs, **Design Kit** (manifest, library, Kit card, capture on first use), `T.cutout` stepped wrap, pictures staged (2026-09-11) | template .afdesign, symbols, `T.fx`/`T.text(style)`, reflow build |
-| Canva (23) | Affinity MCP bridge (Canva-owned), **engine + quota fallback + connection card** (2026-09-11) | AI Studio hook, Brand Kit mirror, derivatives, Apps SDK app |
-| Gallery (04) | **Gallery screen + asset routes, recipe beside every image, pictures on the audit screen**, **`<Verdict>` with cause chips**, **`my-final/` + Learn from final** (text + PDF), treatment switch (2026-09-11) | `.afdesign` read-back, global library |
-| Taste (18) | capture; proposals from finals; **distill (counted causes + model), rules.jsonl, Taste page, injection into writer + ArtDirector, 3-verdict trial, Taste Packs, clone taste** (2026-09-11) | number rules enforced by a validator; rules in non-book writers |
-| Magazine (13) | **writing bar + readability, surface mix, beauty pre-screen, personal sources (notes + Zotero), recurring issues, design + illustration skills** (2026-09-11) | section board approval, auto-redesign loop |
-| Print (07 §Print) | **print.json, spine/cover, EAN-13, preflight, upload folder + checklist** (2026-09-11) | ordering through an API (Lulu needs public URLs) |
-| Skills (17) | **English frontmatter + versions on all 17, skills lint in the suite, deslop/review output contracts, style-block awareness, `quire-magazine-page`, `quire-research-setting`, `GET /skills/:id`, English role folders with a read-shim, `voiceSkill` preference order** (2026-09-11) | zh/en prompt extraction (deliberately deferred — it is language support, not leakage); §4 tool envelope → 20 |
-| Reader (10) · macOS (11) | — | not started |
+## Phase 1 — Magazine on the shared pipeline (13 C)
 
-## File map (consolidated; superseded files removed)
+The magazine is still a second engine: `publication-runner.ts` (2,874 lines,
+own `STAGE_ORDER`) owns plan, write, fact-check, audit and de-slop. Only
+research, artplan, layout and export are executors.
 
-| File | Topic | Kind |
-|---|---|---|
-| `01-what-works.md` | Subsystem status at first analysis (historical) | analysis |
-| `02-ui-improvement.md` | Vermilion implementation + **the list of screens the other plans need** | impl |
-| `04-organisation.md` | Workspace, sidecars, **Gallery** (approve/redesign/delete) | impl |
-| `05-writing-styles.md` | **Style analyzer fidelity, verified restyle, multi-voice blends** | impl |
-| `07-affinity.md` | Affinity build: cutout grammar, reflow, components | impl |
-| `08-design-system.md` | **ArtPolicy per type, worlds, one prompt composer, golden rules** (absorbs 06) | impl |
-| `09-image-generation.md` | **Treatments, seeded variety, LoRA/base-model answer, real photos, engines** | impl |
-| `10-reader.md` | Reader UI | concept |
-| `11-future-platforms.md` | macOS, mobile, **the seven sellable features** (→ 07, 08, 13, 18, 19, 22) | concept + index |
-| `13-magazine-master-plan.md` | Magazine-specific: section casting, pacing, beauty gate | impl |
-| `14-pipeline-fix-implementation.md` | Orchestrator — status + remaining (absorbs 12) | impl |
-| `17-skills-and-tools.md` | Skill descriptions fix, new skills | impl |
-| `18-taste-engine-implementation.md` | Capture→distill→approve→apply | impl |
-| `19-audit-evolution.md` | **Targeted rewrite**, packs, new audit kinds, learning | impl |
-| `20-harness-and-models.md` | **pi as provider seam, zero-touch Connections, capability routing** (absorbs 15) | impl |
-| `21-multi-agent-workflow.md` | Roster, coordination (routing → 20, ArtDirector → 08) | impl |
-| `22-setting-and-research.md` | **Time/place/culture as inputs: Setting Bible, research stage, cards** | impl (new) |
-| `23-canva-integration.md` | **Canva Pro: image engine with quota fallback to Comfy, AI Studio in Affinity, Brand Kit mirror, derivatives, extension** | impl (new 2026-09-10) |
-| `24-centralisation.md` | **One registry, one screen, one pipeline — ties the 2026-10-05 revisions of 20 (Connections: API·CLI·Local), 02 (generic UI + motion) and 13 (brand, connection web, one pipeline)** | plan (new 2026-10-05) |
-| `design-skill.md` | **Editorial Design skill** (portable, math-first: geometry, grid, type, colour, boxes, breaks, per-type mapping) → `quire-editorial-design` (17 §2 #6) | skill draft |
-| `illustration-skill.md` | **Illustration skill** (portable: sensing from text, brief, per-type process, post-process, cast, reuse) → `quire-illustration` (17 §2 #6b); talks to design via slot/asset | skill draft |
-| `workflow.md` | Master workflow diagram (Mermaid) | diagram |
+1. Register `content.plan`, `content.write`, `content.factcheck`,
+   `content.audit`, `content.destyle` for `publication`, one at a time, each
+   wrapping the runner's existing function; the run must work after each move.
+2. Retire `STAGE_ORDER` and the second state file; `pipeline.json` is the only
+   run state.
+3. Run one real issue end to end (the 13 revision has never run live).
 
-Removed 2026-09-07: `03` (into 14/20), `06` (into 08), `12` (implemented — registry
-stage graph), `15` (into 20), old `20`.
+Done when: an issue runs start → build with no runner-owned stage, and the Run
+screen, rail card and gates show it like any other type.
 
-Updated 2026-09-10 (illustration + Affinity focus): 07 gains the **Design Kit**
-(Affinity vector/FX/gradient/pattern/type/slice assets, approved once, reused
-forever) and skills-before-scripts; 08 ties world + kit into one approval and states
-why magazine and book prompts differ; 09 adds the engine router (Canva ↔ Comfy) and the
-per-type sensing rule; 13 adds the magazine writing bar and section-as-unit-of-
-approval; 04 adds the `final/` folder + **Learn from final** and the `<Verdict>`
-control with cause chips; 18 weights final-derived events; 02 lists the screens; 17
-names the two skills.
+## Phase 2 — Models finished (20, 21, 02)
 
-## Implementation order (decided 2026-09-07)
+1. Shim reads `providers.json` (drop the in-code `AGENTS` list).
+2. Model needs per agent + Best · Balanced · Frugal preset; resolver
+   `pin → preset → needs`; Models page shows the reason per row (20 §4).
+3. Telemetry `_telemetry/llm.jsonl` from the usage envelope → cost meter per run
+   and budget guard (pause with a card at the ceiling).
+4. Agent · model pill on run transcript blocks and job rows; model overrides per
+   production in `pipeline.json` (21).
+5. Last, optional: pi `@mariozechner` 0.67.1 → `@earendil-works` 0.85 and native
+   Anthropic/OpenAI behind "connect via"; generic ACP adapter + session reuse.
 
-Ordered by user value per unit of work, respecting dependencies:
+Done when: a fresh workspace routes every agent without a pin, the run shows
+who wrote what and what it cost, and a ceiling pauses a run.
 
-| Phase | Plan | Work | Unblocks |
-|---|---|---|---|
-| 1 | 19 §5b, §5c | **Fix (rewrite) one finding** via Reviser; iterations=2; **boredom map** (11 #5) | the audit becomes a tool, not a report |
-| 2 | 08 §1–3 + 09 §4 | `artPolicy` in registry; `composeImagePrompt()`; sidecar everywhere; populate worlds | no more photos in storybooks, no more naked prompts |
-| 3 | 04 gallery | Gallery tab + asset routes + inline images | design gate has eyes; taste evidence begins |
-| 3b | 04 §6–7 | `<Verdict>` with cause chips on every card; `final/` folder + **Learn from final** (text + PDF first) | feedback everywhere; the user's finished work feeds the next one |
-| 4 | 09 §1, §3b + 07 (+§1b) + 08 §9 | treatments, rembg, masks, `T.cutout/wrap/vignette`, seeded roll; **Design Kit** + Kit card + capture-on-first-use; reference conditioning + **Cast Sheet** (11 #4) | end of full-bleed-everything; nothing drawn twice; same character on every page |
-| 4b | 23 §3, 09 §5 | `engines.json`, `renderImage()` router, **Canva engine with quota fallback to Comfy**, Canva connection card | GPU-less users get art day one; Pro allowance used, never blocking |
-| 5 | 22 (+§8) | Setting Bible, research stage on all types, cards, anachronism pass, ask-once card; **Series** (11 #2) | authenticity of writing; memory across books |
-| 6 | 05 | fingerprint v2, exemplars, chunked verified restyle, blends, style-drift | authenticity of voice |
-| 7 | 20 | providers.json; pi bump; native Anthropic/OpenAI behind "connect via"; Connections screen; capability presets | zero-touch setup |
-| 8 | 14 remainder + 07 §Print | withdraw→cancel, RunPage on pipeline.json, content executors for the 4 types, reflow build; **print profile, spine/cover, preflight, Order-a-copy** (11 #1) | every type end-to-end, to a bound book |
-| 9 | 09 §2 + 13 (+§4b, §Sources) + design-skill | LoRA-capable base + technique pack; magazine section+kit casting, **writing bar + readability pack**, `quire-editorial-design` + `quire-illustration` skills, surface mix, beauty gate; **personal magazine** connectors (11 #6) | magazine quality; recurring use |
-| 10 | 18 (+§7) | taste engine over all five scopes incl. final-derived events; **Taste Packs** export/import (11 #3) | the product improves itself, and its taste travels |
-| 11 | 10, 11, 07 §Print bilingual, 23 §6 | reader, macOS, **bilingual facing-page edition** (11 #7), Canva derivatives + "Quire for Canva" app | reach |
+## Phase 3 — Gates and validators that enforce (19, 18, 08)
 
-02 (UI) is not a phase; each phase ships its screens from the table in 02. The seven
-sellable features are defined in **11 §Sellable** and specified in the plans named there.
+1. Gates read the pack's `blocking` categories (copy gate actually gates).
+2. Reader-map personas from the work's audience field.
+3. Golden rules in `checkDesign` (dominant element, 60-30-10, whitespace,
+   no three full-bleeds, declared breaks) — today only contrast + world validity.
+4. `kind: number` taste rules written into the world/type `math` block on
+   accept, so `checkDesign` enforces them.
+5. Taste evidence popover shows the passage, not the finding title.
+
+Done when: a blocking finding holds the content gate, and an accepted number
+rule rejects a spec before render.
+
+## Phase 4 — One scoring module (07, 09 §0.3b, 13, 18 §8, design-skill §12b)
+
+1. Fix `renderPage` (still unverified) or rasterise the PDF page.
+2. `measurePage(png, spec, assets)` → the seven dimensions; `scorePage` =
+   measure + spec checks + cause routing → `pages/<nn>/score.json`.
+3. Same module, three checkpoints: **spec-lint** (before build),
+   **asset-check** (before staging), **page-score** (after render).
+4. Cause-routed auto-redesign ≤ 2 passes; `surface: "score"` taste events.
+
+Done when: a bad page is redesigned by its cause before the user sees it.
+
+## Phase 5 — Magazine approval UI (13, 02)
+
+1. Page bundles `pages/<nn>/{content,spec,art,render.png,score.json}`.
+2. Section board = unit of approval (world, kit, opener, beats, copy proof;
+   keep / re-world / lock).
+3. Beauty-gate flipbook with the four verdicts and the score card.
+4. Per-page re-run routes (rewrite / redesign / re-world / regenerate art).
+5. Taste accumulated per world.
+
+Done when: the six-step UX in 13 ("What the user actually does") works.
+
+## Phase 6 — Pictures (09)
+
+Keep refs at 1024 px and GPU temperature safety **first** — the laptop has hard
+powered off twice on Qwen reference encoding.
+
+1. GPU safety (pre-job cool-down, temp in recipe), workflow schema with
+   `mode`, `refs[]`, `caps`, `license`.
+2. `qwen-image-21.json`: generate → extract → edit; postprocess `alphaClean`,
+   `cropToObject`, `invert`; gallery Edit / Extract.
+3. `hooks[]` from writing; `graph.json` asset graph, decision table, DAG holds,
+   budget.
+4. Cast refs into the render seam (IPAdapter / native refs); inpaint + Tweak.
+5. Engine settings + workflow/LoRA manager UI; upscale-2x.
+6. Later: Openverse/Commons photo search, personal world LoRA.
+
+Done when: generate → extract → edit → stage runs over `/image/render` and a
+storybook protagonist stays the same across spreads.
+
+## Phase 7 — Libraries (08, 07)
+
+World library + Worlds page; Kit library; kit strip on the World card; kit verbs
+`T.symbol / T.fill / T.fx / T.text(style)` (only `pattern` exists); template
+`.afdesign`; font preflight; node-side text measurement.
+
+## Phase 8 — Leftovers
+
+- 05: live "Sample" in the mixer; per-facet merged guide.
+- 22: `speech` per character in roles (only setting-wide exists); Setting
+  library screen; Series shelf on Home; taste scope `setting`.
+- 04: `.afdesign` read-back from `my-final/` (needs Affinity open).
+- 19: image ↔ text coherence check; whole-work repetition scan.
+- 21: ImageSmith / DesignAuditor / AffinityBuilder as named agents.
+- 02: delete `studio-patch/patch.js`, `cli-shim/ui.html`; drop `lucide-react`
+  and `motion` from `package.json`; desktop notification when a gate opens;
+  degraded-mode banners; gate cards say what happens next.
+
+## Deliberately not doing
+
+- SQLite index (14) — `allRuns()` walks the disk; add only when Home is slow.
+- zh prompt extraction (17 §1.2) — language support, not leakage.
+- Tool envelope (17 §4) — only if Phase 2 step 5 needs it.
+- Affinity reflow script (14, 07) — Typst covers reflow.
+
+## File map
+
+| File | Topic |
+|---|---|
+| `01-what-works.md` | Status at first analysis (history) |
+| `02-ui-improvement.md` | Generic UI, components, motion, screens list |
+| `03-ui-consistency-sweep.md` · `04-ease-of-use-and-motion.md` | Done sweeps (history) |
+| `04-organisation.md` | Workspace, sidecars, Gallery, final folder, Verdict |
+| `05-writing-styles.md` | Fingerprint, restyle, blends |
+| `07-affinity.md` | Affinity build, Design Kit, Print |
+| `08-design-system.md` | ArtPolicy, worlds, prompt composer, golden rules, Cast Sheet |
+| `09-image-generation.md` | Treatments, Qwen asset graph, LoRAs, engines |
+| `13-magazine-master-plan.md` | Brand, connection web, section board, beauty gate |
+| `14-pipeline-fix-implementation.md` | Orchestrator, spine, gates, jobs |
+| `17-skills-and-tools.md` | Skills |
+| `18-taste-engine-implementation.md` | Capture → distill → approve → apply |
+| `19-audit-evolution.md` | Packs, rewrite, reader map, bench |
+| `20-harness-and-models.md` | Connections, providers.json, routing |
+| `21-multi-agent-workflow.md` | Roster, per-agent models |
+| `22-setting-and-research.md` | Setting Bible, research, Series |
+| `24-centralisation.md` | One registry, one screen, one pipeline |
+| `design-skill.md` · `illustration-skill.md` | Skill drafts (shipped as skills) |
+| `debt.md` | Parked work and its return condition |
+| `workflow.md` | Workflow diagram |
+| `10`, `11`, `23` | Parked |
 
 ## Two principles, unchanged
 
-1. **Everything is a spec file + a registry** — now including `artPolicy`, worlds,
-   `providers.json`, settings, LoRAs, audit packs, blends.
-2. **Research in, slop out** — put authentic material (setting, voice exemplars,
-   design world) *into* the prompt rather than scrubbing generic output afterwards.
+1. **Everything is a spec file + a registry.**
+2. **Research in, slop out** — authentic material goes into the prompt rather
+   than scrubbing generic output afterwards.

@@ -1,5 +1,7 @@
 # 13 — Magazine Master Plan: Every Page Must Earn a Look
 
+> **Correction 2026-10-06 (checked against the code):** Plan was ahead of the code. Only `content.research`, `design.artplan`, `build.layout` and `build.export` run as executors for `publication`. Plan, write, fact-check, audit and de-slop are still owned by `publication-runner.ts` (2,874 lines, own `STAGE_ORDER`). The "runner stages as shared-pipeline executors" line below is not done yet. It is Phase 1 of `00-overview.md`.
+
 ## Revision 2026-10-05 — our own brand, the connection web, one pipeline
 
 Three decisions from the user, each replacing older parts of this plan.

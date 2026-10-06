@@ -1,5 +1,7 @@
 # 18 — Auto-Learning (Taste Engine): Implementation Spec
 
+> **Correction 2026-10-06 (checked against the code):** The code is ahead of the plan. House rules already reach the short, script, storyboard, storybook and magazine writers through `buildRuleStack` (`utils/rule-stack.ts`, its `taste` option), so "rules for the short/script/storybook writers" is done. What is still open: `kind: number` rules written into a validator, and §8 score learning.
+
 ## Status (2026-09-11) — steps 3–8 built
 
 Distill job (counted causes, then a model over notes and diffs), one `rules.jsonl`

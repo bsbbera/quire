@@ -1,5 +1,7 @@
 # 07 — Affinity: Build Pipeline, Design Kit & Component Reuse
 
+> **Correction 2026-10-06 (checked against the code):** The 2026-09-07 status is stale. A reflow build exists through Typst (`pipeline/typeset.ts`), and the print profile, spine, EAN-13, preflight and upload folder exist (`pipeline/print.ts`). So Print item 0 and item 8 (Typst fallback) are done. Still open: `renderPage` verification, `measurePage`/`scorePage`, template `.afdesign`, the kit verbs (only `pattern` exists in `tk.js`), node-side text measurement, font preflight, and the Affinity reflow script (dropped, because Typst covers reflow).
+
 ## Status (2026-09-10)
 
 Added §1b Design Kit (Affinity's vector/FX/gradient/pattern/type/slice features as

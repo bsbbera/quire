@@ -1,5 +1,7 @@
 # 20 — Harness & Models: pi as the Provider Seam, Zero-Touch Connection, Open Routing
 
+> **Correction 2026-10-06 (checked against the code):** Verified against the code: Connections is built. Still open: the shim reading `providers.json` (`AGENTS` is still in `server.mjs`), routing by needs and presets, telemetry, budget guard and cost meter, the pi upgrade (still `@mariozechner` 0.67.1), "connect via", and the generic ACP adapter.
+
 ## Revision 2026-10-05 — one Connections screen: API · CLI · Local (supersedes §3's screen)
 
 **User decision:** the app offers all three ways to reach a model, like Open Design:

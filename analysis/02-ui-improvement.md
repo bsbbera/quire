@@ -1,5 +1,7 @@
 # 02 — UI: Vermilion Implementation Plan (Mock → App)
 
+> **Correction 2026-10-06 (checked against the code):** "Left for segment 3: Setup/Services/Model routing" is done. Connections replaced Services, and the `#/services` route is removed. Still open (Phase 2 and Phase 8 of `00-overview.md`): the cost meter, the agent·model pill, a desktop notification when a gate opens, degraded-mode banners, the Worlds and Kit library pages, the beauty flipbook, and deleting `patch.js`, `ui.html`, `lucide-react` and `motion`.
+
 ## Revision 2026-10-05 — one generic UI, nothing hardcoded (supersedes the waves' order)
 
 **User decision:** the app has one generic UI. Every page is built from the same
