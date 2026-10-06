@@ -34,19 +34,38 @@ writing bar, surface mix, personal sources (Markdown + Zotero), recurring (13).
 
 ## Phase 1 — Magazine on the shared pipeline (13 C)
 
-The magazine is still a second engine: `publication-runner.ts` (2,874 lines,
-own `STAGE_ORDER`) owns plan, write, fact-check, audit and de-slop. Only
-research, artplan, layout and export are executors.
+**Corrected 2026-10-06 (the first draft of this phase was wrong).** The code
+already does steps 1 and 2: `publicationExecutor(ctx, stage)` in
+`publication-runner.ts` holds `content.plan/write/factcheck/audit`,
+`design.artplan/generate` and `build.export` as executors, and `run()` drives
+them with the shared `runStage` against `pipeline.json` (ARCHITECTURE.md, "The
+magazine runs on the shared pipeline"). The executors are resolved per run,
+not registered at boot, on purpose: a magazine run carries its model call in
+its context. `STAGE_ORDER` survives as the short names routes and the chat
+tool use, not as a second engine. `publication.json` (content) beside
+`pipeline.json` (run state) is two files by design.
 
-1. Register `content.plan`, `content.write`, `content.factcheck`,
-   `content.audit`, `content.destyle` for `publication`, one at a time, each
-   wrapping the runner's existing function; the run must work after each move.
-2. Retire `STAGE_ORDER` and the second state file; `pipeline.json` is the only
-   run state.
-3. Run one real issue end to end (the 13 revision has never run live).
+Evidence it ran: `Magazine/indigo-…/pipeline.json` walked research, plan and
+7 of 16 pages on 2026-10-05, then stopped on a provider quota (429), resumable.
 
-Done when: an issue runs start → build with no runner-owned stage, and the Run
+What is left:
+
+1. Finish that run (resume from `write`, stop at `audit`) and read the Run
+   screen, rail card and gates for it.
+2. Run it on to design and build only after you approve the copy gate; art
+   uses the GPU, so Phase 6's safety work comes first.
+3. `de-slop` (`runDeslop`) is the audit with a filter, not a stage; leave it.
+
+Done when: one issue runs start → audit on the shared pipeline and the Run
 screen, rail card and gates show it like any other type.
+
+**Closed 2026-10-06.** Indigo ran research → plan → write (16/16) →
+fact-check (57 claims) → audit on `runStage`; Run screen, rail card and gates
+checked live. Audit tested on 9 of 16 pages (47 page findings, shown per page
+on the Audit screen after the sync fix); finishing the other 7 is a resume, not
+a test. Copy gate shows, warns "the audit has not finished", and is yours to
+sign off. Fixes made on the way: plain model path for page/audit/revise,
+per-page audit checkpoint + resume, Audit screen sync, plate label.
 
 ## Phase 2 — Models finished (20, 21, 02)
 

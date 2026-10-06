@@ -724,6 +724,35 @@ and hit its own deadline. Each claim is judged on at most
 `SNIPPET_CHARS` (400) by `evidenceFor`; Tavily plus Brave at five long results
 each had made one page's judging prompt 45,000 characters and three minutes.
 
+Page writes, page audits and page revises (`page-N`, `audit-N`, `revise-N`
+tags) take the same plain path (2026-10-06): the page and its research are
+already in the prompt. Through the session, Indigo p8 hit agy's nine-minute
+print timeout twice (the same prompt as a plain call answered in four), and a
+timed-out `revise-13` ended a 2.4 hour audit with nothing saved. Plan, web,
+design and research still run as sessions. A failed revise still fails the
+whole audit stage; the pages it already rewrote are kept.
+
+The magazine audit (`runAudit`) saves as it reads (2026-10-06). After each page
+the model reads, `issue.audit` is written with `complete: false` and
+`reviewed[n] = {hash, findings}`; the strip shows `partial` with "7/16 pages
+read", and the copy gate says "the audit has not finished" instead of
+"has not been audited". A resume or a re-audit reads only pages whose text hash
+changed, so a revise re-reads only the pages it rewrote. A page the model
+could not read is not remembered and is tried again. Before this the audit
+lived in memory: a run stopped after 16 minutes, or a failed revise after 2.4
+hours, left no page with any audit status. A plate page (empty body, written)
+reads "picture only" on the Pages tab, not "not written".
+
+The Audit screen reads its own stores (`.quire/findings.json`,
+`.quire/audit-state.json`, keyed by page .md path), which the magazine run
+never wrote, so a run with 65 findings showed every page "never read".
+`syncPublicationAudits` (studio `api/audit.ts`) copies each page in
+`issue.audit.reviewed` into them on `GET /api/v1/findings` and
+`GET /api/v1/audit/project/publication/:id`: findings located against the
+page .md, merged with `recordRun` (settled stays settled), `checked` set to
+the audit's `at` so an unchanged audit is skipped. Issue-wide findings (page 0)
+stay on the issue only. A finding with no quote lists but cannot highlight.
+
 A Stop is recorded as `lastError.stopped: true`. The strip then keeps the
 stage's own state (a stopped fact-check is `partial`) with "stopped ·" in the
 detail, instead of painting a person's own Stop as a red failure.
