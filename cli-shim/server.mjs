@@ -4,6 +4,7 @@
 // Point Quire at: baseUrl=http://127.0.0.1:8787/v1  apiKey=local  model=<cli>/<model>
 import * as events from "./events.mjs";
 import * as postprocess from "./postprocess.mjs";
+import * as score from "./score.mjs";
 import { createServer } from "node:http";
 import { collectMeta, newMeta, usageBody } from "./usage.mjs";
 import { spawn, execFileSync } from "node:child_process";
@@ -409,6 +410,13 @@ const fingerprint = (agents) => agents
 let modelCache = { at: 0, key: null, data: null, ttl: 0 };
 /** Sign-in answers per CLI binary, for a minute (see GET /agents). */
 const authCache = new Map();
+// The last real call per CLI, when it failed in a way the next one will too
+// (no network to the provider, signed out, the binary gone). Listing models
+// still works for such a CLI, so without this its connection test passed and a
+// preset could route an agent to it. Kept 10 minutes; any good call clears it.
+const callHealth = new Map();
+const FAILING_MS = 10 * 60_000;
+const LASTING = new Set(["upstream", "auth", "cli-missing"]);
 const MODELS_TTL = 300000;
 // A fallback is a guess, and a guess must not sit in the cache for as long as
 // an answer. Devin's catalogue arrives over an ACP session that can be slow or
@@ -661,6 +669,7 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
   const fail = (code, detail) => {
     stopBeat();
     release();
+    if (LASTING.has(code)) callHealth.set(agent.id, { at: Date.now(), code, detail: String(detail || code).slice(0, 200) });
     if (res.writableEnded) return;
     const body = errorBody(code, agent.id, detail);
     if (streaming) {
@@ -688,6 +697,7 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
     stopBeat();
     release();
     if (res.writableEnded) return;
+    callHealth.delete(agent.id);
     // With a call in hand the prose around it is still the model's, but the
     // block itself is machinery and never belongs in the transcript.
     const { calls, text, finish } = finishTurn(got, tools);
@@ -972,6 +982,11 @@ createServer((req, res) => {
         // rather than guessed at.
         authed: authed(a),
         enabled: agentState.isEnabled(a.id),
+        // Its last real call failed and the next one would too (see callHealth).
+        failing: (() => {
+          const h = callHealth.get(a.id);
+          return h && Date.now() - h.at < FAILING_MS ? { at: new Date(h.at).toISOString(), code: h.code, reason: h.detail } : null;
+        })(),
         // What to offer if the live probe fails. Deliberately aliases the CLI
         // keeps stable across releases — "opus", "sonnet", "adaptive" — never
         // pinned version ids, which rot on the next `devin update` and then
@@ -1144,6 +1159,17 @@ createServer((req, res) => {
       const file = String(b?.file || "");
       if (!/\.png$/i.test(file) || !existsSync(file)) throw new Error("a rendered PNG path is required");
       return postprocess.inspect(file);
+    }));
+  }
+  // What a rendered page, or one placed picture, measures (design-skill 12b).
+  // Numbers only: scoring, cause and fix are core's. PNG only, read-only.
+  if ((path === "/score/measure" || path === "/score/asset") && req.method === "POST") {
+    return handle(bodyOf().then((b) => {
+      const file = String(b?.file || "");
+      if (!/.png$/i.test(file) || !existsSync(file)) throw new Error("a PNG path is required");
+      return { ok: true, ...(path === "/score/measure"
+        ? score.measureFile(file, { palette: b.palette, frames: b.frames, boxes: b.boxes })
+        : score.assetFile(file, { palette: b.palette, slotMm: b.slotMm })) };
     }));
   }
   if (path === "/image/engines" && req.method === "GET") return handle(Promise.resolve(engines.status()));

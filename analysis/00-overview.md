@@ -64,7 +64,10 @@ fact-check (57 claims) → audit on `runStage`; Run screen, rail card and gates
 checked live. Audit tested on 9 of 16 pages (47 page findings, shown per page
 on the Audit screen after the sync fix); finishing the other 7 is a resume, not
 a test. Copy gate shows, warns "the audit has not finished", and is yours to
-sign off. Fixes made on the way: plain model path for page/audit/revise,
+sign off. **Update 2026-10-07:** the audit finished all 16 pages (pipeline history). Indigo then
+walked through the copy gate (a gate signs, it does not stop) into `design.artplan` and shows
+`failed` only because the app was closed mid-stage; resuming runs art generation on the GPU, so it
+waits for Phase 6. The copy gate is held by p14 `readability/over-cap`: yours to rewrite or sign. Fixes made on the way: plain model path for page/audit/revise,
 per-page audit checkpoint + resume, Audit screen sync, plate label.
 
 ## Phase 2 — Models finished (20, 21, 02)
@@ -90,14 +93,16 @@ the same way, and 1.0 is the maintained line. Live: a JSON-only ACP CLI connecte
 and listed; a chat turn named Quire and its tools (prompt and tools reach the model);
 OpenAI via the Codex CLI answered; subscription sign-in reaches claude.ai and waits
 for the person; Frugal routed with reasons; the Indigo audit (53 calls) was metered
-with agent · model rows. Open: the budget pause is unit-tested only; a subscription
-sign-in has not been completed; per-production pins have an API and no screen; Claude
-Code on this machine fails with "Connection refused" (not this change), and a preset
-can still pick it because a connection test only lists models.
+with agent · model rows. **Closed 2026-10-07:** the budget pause held live (a copy of Indigo
+resumed under a 1,000-token ceiling paused before any call); per-production pins have their screen
+(`RunPins.tsx`); "Connection refused" is gone with the settings override, and a CLI whose real calls
+fail is now marked `failing` by the shim and fails its connection test, so no preset picks it (live:
+Claude Code). Yours: Claude Code's OAuth session has expired (run `claude` and sign in), and a
+subscription sign-in has not been completed.
 
 ## Phase 3 — Gates and validators that enforce (19, 18, 08)
 
-**Built 2026-10-07, unit-tested; live check below.** All five steps are in (ARCHITECTURE.md "Gates that enforce"). Not done: the golden rules a spec cannot answer (whitespace, dominant share, 60-30-10) wait for Phase 4's measuring, and old audit verdicts have no passage to show.
+**Built 2026-10-07.** All five steps are in (ARCHITECTURE.md "Gates that enforce"). The golden rules a spec cannot answer (whitespace, dominant share, 60-30-10) are measured on the render by Phase 4 and read `math.json`; old audit verdicts show their finding's quote. The old-verdict passage is unit-tested only: this workspace has no proposal resting on verdicts.
 
 1. Gates read the pack's `blocking` categories (copy gate actually gates).
 2. Reader-map personas from the work's audience field.
@@ -111,6 +116,8 @@ Done when: a blocking finding holds the content gate, and an accepted number
 rule rejects a spec before render.
 
 ## Phase 4 — One scoring module (07, 09 §0.3b, 13, 18 §8, design-skill §12b)
+
+**Closed 2026-10-07, live on Affinity 3.3.** All four steps are in (ARCHITECTURE.md "The page score"). The layout stage runs place → render → score → mend by cause (≤ 2) per page; G and H come from the frames Affinity reports, T catches leaked markup and unbalanced columns, H uses measured visual weight. Automatic mends: `repair` and `re-archetype` (page variants); `recolour` and `redo-image` stay with the person (a world's colours; pictures are Phase 6). Live: Photography p.8 laid out, rendered and scored; a redesign by cause ran 76 → 87.
 
 1. Fix `renderPage` (still unverified) or rasterise the PDF page.
 2. `measurePage(png, spec, assets)` → the seven dimensions; `scorePage` =

@@ -133,9 +133,9 @@
       try { return FontFamily.all.find(function (x) { return x.name === name.trim(); }) ? name.trim() : null; }
       catch (e) { return null; }
     };
-    var disp = have(SPEC.type.display), text = have(SPEC.type.text);
+    var disp = have(SPEC.type.display), bodyFace = have(SPEC.type.text);
     if (disp) { F.disp = disp; FACE.disp = 'Bold'; FACE.dispReg = 'Regular'; FACE.dispIt = 'Italic'; }
-    if (text) { F.body = text; }
+    if (bodyFace) { F.body = bodyFace; }
   }
 
   function col(h, a) {

@@ -13,7 +13,7 @@
 //     EDITORIAL-METHOD section 3). Body copy is therefore poured column by
 //     column, with break points found by measuring overflow rather than guessed.
 import * as events from "./events.mjs";
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
@@ -233,6 +233,38 @@ const CREATE = (pages) => `
  * rings a page's bridge ties together. Drawn by tk.js `webMap`; computed here
  * because the layout script has no way to read the issue but what it is handed.
  */
+/**
+ * A body as a flat run of words, each knowing its paragraph (`g`) and whether
+ * that paragraph is a heading (`k: "h"`). The copy is markdown; Affinity set
+ * the `###` as text because nothing here ever read it.
+ */
+export function bodyItems(body) {
+  const items = [];
+  const plain = String(body || "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")            // [text](url) -> text
+    .replace(/\*\*|__|`/g, "")
+    .replace(/(^|[\s(])[*_]([^*_\n]+)[*_](?=[\s.,;:!?)]|$)/g, "$1$2")  // *em* / _em_
+    .replace(/^[ \t]*(?:>|[-*+]|\d+[.)])[ \t]+/gm, "");  // quote and list markers
+  plain.split(/\n\s*\n|\n(?=#)/).forEach((block) => {
+    const text = block.trim();
+    if (!text) return;
+    const h = /^#{1,6}\s+(.*)$/s.exec(text);
+    const g = items.length ? items[items.length - 1].g + 1 : 0;
+    (h ? h[1] : text).split(/\s+/).filter(Boolean).forEach((t) => items.push({ t, g, k: h ? "h" : "p" }));
+  });
+  return items;
+}
+
+/** Markup that would print as characters: what reached the page, not what was written. */
+export function leaksOf(texts) {
+  const out = new Set();
+  for (const t of texts) {
+    const m = String(t || "").match(/#{1,6}(?=\s|$)|\*\*|__|`|\[[^\]]*\]\(|^>\s/gm);
+    if (m) m.forEach((x) => out.add(x.trim()));
+  }
+  return [...out];
+}
+
 export function mapData(issue) {
   const pages = issue.pages || [];
   const key = (s) => String(s || "").trim().toLowerCase();
@@ -276,7 +308,7 @@ const linkOf = (p) => (p.links || []).map((l) => Number(l.to)).find((n) => n && 
 export function layoutScript(issue, staged) {
   const pages = issue.pages.map((p) => ({
     n: p.n, type: p.type, density: p.density, section: p.section,
-    title: p.title || "", deck: p.deck || "", body: p.body || "",
+    title: p.title || "", deck: p.deck || "", items: bodyItems(p.body),
     pull: p.pullQuote || "", furniture: (p.furniture || []).slice(0, 4),
     image: staged[String(p.n).padStart(2, "0") + ".png"] || null,
     treatment: (p.briefs && p.briefs[0] && p.briefs[0].treatment) || null,
@@ -292,23 +324,8 @@ export function layoutScript(issue, staged) {
   const C = T.C, F = T.F, FACE = T.FACE;
   const log = [];
 
-  // Pour text into one column and return what did not fit. Overflow is the
-  // only measurement the SDK exposes, so the fit is found by bisection.
-  function pour(P, x, y, w, h, words, style) {
-    if (!words.length) return [];
-    var lo = 1, hi = words.length, best = 0;
-    while (lo <= hi) {
-      var mid = (lo + hi) >> 1;
-      var n = T.text(P, x, y, w, h, [{ t: words.slice(0, mid).join(" ") }],
-        Object.assign({ tag: "mag-probe", align: "Justify", hyph: true }, style || {}));
-      if (T.overflows(n)) hi = mid - 1; else { best = mid; lo = mid + 1; }
-    }
-    T.kill("mag-probe", [P]);
-    if (!best) { log.push("p" + P + ": no room for body"); return words; }
-    T.text(P, x, y, w, h, [{ t: words.slice(0, best).join(" ") }],
-      Object.assign({ tag: "mag", align: "Justify", hyph: true }, style || {}));
-    return words.slice(best);
-  }
+  var CTX = { pn: 0, tag: "mag", ink: C.ink };
+  ${FLOW_JS}
 
   function folio(p) {
     if (p.n === 1 || p.type === "plate") return;   // a plate carries no folio
@@ -321,6 +338,7 @@ export function layoutScript(issue, staged) {
   }
 
   PAGES.forEach(function (p) {
+    CTX.pn = p.n;
     var L = T.live(p.n);
 
     // The Map: the whole web on a spread, drawn once from its left-hand page.
@@ -334,7 +352,7 @@ export function layoutScript(issue, staged) {
         [{ t: p.title, fam: F.disp, face: FACE.dispReg, size: 26, color: C.ink }], { tag: "mag", lead: 28 });
       if (p.deck) T.text(p.n, L.x0, T.bl(0) + 22, T.gw(4), 15,
         [{ t: p.deck, fam: F.cond, size: 12, color: C.inkSoft }], { tag: "mag", lead: 15 });
-      pour(p.n, L.x0, T.bl(0) + 40, T.gw(3), 30, String(p.body).split(/\\s+/).filter(Boolean));
+      pour(L.x0, T.bl(0) + 40, T.gw(3), 30, p.items);
       T.webMap(p.n, MAP, { tag: "mag", spread: !!spread });
       folio(p);
       return;
@@ -403,9 +421,7 @@ export function layoutScript(issue, staged) {
     var colW = T.gw(3);
     var below = cut ? Math.max(top, cut.y + cut.h + 6) : top;
     var leftTop = cut && !L.recto ? below : top, rightTop = cut && L.recto ? below : top;
-    var rest = pour(p.n, L.x0, leftTop, colW, 266 - leftTop, String(p.body).split(/\\s+/).filter(Boolean));
-    rest = pour(p.n, L.x0 + colW + T.GUT, rightTop, colW, 266 - rightTop, rest);
-    if (rest.length) log.push("p" + p.n + ": " + rest.length + " words overset");
+    pourBalanced([L.x0, L.x0 + colW + T.GUT], [leftTop, rightTop], colW, 266, p.items);
 
     folio(p);
   });
@@ -480,7 +496,7 @@ export async function build(issue, { pdf, issueDir }) {
 let session = null;
 
 /** Locate the build document again in a context that has never seen it. */
-const FIND = () => `
+const FIND = (uuid) => `
   const { Document } = require("/document");
   const _all = Array.from(Document.all);
   const _want = ${JSON.stringify("QUIRE-BUILD")};
@@ -488,7 +504,9 @@ const FIND = () => `
   // at creation: index and creation order both move when the user touches
   // another file mid-build.
   let _doc = null;
-  for (const d of _all) { try { if (d.metadata && d.metadata.title === _want) { _doc = d; break; } } catch (e) {} }
+  // The session uuid is what holds across documents: \`metadata\` is not there on 3.3.
+  for (const d of _all) { try { if (${JSON.stringify(uuid || "")} && d.sessionUuid === ${JSON.stringify(uuid || "")}) { _doc = d; break; } } catch (e) {} }
+  if (!_doc) for (const d of _all) { try { if (d.metadata && d.metadata.title === _want) { _doc = d; break; } } catch (e) {} }
   if (!_doc && _all.length === 1) _doc = _all[0];
   if (!_doc) throw new Error("build document not found - was it closed?");
   globalThis.TK_DOC = _doc;`;
@@ -504,7 +522,8 @@ const CREATE_TAGGED = (pages) => `
   // The marker FIND() looks for. Without it a second open document makes the
   // build write into whichever one the SDK happens to hand back.
   try { _d.metadata.title = "QUIRE-BUILD"; } catch (e) {}
-  globalThis.TK_DOC = _d;`;
+  globalThis.TK_DOC = _d;
+  console.log(JSON.stringify({ uuid: _d.sessionUuid }));`;
 
 function cfgFor(issue, stageDir, desktop) {
   return {
@@ -527,13 +546,18 @@ function cfgFor(issue, stageDir, desktop) {
 export async function openIssue(issue, { issueDir, pdf } = {}) {
   const st = await status();
   if (!st.up) throw new Error(st.reason);
+  // A page build opens each time; one document per issue, not one per page.
+  if (session && session.id === issue.id && session.uuid) {
+    return { ok: true, staged: Object.keys(session.stage.staged).length, reused: true };
+  }
   const stage = stageAssets(issue, issueDir, st.desktop);
   session = {
     id: issue.id, desktop: st.desktop, stage, pdf,
     cfg: cfgFor(issue, stage.dir, st.desktop),
   };
-  const out = await run(CREATE_TAGGED(issue.pages.length) + `\nconsole.log(JSON.stringify({ok:true}));`, 300000, { launch: true });
-  if (out.raw) throw new Error("could not create the build document: " + out.raw.slice(0, 200));
+  const out = await run(CREATE_TAGGED(issue.pages.length), 300000, { launch: true });
+  if (out.raw || !out.uuid) throw new Error("could not create the build document: " + (out.raw || "no session id").slice(0, 200));
+  session.uuid = out.uuid;
   return { ok: true, staged: Object.keys(stage.staged).length };
 }
 
@@ -543,7 +567,7 @@ export async function closeIssue({ pdf } = {}) {
   let out = { ok: true };
   if (target) {
     const deskPdf = join(session.desktop, "Quire", session.id, basename(target));
-    out = await run(FIND() + "\n" + EXPORT(deskPdf), 900000);
+    out = await run(FIND(session.uuid) + "\n" + EXPORT(deskPdf), 900000);
     if (out.exported && existsSync(deskPdf)) {
       mkdirSync(dirname(target), { recursive: true });
       copyFileSync(deskPdf, target);
@@ -562,26 +586,32 @@ export async function closeIssue({ pdf } = {}) {
  * and nothing about whether the result is any good. A page can satisfy every
  * rule the inspector checks and still be ugly.
  *
- * UNVERIFIED against a live Affinity. The export call mirrors the PDF one,
- * which does work, but the PNG preset name and per-spread export are read from
- * the shape of that API rather than confirmed. If Affinity rejects it the error
- * comes back as exportError rather than a thrown script, so a render failure
- * degrades to "no image" instead of taking the build down with it.
+ * Verified on Affinity 3.3 (ARCHITECTURE.md "The page score"). A rejected
+ * export comes back as renderError rather than a thrown script, so a render
+ * failure degrades to "no image" instead of taking the build down with it.
  */
 export async function renderPage(issue, page, out) {
   if (!session) throw new Error("no build session - openIssue first");
   const target = out || join(session.desktop, "Quire", session.id, `spread-${page}.png`);
+  // Affinity does not overwrite: with the old file there, the new render went
+  // to name_1.png and the stale one was returned and scored. Clear both first.
+  const base = basename(target, ".png");
+  if (existsSync(dirname(target))) {
+    for (const f of readdirSync(dirname(target))) {
+      if (f === base + ".png" || (f.startsWith(base + "_") && f.endsWith(".png"))) unlinkSync(join(dirname(target), f));
+    }
+  }
   const script = [
-    FIND(),
+    FIND(session.uuid),
     `globalThis.TK_CFG = ${JSON.stringify(session.cfg)};`,
     `(function () {
   const out = globalThis.TK_RESULT || {};
   const _doc = globalThis.TK_DOC;
   try {
-    const { FileExportOptions } = require("/document");
+    const { FileExportOptions, FileExportArea } = require("/document");
     const opts = FileExportOptions.createWithPresetName("PNG");
-    if (opts && "spreadIndex" in opts) opts.spreadIndex = ${Number(page)} - 1;
-    _doc.export(${JSON.stringify(win(target))}, opts);
+    // Without an area the export writes every spread, numbered; ask for one.
+    _doc.export(${JSON.stringify(win(target))}, opts, FileExportArea.createForSpreads(${JSON.stringify(String(Number(page)))}));
     out.rendered = true; out.path = ${JSON.stringify(win(target))};
   } catch (e) {
     out.rendered = false; out.renderError = e.message;
@@ -590,6 +620,11 @@ export async function renderPage(issue, page, out) {
 })();`,
   ].join("\n");
   const res = await run(script, 300000, { launch: true });
+  // Affinity may number the file (name_1.png) even for a single spread.
+  if (res.rendered && !existsSync(target)) {
+    const made = readdirSync(dirname(target)).filter((f) => f.startsWith(base + "_") && f.endsWith(".png"));
+    if (made.length === 1) renameSync(join(dirname(target), made[0]), target);
+  }
   if (res.rendered && existsSync(target)) return { ok: true, image: target };
   return { ok: false, error: res.renderError || "Affinity did not write the image" };
 }
@@ -606,7 +641,7 @@ export async function buildPage(issue, page) {
   }) || null;
 
   const script = [
-    FIND(),
+    FIND(session.uuid),
     `globalThis.TK_CFG = ${JSON.stringify(session.cfg)};`,
     TK(),
     onePageScript(issue, page, world, session.stage.staged),
@@ -615,19 +650,101 @@ export async function buildPage(issue, page) {
   events.emit("affinity:page:start", { issue: issue.id, page: page.n });
   const out = await run(script, 600000);
   events.emit("affinity:page:done", { issue: issue.id, page: page.n });
+  // Checked on what was handed to Affinity, after bodyItems: anything here prints.
+  out.leaks = leaksOf([page.title, page.deck, bodyItems(page.body).map((i) => i.t).join(" ")]);
   return out;
 }
+
+/** Column pouring shared by the whole-issue and the one-page layouts. Reads CTX = { pn, tag, ink }. */
+const FLOW_JS = `
+  // The body is a run of items (see bodyItems): words that know their
+  // paragraph and whether it is a heading. Headings get their own face and
+  // paragraph spacing; "###" never reaches the page.
+  function runsOf(items) {
+    var runs = [], i = 0;
+    while (i < items.length) {
+      var g = items[i].g, k = items[i].k, words = [];
+      while (i < items.length && items[i].g === g) { words.push(items[i].t); i++; }
+      if (runs.length) runs.push({ br: true });
+      runs.push(k === "h"
+        ? { pa: { align: "Left", hyph: false, lead: 16, space: runs.length ? 6 : 0, spaceAfter: 2 } }
+        : { pa: { align: "Justify", hyph: true, spaceAfter: 4.5 } });
+      runs.push(k === "h"
+        ? { t: words.join(" "), fam: F.disp, face: FACE.dispReg, size: 13, color: CTX.ink }
+        : { t: words.join(" "), color: CTX.ink });
+    }
+    return runs;
+  }
+
+  // How many items a frame holds. A heading is never the last thing in a
+  // column: it would be stranded from the paragraph it introduces.
+  function fit(x, y, w, h, items) {
+    var lo = 1, hi = items.length, best = 0;
+    while (lo <= hi) {
+      var mid = (lo + hi) >> 1;
+      var n = T.text(CTX.pn, x, y, w, h, runsOf(items.slice(0, mid)), { tag: "mag-probe" });
+      if (T.overflows(n)) hi = mid - 1; else { best = mid; lo = mid + 1; }
+    }
+    T.kill("mag-probe", [CTX.pn]);
+    while (best > 0 && best < items.length && items[best - 1].k === "h") best--;
+    return best;
+  }
+
+  function place(x, y, w, h, items) {
+    if (items.length) T.text(CTX.pn, x, y, w, h, runsOf(items), { tag: CTX.tag });
+  }
+
+  // Fill columns to the foot of the live area; what does not fit is returned.
+  function pour(x, y, w, h, items) {
+    var n = fit(x, y, w, h, items);
+    if (!n) { if (items.length) log.push("no room for body"); return items; }
+    place(x, y, w, h, items.slice(0, n));
+    return items.slice(n);
+  }
+
+  // Two columns of the same depth. Pour at full depth first to learn whether the
+  // copy fits at all, then find the shallowest foot that still holds all of it.
+  function pourBalanced(xs, tops, w, foot, items) {
+    var deep = Math.max(tops[0], tops[1]);
+    function split(b) {
+      var n1 = fit(xs[0], tops[0], w, b - tops[0], items);
+      var rest = items.slice(n1);
+      var n2 = fit(xs[1], tops[1], w, b - tops[1], rest);
+      return { n1: n1, n2: n2, rest: rest };
+    }
+    var full = split(foot);
+    if (full.n2 < full.rest.length) {
+      place(xs[0], tops[0], w, foot - tops[0], items.slice(0, full.n1));
+      place(xs[1], tops[1], w, foot - tops[1], full.rest.slice(0, full.n2));
+      log.push((full.rest.length - full.n2) + " words overset");
+      CTX.cols = { words: [full.n1, full.n2], overset: full.rest.length - full.n2 };
+      return;
+    }
+    var lo = deep + 10, hi = foot, b = foot;
+    while (hi - lo > 2.4) {
+      var mid = (lo + hi) / 2, s = split(mid);
+      if (s.n2 === s.rest.length) { hi = mid; b = mid; } else lo = mid;
+    }
+    var s2 = split(b);
+    place(xs[0], tops[0], w, b - tops[0], items.slice(0, s2.n1));
+    place(xs[1], tops[1], w, b - tops[1], s2.rest);
+    // What the score reads for balance: words per column, and where they stop.
+    CTX.cols = { words: [s2.n1, s2.rest.length], overset: 0, foot: Math.round(b * 10) / 10 };
+  }
+`;
 
 /** One page's layout. The shared helpers are restated because each script is
  *  a fresh context — there is nowhere to keep them between calls. */
 export function onePageScript(issue, page, world, staged) {
   const p = {
     n: page.n, type: page.type, density: page.density, section: page.section,
-    title: page.title || "", deck: page.deck || "", body: page.body || "",
+    title: page.title || "", deck: page.deck || "", items: bodyItems(page.body),
     pull: page.pullQuote || "", furniture: (page.furniture || []).slice(0, 4),
     image: staged[String(page.n).padStart(2, "0") + ".png"] || null,
     treatment: (page.briefs && page.briefs[0] && page.briefs[0].treatment) || null,
     link: linkOf(page),
+    // How the page score last asked this page to be arranged (page-score-run.ts).
+    variant: issue.design?.spec?.pages?.[String(page.n)]?.variant || null,
     // Whether this map page is the left half of a two-page map.
     spread: page.type === "map" && page.n % 2 === 0
       && (issue.pages || []).some((q) => q.n === page.n + 1 && q.type === "map"),
@@ -656,28 +773,17 @@ export function onePageScript(issue, page, world, staged) {
   T.kill("mag-p" + P.n, [P.n]);
   const TAG = "mag-p" + P.n;
 
-  function pour(x, y, w, h, words, style) {
-    if (!words.length) return [];
-    var lo = 1, hi = words.length, best = 0;
-    while (lo <= hi) {
-      var mid = (lo + hi) >> 1;
-      var n = T.text(P.n, x, y, w, h, [{ t: words.slice(0, mid).join(" ") }],
-        Object.assign({ tag: "mag-probe", align: "Justify", hyph: true }, style || {}));
-      if (T.overflows(n)) hi = mid - 1; else { best = mid; lo = mid + 1; }
-    }
-    T.kill("mag-probe", [P.n]);
-    if (!best) { log.push("no room for body"); return words; }
-    T.text(P.n, x, y, w, h, [{ t: words.slice(0, best).join(" ") }],
-      Object.assign({ tag: TAG, align: "Justify", hyph: true, color: INK }, style || {}));
-    return words.slice(best);
-  }
+  // Each frame says what it is after the colon; INSPECT reports it with its box.
+  const R_ = function (role) { return TAG + ":" + role; };
+  var CTX = { pn: P.n, tag: R_("body"), ink: INK };
+  ${FLOW_JS}
 
   function folio() {
     if (P.n === 1 || P.type === "plate") return;   // a plate carries no folio
     var L = T.live(P.n);
     T.text(P.n, L.recto ? L.x1 - 20 : L.x0, 277, 20, 6,
       [{ t: String(P.n), fam: F.sans, size: 8, color: FIELD }],
-      { tag: TAG, align: L.recto ? "Right" : "Left" });
+      { tag: R_("folio"), align: L.recto ? "Right" : "Left" });
     // The page it is tied to, in the accent: the brand's connection line.
     if (P.link) T.linkNote(P.n, P.link, { tag: TAG });
   }
@@ -687,74 +793,93 @@ export function onePageScript(issue, page, world, staged) {
   if (P.type === "map") {
     // The right half of a two-page map is drawn with its left; it keeps its folio.
     if (!P.mapRight) {
-      T.rect(P.n, 0, 0, P.spread ? 420 : 210, 297, { tag: TAG, fill: PAPER });
+      T.rect(P.n, 0, 0, P.spread ? 420 : 210, 297, { tag: R_("ground"), fill: PAPER });
       if (P.title) T.text(P.n, L.x0, T.bl(0), T.gw(4), 20,
-        [{ t: P.title, fam: F.disp, face: FACE.dispReg, size: 26, color: INK }], { tag: TAG, lead: 28 });
+        [{ t: P.title, fam: F.disp, face: FACE.dispReg, size: 26, color: INK }], { tag: R_("title"), lead: 28 });
       if (P.deck) T.text(P.n, L.x0, T.bl(0) + 22, T.gw(4), 15,
-        [{ t: P.deck, fam: F.cond, size: 12, color: INK }], { tag: TAG, lead: 15 });
-      pour(L.x0, T.bl(0) + 40, T.gw(3), 30, String(P.body).split(/\\s+/).filter(Boolean));
+        [{ t: P.deck, fam: F.cond, size: 12, color: INK }], { tag: R_("deck"), lead: 15 });
+      pour(L.x0, T.bl(0) + 40, T.gw(3), 30, P.items);
       T.webMap(P.n, MAP, { tag: TAG, spread: P.spread });
     }
     folio();
   } else if (P.type === "cover" || P.type === "plate" || P.type === "photo-spread") {
-    if (P.image) T.img(P.n, 0, 0, 210, 297, P.image, { tag: TAG, cover: true });
-    else T.rect(P.n, 0, 0, 210, 297, { tag: TAG, fill: FIELD });
+    if (P.image) T.img(P.n, 0, 0, 210, 297, P.image, { tag: R_("image"), cover: true });
+    else T.rect(P.n, 0, 0, 210, 297, { tag: R_("ground"), fill: FIELD });
     if (P.type === "cover") {
       T.text(P.n, L.x0, 150, L.w, 90,
         [{ t: TITLE, fam: F.disp, face: FACE.disp, size: 64, color: C.onDark }],
-        { tag: TAG, lead: 62 });
+        { tag: R_("title"), lead: 62 });
     } else if (P.deck) {
       T.text(P.n, L.x0, 232, T.gw(4), 24,
         [{ t: P.deck, fam: F.disp, face: FACE.dispIt, size: 20, color: C.onDark }],
-        { tag: TAG, lead: 24 });
+        { tag: R_("title"), lead: 24 });
     }
     folio();
   } else if (P.type === "statement" || P.density === "D") {
-    T.rect(P.n, 0, 0, 210, 297, { tag: TAG, fill: PAPER });
-    if (P.image) T.img(P.n, L.x0, 150, L.w, 100, P.image, { tag: TAG, contain: true });
+    T.rect(P.n, 0, 0, 210, 297, { tag: R_("ground"), fill: PAPER });
+    if (P.image) T.img(P.n, L.x0, 150, L.w, 100, P.image, { tag: R_("image"), contain: true });
     T.text(P.n, L.x0, T.bl(4), L.w, 100,
       [{ t: P.deck || P.title, fam: F.disp, face: FACE.dispReg, size: 34, color: INK }],
-      { tag: TAG, lead: 38 });
+      { tag: R_("title"), lead: 38 });
     folio();
   } else {
-    T.rect(P.n, 0, 0, 210, 297, { tag: TAG, fill: PAPER });
+    T.rect(P.n, 0, 0, 210, 297, { tag: R_("ground"), fill: PAPER });
     // Image first: it is placed behind, and the bands below never re-enter it.
     // A content-heavy page earns a smaller picture, or the body oversets.
-    var IMG_H = P.density === "C" ? 58 : 92;
+    var IMG_H = P.variant === "small-band" ? 58 : P.variant === "large-band" ? 120 : P.density === "C" ? 58 : 92;
     var top = T.bl(0);
     // A cutout sits on the outer edge beside the type, not in a band above it
     // (08 §5). The script API cannot create a text wrap, so the wrap is
     // stepped: the outer column starts below the cutout, the inner at the head.
     var cut = P.image && P.treatment === "cutout"
-      ? T.cutout(P.n, top, T.gw(2), IMG_H + 24, P.image, { tag: TAG }) : null;
+      ? T.cutout(P.n, top, T.gw(2), IMG_H + 24, P.image, { tag: R_("image") }) : null;
     var headX = cut && !L.recto ? L.x0 + T.gw(2) + T.GUT : L.x0;
     if (P.image && !cut) {
-      T.img(P.n, L.x0, top, T.gw(6), IMG_H, P.image, { tag: TAG, contain: true });
+      T.img(P.n, L.x0, top, T.gw(6), IMG_H, P.image, { tag: R_("image"), contain: true });
       top += IMG_H + 8;
     }
     if (P.title) {
       T.text(P.n, headX, top, T.gw(4), 20,
         [{ t: P.title, fam: F.disp, face: FACE.dispReg, size: 26, color: INK }],
-        { tag: TAG, lead: 28 });
+        { tag: R_("title"), lead: 28 });
       top += 22;
     }
-    if (P.deck) {
+    // The shortest frame that holds the runs, so a two-line pull is not set in
+    // a six-line box with the empty half counted as its weight.
+    function snug(x, y, w, runs, lead, max) {
+      for (var h = lead + 2; h < max; h += 3) {
+        var probe = T.text(P.n, x, y, w, h, runs, { tag: "mag-probe", lead: lead });
+        var over = T.overflows(probe);
+        T.kill("mag-probe", [P.n]);
+        if (!over) return h;
+      }
+      return max;
+    }
+    if (P.deck && P.variant === "big-deck") {
+      // No picture to lead with: the standfirst becomes the page's one big thing.
+      var bigRuns = [{ t: P.deck, fam: F.disp, face: FACE.dispIt, size: 20, color: INK }];
+      var bigW = cut ? T.gw(4) : T.gw(6), bigH = snug(headX, top + 2, bigW, bigRuns, 24, 60);
+      T.text(P.n, headX, top + 2, bigW, bigH, bigRuns, { tag: R_("pull"), lead: 24 });
+      top += bigH + 8;
+    } else if (P.deck) {
       T.text(P.n, headX, top, cut ? T.gw(4) : T.gw(5), 15,
-        [{ t: P.deck, fam: F.cond, size: 12, color: INK }], { tag: TAG, lead: 15 });
+        [{ t: P.deck, fam: F.cond, size: 12, color: INK }], { tag: R_("deck"), lead: 15 });
       top += 18;
+    }
+    if (P.pull && P.variant === "pull") {
+      var pullRuns = [{ t: P.pull, fam: F.disp, face: FACE.dispIt, size: 22, color: FIELD }];
+      var pullW = cut ? T.gw(4) : T.gw(5), pullH = snug(headX, top + 4, pullW, pullRuns, 26, 70);
+      T.text(P.n, headX, top + 4, pullW, pullH, pullRuns, { tag: R_("pull"), lead: 26 });
+      top += pullH + 10;
     }
     var colW = T.gw(3);
     var below = cut ? Math.max(top, cut.y + cut.h + 6) : top;
     var leftTop = cut && !L.recto ? below : top, rightTop = cut && L.recto ? below : top;
-    // Backslash doubled: this is a template string, and a single one reached
-    // Affinity as /s+/ — the body was being split on the letter s.
-    var rest = pour(L.x0, leftTop, colW, 266 - leftTop, String(P.body).split(/\\s+/).filter(Boolean));
-    rest = pour(L.x0 + colW + T.GUT, rightTop, colW, 266 - rightTop, rest);
-    if (rest.length) log.push(rest.length + " words overset");
+    pourBalanced([L.x0, L.x0 + colW + T.GUT], [leftTop, rightTop], colW, 266, P.items);
     folio();
   }
 
-  globalThis.TK_RESULT = { page: P.n, warnings: log };
+  globalThis.TK_RESULT = { page: P.n, warnings: log, cols: CTX.cols || null, variant: P.variant };
 })();`;
 }
 
@@ -792,15 +917,22 @@ const INSPECT = (n) => `(function () {
 
   if (!nodes.length) findings.push({ level: "error", what: "page is empty" });
 
-  const texts = [];
+  const texts = [], frames = [];
+  const r1 = function (v) { return Math.round(v * 10) / 10; };
   nodes.forEach(function (node) {
     var b;
     try { b = box(node); } catch (e) { return; }
     // Only count what is actually on this page of the spread.
     if (b.x + b.w < -2 || b.x > 212) return;
 
+    // The geometry the score reads for grid and hierarchy (page-score.ts G, H).
+    var d = node.userDescription, role = d.indexOf(":") > 0 ? d.slice(d.indexOf(":") + 1) : "";
+    // A tagged frame says what it is. lineBox alone is not enough: on 3.3 a
+    // plain rectangle has one too, and the paper ground "overlapped" every frame.
     var isText = false;
-    try { isText = !!node.lineBox; } catch (e) {}
+    if (role) isText = ["title", "deck", "body", "pull", "folio"].indexOf(role) >= 0;
+    else try { isText = !!node.lineBox; } catch (e) {}
+    frames.push({ role: role, text: isText, x: r1(b.x), y: r1(b.y), w: r1(b.w), h: r1(b.h) });
 
     if (isText) {
       texts.push({ node: node, b: b });
@@ -819,11 +951,14 @@ const INSPECT = (n) => `(function () {
   for (var i = 0; i < texts.length; i++) {
     for (var j = i + 1; j < texts.length; j++) {
       var a = overlap(texts[i].b, texts[j].b);
-      if (a > 40) findings.push({ level: "error", what: "two text frames overlap", area: Math.round(a) });
+      if (a > 40) findings.push({ level: "error", what: "two text frames overlap", area: Math.round(a),
+        roles: [texts[i].node.userDescription, texts[j].node.userDescription] });
     }
   }
 
   R.findings = findings;
+  R.frames = frames;
+  R.grid = { x0: L.x0, x1: L.x1, top: T.bl(0), foot: 266, col: T.COLW, gut: T.GUT, ncol: T.NCOL };
   R.errors = findings.filter(function (f) { return f.level === "error"; }).length;
   R.nodes = nodes.length;
   console.log(JSON.stringify(R));

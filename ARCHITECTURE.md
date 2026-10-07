@@ -113,6 +113,11 @@ re-tested in the background). Only connected providers reach the model list
   and `#/services/<id>` land there; the old Services pages are gone.
 - The shim's `/agents` runs each CLI's sign-in check synchronously and blocks
   the shim; it caches answers for 60 s, and Studio shares one ask per minute.
+- **A CLI whose real calls fail is not connected.** Listing models is not a call: Claude Code listed
+  its models while every call died on a dead `ANTHROPIC_BASE_URL`, so its test passed and a preset
+  could route to it. The shim keeps the last real call per CLI (`callHealth`): one that failed as
+  `upstream`, `auth` or `cli-missing` is reported by `/agents` as `failing` for 10 minutes, and the
+  connection test fails with its reason; any good turn clears it.
 
 ## The model catalogue
 
@@ -232,7 +237,79 @@ telemetry file edited from outside while Studio runs is not seen until restart.
   says `enforced: null`.
 - **Taste evidence** is the passage, not the title: an audit verdict records `passage` (the finding's
   quote), `GET /taste/proposals/:id/evidence` lists them, and the Taste page shows them under the row.
-  Verdicts recorded before this have no passage and fall back to the title.
+  A verdict recorded before `passage` existed is given the quote of its finding, found in
+  `.quire/findings.json` by file (`target`) and title (`note`); none only when the finding is gone.
+
+## The page score (Phase 4)
+
+Three halves, one score. **The shim measures** (`cli-shim/score.mjs`, routes `POST /score/measure` and
+`/score/asset`): pure Node over `postprocess.mjs`'s PNG codec, no model. A render gives the share of each
+declared colour (nearest role in OKLab outside the image frames), the share off palette, whitespace
+(16px cells that are all paper), and balance (weight centroid from the optical centre, as a fraction of
+the half-diagonal). A picture gives subject fill, halo share (half-transparent pixels with nothing solid
+within 2px), distance from the world's palette, and dpi at the slot size. **Core scores**
+(`pipeline/page-score.ts`): `scorePage` turns those and the spec's own checks into the seven dimensions
+(G H W C T I R), the weighted total per type, a cause (lowest dimension, named with its worst
+sub-metric) and the fix that cause routes to (repair / re-archetype / recolour / redo-image).
+`improvePage` runs that at most twice. **Core runs it on an issue** (`pipeline/page-score-run.ts`):
+`scoreIssuePage` reads what exists for a page, and `layoutScored` is what the layout stage
+(`executors.ts` `layout`) runs per page: place, render to `<issue>/pages/<nn>/render.png`, score, and on
+a failure mend by cause and lay it out again, twice at most. **Studio** only joins it to an id
+(`api/page-score.ts`): `POST|GET /publications/:id/pages/:n/score` (`{layout: true}` runs `layoutScored`),
+`POST /publications/:id/improve-spec`.
+
+- **Where G, H and T come from.** Every frame the one-page script places is tagged `mag-p<n>:<role>`
+  (ground, image, title, deck, pull, body, folio). INSPECT reports each frame's box with its role, the
+  grid (`x0`, column, gutter) and its findings; `buildPage` adds `leaks` (markup that reached Affinity,
+  checked on what `bodyItems` handed over) and `pourBalanced` adds `cols` (words per column, overset).
+  `placePage` keeps that as `<issue>/pages/<nn>/layout.json`. G: overlapping text frames, type outside
+  the live area, frames off the column grid. H (design-skill §12b): the leading picture, head, pull or
+  deck holds 40-60 % of the page's visual weight (`dominantMin` lowers the floor), a rival at 80 % of
+  its weight competes, the body starts above the head. Weight is area x contrast against the paper,
+  measured per frame on the render by `/score/measure` (`boxes` in, `weights` out); body text counts in
+  the whole but is never the dominant. T adds leaked markup, overset words and unbalanced columns.
+  INSPECT reads text-ness from the role tag: on 3.3 a plain rectangle has a `lineBox` too, and the
+  paper ground was reported as a text frame overlapping every other one (the five "overlaps" on p.8).
+- **C is an order, not pixel shares.** 60-30-10 is checked as dominant > secondary > accent and an
+  accent kept under 1.5x its share. The first version compared pixel shares and blamed colour on every
+  text page, where body text is ink but covers a tenth of the page.
+- **What a cause can mend on its own.** `repair`: `repairGoldenRules` on the spec, or a smaller picture
+  band when the words overset. `re-archetype`: a `PageVariant` written to `spec.pages[n].variant` and
+  honoured by `onePageScript` (`small-band` / `large-band` picture band, `pull` leads a text page with
+  its pull quote, `big-deck` with its standfirst), never the same one twice. `recolour` and
+  `redo-image` are not automatic: a world's colours are the person's, and pictures wait for Phase 6.
+  `math.minWhitespace` and `math.dominantMin` reach the score as the W floor and the H share.
+- **Verified live (2026-10-07, Affinity 3.3, a copy of Photography p.8).** Laid out, rendered and scored
+  in 30 s; G 100, T found no leaks and columns of 230/226 words. Under the first H rule (12 % of page
+  area) it failed on H, was given its pull quote as lead, laid out again and passed 76 -> 87; under the
+  documented rule it passes at 80 with H 62 ("nothing dominates") and no redesign. Without a picture
+  (Phase 6) no arrangement gives it a dominant.
+
+- One function, three checkpoints: `spec-lint` (no render), `asset-check` (pictures), `page-score`
+  (a render at `<issue>/pages/<nn>/render.png`). Which runs follows what exists.
+- **A dimension nothing measured is `null`, never 100**; the total is over the measured ones with their
+  weights renormalised, and `unmeasured` lists the rest. G and H are measured only once the page has
+  been laid out (`layout.json`). A total of 100 on a page with five dimensions unmeasured means
+  "nothing found wrong in what was checked", not "a good page".
+- Stored per page at `<issue>/pages/<nn>/score.json` (latest + history, last 40). Machine verdicts go to
+  `_taste/score.jsonl`, not `feedback.jsonl`: a machine "redo" must not count against a rule on trial.
+- `repairGoldenRules` (`design-rules.ts`) mends a spec without a model (ends a full-bleed run, drops
+  surplus breaks, trims blocks). The design stage runs it before refusing a spec, and
+  `improve-spec` runs it by cause. It writes `publication.json` directly.
+- `renderPage` (`cli-shim/affinity.mjs`) was verified live on Affinity 3.3 (2026-10-07): open, build
+  page 1, render gave a 2481x3508 PNG that `/score/measure` read in 1.6s. Two things it found:
+  `doc.export` without a `FileExportArea` writes every spread as `name_N.png`, so the call now passes
+  `createForSpreads("<n>")` and renames a numbered result (old renders are deleted first: Affinity does not
+overwrite, so a re-render went to `name_1.png` and the stale picture was scored); and `document.metadata` is gone on 3.3, so
+  the old `QUIRE-BUILD` title marker never matched. The build document is now found by its
+  `sessionUuid` (kept on the session), and `openIssue` reuses the open document for the same issue
+  instead of making one per page. A page built from a design spec was then rendered live (Photography
+  p.8) and found two more faults, both fixed: `tk.js` reassigned its own `text()` to a font name when a
+  spec named a text face, so no frame could be built on a designed issue; and the body was poured as
+  flat words, so markdown `###` reached the page and the right column stood half empty. The copy is now
+  parsed in Node (`bodyItems`: words that know their paragraph and whether it is a heading) and poured
+  by `FLOW_JS`, shared by `layoutScript` and `onePageScript`: headings in the display face, never last
+  in a column, and `pourBalanced` finds the shallowest column foot that still holds all of it.
 
 ## Skills
 
