@@ -53,7 +53,7 @@ What is left:
 1. Finish that run (resume from `write`, stop at `audit`) and read the Run
    screen, rail card and gates for it.
 2. Run it on to design and build only after you approve the copy gate; art
-   uses the GPU, so Phase 6's safety work comes first.
+   uses the GPU, so Phase 7's safety work comes first.
 3. `de-slop` (`runDeslop`) is the audit with a filter, not a stage; leave it.
 
 Done when: one issue runs start → audit on the shared pipeline and the Run
@@ -67,7 +67,7 @@ a test. Copy gate shows, warns "the audit has not finished", and is yours to
 sign off. **Update 2026-10-07:** the audit finished all 16 pages (pipeline history). Indigo then
 walked through the copy gate (a gate signs, it does not stop) into `design.artplan` and shows
 `failed` only because the app was closed mid-stage; resuming runs art generation on the GPU, so it
-waits for Phase 6. The copy gate is held by p14 `readability/over-cap`: yours to rewrite or sign. Fixes made on the way: plain model path for page/audit/revise,
+waits for Phase 7. The copy gate is held by p14 `readability/over-cap`: yours to rewrite or sign. Fixes made on the way: plain model path for page/audit/revise,
 per-page audit checkpoint + resume, Audit screen sync, plate label.
 
 ## Phase 2 — Models finished (20, 21, 02)
@@ -117,7 +117,7 @@ rule rejects a spec before render.
 
 ## Phase 4 — One scoring module (07, 09 §0.3b, 13, 18 §8, design-skill §12b)
 
-**Closed 2026-10-07, live on Affinity 3.3.** All four steps are in (ARCHITECTURE.md "The page score"). The layout stage runs place → render → score → mend by cause (≤ 2) per page; G and H come from the frames Affinity reports, T catches leaked markup and unbalanced columns, H uses measured visual weight. Automatic mends: `repair` and `re-archetype` (page variants); `recolour` and `redo-image` stay with the person (a world's colours; pictures are Phase 6). Live: Photography p.8 laid out, rendered and scored; a redesign by cause ran 76 → 87.
+**Closed 2026-10-07, live on Affinity 3.3.** All four steps are in (ARCHITECTURE.md "The page score"). The layout stage runs place → render → score → mend by cause (≤ 2) per page; G and H come from the frames Affinity reports, T catches leaked markup and unbalanced columns, H uses measured visual weight. Automatic mends: `repair` and `re-archetype` (page variants); `recolour` and `redo-image` stay with the person (a world's colours; pictures are Phase 7). Live: Photography p.8 laid out, rendered and scored; a redesign by cause ran 76 → 87.
 
 1. Fix `renderPage` (still unverified) or rasterise the PDF page.
 2. `measurePage(png, spec, assets)` → the seven dimensions; `scorePage` =
@@ -128,7 +128,30 @@ rule rejects a spec before render.
 
 Done when: a bad page is redesigned by its cause before the user sees it.
 
-## Phase 5 — Magazine approval UI (13, 02)
+## Phase 5 — Pages built from the spec (25, 07, 08, design-skill §12b)
+
+Planned 2026-10-07 (`25-pages-from-the-spec.md`). Quire drives Affinity, but
+`onePageScript` draws a fixed arrangement per page type: the spec's blocks,
+fonts and grid never reach it. This makes the spec the page.
+
+1. Closed block vocabulary (`figure`, `dropcap`, `panel`, `kicker`, `runhead`,
+   `wordmark`, `drawn`, …) with grid slots; `figure` and `notes` in the page
+   content; `checkSpec` refuses what the builder cannot place.
+2. `spec.type` and `spec.grid` replace the hard-coded fonts and grid in `tk.js`;
+   font preflight (moved from Phase 8).
+3. Toolkit verbs for each block, role-tagged; `T.drawn` for seeded vector art.
+4. `onePageScript` interprets the block list; today's arrangements become the
+   default lists, variants become block rewrites (the Phase 4 loop keeps working).
+5. Design prompt gets the vocabulary, installed fonts and the rules as numbers;
+   brand furniture becomes structured; `drawn` joins the art ladder.
+6. Score adds scale steps ≥ 1.2×, contrast per text block, shared left edge,
+   line length, drop cap on whole lines, undeclared transgressions.
+
+Done when: Quire builds a page from its spec alone in Affinity, with no hand
+edits — the PETRICHOR reference re-expressed as a fixture scores ≥ 80 — and
+the score checks every rule the spec declares.
+
+## Phase 6 — Magazine approval UI (13, 02)
 
 1. Page bundles `pages/<nn>/{content,spec,art,render.png,score.json}`.
 2. Section board = unit of approval (world, kit, opener, beats, copy proof;
@@ -139,7 +162,7 @@ Done when: a bad page is redesigned by its cause before the user sees it.
 
 Done when: the six-step UX in 13 ("What the user actually does") works.
 
-## Phase 6 — Pictures (09)
+## Phase 7 — Pictures (09)
 
 Keep refs at 1024 px and GPU temperature safety **first** — the laptop has hard
 powered off twice on Qwen reference encoding.
@@ -157,13 +180,13 @@ powered off twice on Qwen reference encoding.
 Done when: generate → extract → edit → stage runs over `/image/render` and a
 storybook protagonist stays the same across spreads.
 
-## Phase 7 — Libraries (08, 07)
+## Phase 8 — Libraries (08, 07)
 
 World library + Worlds page; Kit library; kit strip on the World card; kit verbs
 `T.symbol / T.fill / T.fx / T.text(style)` (only `pattern` exists); template
-`.afdesign`; font preflight; node-side text measurement.
+`.afdesign`; node-side text measurement. (Font preflight moved to Phase 5.)
 
-## Phase 8 — Leftovers
+## Phase 9 — Leftovers
 
 - 05: live "Sample" in the mixer; per-facet merged guide.
 - 22: `speech` per character in roles (only setting-wide exists); Setting
@@ -203,6 +226,7 @@ World library + Worlds page; Kit library; kit strip on the World card; kit verbs
 | `21-multi-agent-workflow.md` | Roster, per-agent models |
 | `22-setting-and-research.md` | Setting Bible, research, Series |
 | `24-centralisation.md` | One registry, one screen, one pipeline |
+| `25-pages-from-the-spec.md` | Block vocabulary, spec → Affinity, the missing rules |
 | `design-skill.md` · `illustration-skill.md` | Skill drafts (shipped as skills) |
 | `debt.md` | Parked work and its return condition |
 | `workflow.md` | Workflow diagram |

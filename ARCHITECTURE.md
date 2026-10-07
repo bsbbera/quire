@@ -277,13 +277,13 @@ a failure mend by cause and lay it out again, twice at most. **Studio** only joi
   band when the words overset. `re-archetype`: a `PageVariant` written to `spec.pages[n].variant` and
   honoured by `onePageScript` (`small-band` / `large-band` picture band, `pull` leads a text page with
   its pull quote, `big-deck` with its standfirst), never the same one twice. `recolour` and
-  `redo-image` are not automatic: a world's colours are the person's, and pictures wait for Phase 6.
+  `redo-image` are not automatic: a world's colours are the person's, and pictures wait for Phase 7.
   `math.minWhitespace` and `math.dominantMin` reach the score as the W floor and the H share.
 - **Verified live (2026-10-07, Affinity 3.3, a copy of Photography p.8).** Laid out, rendered and scored
   in 30 s; G 100, T found no leaks and columns of 230/226 words. Under the first H rule (12 % of page
   area) it failed on H, was given its pull quote as lead, laid out again and passed 76 -> 87; under the
   documented rule it passes at 80 with H 62 ("nothing dominates") and no redesign. Without a picture
-  (Phase 6) no arrangement gives it a dominant.
+  (Phase 7) no arrangement gives it a dominant.
 
 - One function, three checkpoints: `spec-lint` (no render), `asset-check` (pictures), `page-score`
   (a render at `<issue>/pages/<nn>/render.png`). Which runs follows what exists.
