@@ -97,6 +97,8 @@ can still pick it because a connection test only lists models.
 
 ## Phase 3 — Gates and validators that enforce (19, 18, 08)
 
+**Built 2026-10-07, unit-tested; live check below.** All five steps are in (ARCHITECTURE.md "Gates that enforce"). Not done: the golden rules a spec cannot answer (whitespace, dominant share, 60-30-10) wait for Phase 4's measuring, and old audit verdicts have no passage to show.
+
 1. Gates read the pack's `blocking` categories (copy gate actually gates).
 2. Reader-map personas from the work's audience field.
 3. Golden rules in `checkDesign` (dominant element, 60-30-10, whitespace,

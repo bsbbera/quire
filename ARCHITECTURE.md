@@ -208,6 +208,32 @@ run's pipeline state and win over the project's for that run only. The run meter
 memory per run for the life of the process (`telemetry.ts` `meters`): it reads the file once, so a
 telemetry file edited from outside while Studio runs is not seen until restart.
 
+## Gates that enforce (Phase 3)
+
+- **Blocking categories.** An audit pack's `blocking` list is read by `holdsGate(pack, finding)`
+  (`core/src/pipeline/audit-pack.ts`): a finding holds a gate when it is rated blocking or its
+  category (or the family above it, `readability` for `readability/grade`) is listed and not
+  silenced. The magazine copy gate uses it: `gateState(issue, pack, math)` in
+  `studio/src/api/publications.ts` puts such findings in `copy.blockers`, `canApprove` goes false,
+  and `POST /publications/:id/approve` answers 409 with them. The Audit sync rates them blocking in
+  the findings queue too, so counts and the gate agree. The pack an issue resolves to is
+  `publicationPack(root, id)`. Warnings (pages unwritten, not audited) still do not block.
+- **Reader personas** follow the work's audience field (`personasFor(type, audience)`,
+  `reader-sim.ts`): the two adult readers are readers of that audience, and a young audience, or any
+  storybook, adds the listener named for the age. `workAudience()` in `api/audit.ts` reads it from
+  `storybook.json` or `publication.json`.
+- **Golden rules and number rules** are `pipeline/design-rules.ts`. `goldenRules(spec, sections, math)`
+  checks what a spec can answer on its own: full-bleed runs, declared breaks per section
+  (`PageLayout.breaks`), blocks per page. It runs in the design stage, in `build`, and in the design
+  gate. Whitespace and dominant share are kept as numbers but are measured on the render (Phase 4).
+  The numbers live in `<workspace>/_taste/math.json` by scope (`global`, `type:`, `world:`,
+  `work:`), read layered by `readMath`. Accepting a taste proposal of kind `number` parses it
+  (`parseNumberRule`) and writes it; one the checker cannot hold stays a prompt line and the answer
+  says `enforced: null`.
+- **Taste evidence** is the passage, not the title: an audit verdict records `passage` (the finding's
+  quote), `GET /taste/proposals/:id/evidence` lists them, and the Taste page shows them under the row.
+  Verdicts recorded before this have no passage and fall back to the title.
+
 ## Skills
 
 `packages/core/src/skills/external-loader.ts` scans, always and unconditionally:
