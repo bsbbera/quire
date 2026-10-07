@@ -1089,6 +1089,7 @@ createServer((req, res) => {
    */
   if (path === "/events") return events.subscribe(req, res);
 
+  if (path === "/affinity/fonts") return handle(affinity.fonts());
   if (path === "/affinity/status") {
     const launch = new URL(req.url, "http://x").searchParams.get("launch") === "1";
     return handle(affinity.status({ launch }));

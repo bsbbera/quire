@@ -1,0 +1,248 @@
+{
+  "id": "petrichor-fixture",
+  "type": "magazine",
+  "series": "Petrichor",
+  "subject": "the monsoon",
+  "angle": "the people who live inside the weather",
+  "title": "The Monsoon Issue",
+  "thesis": "Where it rains most, people build with the rain instead of against it.",
+  "extent": 3,
+  "status": "designed",
+  "createdAt": "2026-10-07T00:00:00.000Z",
+  "research": null,
+  "approved": {
+    "at": "2026-10-07T00:00:00.000Z",
+    "by": "fixture"
+  },
+  "designApproved": {
+    "at": "2026-10-07T00:00:00.000Z",
+    "by": "fixture"
+  },
+  "sections": [
+    {
+      "n": 1,
+      "label": "Meghalaya",
+      "question": "How do you live in the wettest place on Earth?",
+      "colour": "#f0a202",
+      "from": 1,
+      "to": 3
+    }
+  ],
+  "pages": [
+    {
+      "n": 1,
+      "title": "The Monsoon Issue",
+      "type": "cover",
+      "density": "A",
+      "section": 1,
+      "pillar": "place",
+      "premise": "cover",
+      "body": "",
+      "deck": "",
+      "words": 0
+    },
+    {
+      "n": 2,
+      "title": "Rain is a place",
+      "type": "statement",
+      "density": "D",
+      "section": 1,
+      "pillar": "place",
+      "premise": "opener",
+      "body": "",
+      "deck": "Some towns measure the year in metres of water.",
+      "words": 0
+    },
+    {
+      "n": 3,
+      "title": "The village that waits for the sky to stop",
+      "type": "feature",
+      "density": "B",
+      "section": 1,
+      "pillar": "place",
+      "premise": "Mawsynram grows its bridges",
+      "deck": "The wettest inhabited place on Earth gave up building bridges a long time ago. Now it grows them.",
+      "pullQuote": "The bridge grows stronger with every monsoon that tries to wash it away.",
+      "body": "In Mawsynram the rain is not weather. It is the second roof of every house, and the reason umbrellas here are woven from bamboo and worn like a turtle's shell, leaving both hands free for the fields. From June the clouds come up off the plains, meet the wall of the Khasi Hills, and have nowhere left to go but down.\n\nOne year here brings close to twelve metres of water. Paths become streams by noon, and streams carry the bridges away.\n\nSo the Khasi stopped building bridges and started growing them. A young rubber fig is planted on one bank, and its hanging roots are led across the water along a hollowed trunk. Then everyone waits, fifteen years or thirty, until the roots will hold a person. Nobody who plants one walks on it first.",
+      "furniture": [
+        {
+          "kind": "pull-number",
+          "text": "11,871 mm / year — rain in an average year"
+        },
+        {
+          "kind": "sidefact",
+          "text": "Wettest months: Jun–Aug"
+        },
+        {
+          "kind": "sidefact",
+          "text": "A bridge grows in: 15–30 years"
+        },
+        {
+          "kind": "sidefact",
+          "text": "Grown from: the rubber fig"
+        }
+      ],
+      "words": 140
+    }
+  ],
+  "design": {
+    "sections": [
+      {
+        "n": 1,
+        "register": "survey map",
+        "idiom": "contours under rain",
+        "paper": "#eef0ea",
+        "ink": "#14211d",
+        "hue": "#f0a202",
+        "field": "#15302a"
+      }
+    ],
+    "fixed": {
+      "folio": "page number outer foot, display face",
+      "blocks": [
+        {
+          "kind": "runhead",
+          "slot": {
+            "col": 1,
+            "span": 12,
+            "row": 0,
+            "rows": 1
+          }
+        }
+      ]
+    },
+    "spec": {
+      "palette": {
+        "paper": "#eef0ea",
+        "ink": "#14211d",
+        "accent": "#f0a202"
+      },
+      "type": {
+        "display": "Bodoni MT",
+        "text": "Lora",
+        "scale": [
+          30,
+          14,
+          9.5
+        ]
+      },
+      "grid": {
+        "columns": 12,
+        "gutterMm": 4,
+        "marginMm": 14,
+        "baselineMm": 4.7625
+      },
+      "imageDirection": "Surveyor's contour lines in pale mist on deep moss, slanted rain, one marigold mark.",
+      "pages": {
+        "1": {
+          "layout": "cover",
+          "imageSlot": "full-bleed"
+        },
+        "2": {
+          "layout": "statement",
+          "imageSlot": "none"
+        },
+        "3": {
+          "layout": "feature-opener",
+          "imageSlot": "top",
+          "breaks": [
+            "the rainfall figure crosses the foot of the picture"
+          ],
+          "blocks": [
+            {
+              "kind": "drawn",
+              "slot": {
+                "col": 1,
+                "span": 12,
+                "row": 0,
+                "rows": 29,
+                "bleed": true
+              },
+              "drawn": "contours+rain",
+              "seed": 7,
+              "text": "Mawsynram 25.30 N 91.58 E"
+            },
+            {
+              "kind": "wordmark",
+              "slot": {
+                "col": 1,
+                "span": 12,
+                "row": 2,
+                "rows": 9
+              }
+            },
+            {
+              "kind": "figure",
+              "slot": {
+                "col": 1,
+                "span": 8,
+                "row": 23,
+                "rows": 9
+              },
+              "crosses": "image-edge"
+            },
+            {
+              "kind": "kicker",
+              "slot": {
+                "col": 1,
+                "span": 8,
+                "row": 34,
+                "rows": 1
+              },
+              "text": "Feature · Meghalaya, India"
+            },
+            {
+              "kind": "title",
+              "slot": {
+                "col": 1,
+                "span": 8,
+                "row": 35,
+                "rows": 5
+              }
+            },
+            {
+              "kind": "deck",
+              "slot": {
+                "col": 9,
+                "span": 4,
+                "row": 34,
+                "rows": 6
+              }
+            },
+            {
+              "kind": "dropcap",
+              "slot": {
+                "col": 1,
+                "span": 1,
+                "row": 41,
+                "rows": 3
+              },
+              "lines": 3,
+              "color": "field"
+            },
+            {
+              "kind": "body",
+              "slot": {
+                "col": 1,
+                "span": 8,
+                "row": 41,
+                "rows": 13
+              },
+              "columns": 2
+            },
+            {
+              "kind": "panel",
+              "slot": {
+                "col": 9,
+                "span": 4,
+                "row": 41,
+                "rows": 13
+              },
+              "text": "Field notes"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

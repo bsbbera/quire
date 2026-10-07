@@ -311,6 +311,46 @@ overwrite, so a re-render went to `name_1.png` and the stale picture was scored)
   by `FLOW_JS`, shared by `layoutScript` and `onePageScript`: headings in the display face, never last
   in a column, and `pourBalanced` finds the shallowest column foot that still holds all of it.
 
+## Pages built from blocks (Phase 5)
+
+`vendor/studio/packages/core/src/pipeline/page-blocks.ts` · `cli-shim/affinity.mjs` (`blocksOf`, `blockPage`) ·
+`cli-shim/affinity/tk.js` (`blockGrid`, `fitText`, `drawn`) · plan: `analysis/25-pages-from-the-spec.md`.
+
+- **A page is its blocks.** `spec.pages[n].blocks` is a list of `{kind, slot}` from a closed vocabulary
+  (`image drawn figure title deck kicker body dropcap pull panel runhead wordmark rule folio`). A slot is
+  grid arithmetic: `{col, span, row, rows, bleed?}` in columns and baselines of the spec's grid
+  (`gridOf`: symmetric `marginMm`, `columns`, `gutterMm`, `baselineMm`; depth `(297 - 2m - 10) / baseline`).
+  A prose slot (`"col-10-12-upper"`, every design made before Phase 5) is a legacy block: kept, never
+  placed. `onePageScript` builds from blocks only when **every** block of the page has a grid slot;
+  otherwise the page type's own arrangement runs as before, on the house 6-column grid.
+- **Content comes from the page.** `figure` reads the `pull-number` furniture (`"11,871 mm / year — caption"`
+  → value, unit, caption: `figureOf`); `panel` reads `sidefact`/`did-you-know` as label/value rows
+  (`notesOf`). `wordmark` and `runhead` read `issue.series`. Brand furniture that sits on every block page
+  is `design.fixed.blocks` (a page's own block of the same kind wins).
+- **The design stage asks for them** (`DEFAULT_DESIGN_PROMPT` "PAGE BLOCKS") and is told the installed
+  faces (`GET shim /affinity/fonts`, read once per shim run, never launches Affinity). A block the builder
+  cannot place is **dropped and said** (`cleanBlocks`, a progress line), never thrown: the design stage
+  throws on a spec problem, and one bad slot must not cost an issue's design. The drop cap is the one
+  block allowed to sit inside another (its body).
+- **The builder.** Pictures first (`image`; a stand-in frame while there is no picture; `drawn` = seeded
+  contours and rain as vectors, cut at the box because the SDK cannot clip), then the rest in order.
+  `fitText` searches size on overset, the only measure the SDK gives: the wordmark (display face at its
+  heaviest, so the measure stops it, not the height) and the figure fill their slots. The drop cap is
+  N body lines tall with the opening words in their own frame beside it; body pours balanced across
+  `columns`. A face the spec names and Affinity lacks is a `warn:` finding (`TK.MISSING`).
+- **What the score reads.** Strokes inside drawn art are tagged `art` and left out of the frames (the
+  field is the frame). INSPECT uses the block grid for the live area. New roles join G (grid), H (`drawn`
+  and `figure` can lead) and the overlap check. `blockRules` (spec-lint, per page): type sizes under
+  `minScaleStep` (1.2x) apart (H), each block of type against the ground it sits on — the picture's field
+  when over one — at 7:1 body/deck, 4.5:1 labels, 3:1 display (C), a `crosses` with no declared break (G).
+  Line length 35-75 characters from column width and body size (T, `measureMin`/`measureMax`).
+- **Not automatic on block pages:** re-archetype variants rearrange a type's default arrangement, so a page
+  built from its spec is left to the designer (`stopped: "no-fix"` with its cause).
+- **Verified live (2026-10-07, Affinity 3.3).** The fixture `cli-shim/fixtures/petrichor.publication.json`
+  (the PETRICHOR reference page as content + spec; copy it to `<workspace>/Magazine/issues/petrichor-fixture/`)
+  builds page 3 from blocks in ~30 s and scores 99, no findings. Not yet verified: a design written by the
+  model with blocks. The pipeline cannot stop after `design.artplan`, and `design.generate` uses the GPU (Phase 7).
+
 ## Skills
 
 `packages/core/src/skills/external-loader.ts` scans, always and unconditionally:

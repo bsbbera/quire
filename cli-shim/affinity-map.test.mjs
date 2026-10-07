@@ -1,7 +1,7 @@
 // node --test cli-shim/affinity-map.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { layoutScript, mapData, onePageScript } from "./affinity.mjs";
+import { blocksOf, figureOf, layoutScript, mapData, notesOf, onePageScript } from "./affinity.mjs";
 
 /** A small issue on the web: a map spread, two tied pages, a closing page. */
 const issue = {
@@ -70,4 +70,31 @@ test("the one-page script tags each frame with its role and honours a variant", 
   assert.match(one, /"variant":"big-deck"/);
   assert.match(one, /R_\("title"\)/);
   assert.match(one, /R_\("pull"\)/);
+});
+
+test("a page whose blocks all have grid slots is built from them, after the brand's furniture", () => {
+  const slot = (col, span, row, rows) => ({ col, span, row, rows });
+  const page = { n: 3, type: "feature", title: "The village", deck: "It grows bridges.", body: "In Mawsynram the rain is not weather.",
+    furniture: [{ kind: "pull-number", text: "11,871 mm / year — rain in an average year" },
+      { kind: "sidefact", text: "Wettest months: Jun–Aug" }, { kind: "sidefact", text: "A bridge grows in — 15–30 years" }] };
+  const blocks = [
+    { kind: "drawn", slot: { ...slot(1, 12, 0, 30), bleed: true }, drawn: "contours+rain", seed: 7, text: "Mawsynram" },
+    { kind: "figure", slot: slot(1, 8, 24, 8), crosses: "image-edge" },
+    { kind: "title", slot: slot(1, 8, 34, 4) }, { kind: "dropcap", slot: slot(1, 1, 39, 3), lines: 3 },
+    { kind: "body", slot: slot(1, 8, 39, 14), columns: 2 }, { kind: "panel", slot: slot(9, 4, 39, 12), text: "Field notes" },
+  ];
+  const withBlocks = { ...issue, series: "Petrichor", design: { spec: { pages: { 3: { layout: "feature", imageSlot: "top", blocks } } },
+    fixed: { blocks: [{ kind: "runhead", slot: slot(1, 12, 0, 1) }] } } };
+  assert.deepEqual(blocksOf(withBlocks, page).map((b) => b.kind), ["runhead", "drawn", "figure", "title", "dropcap", "body", "panel"]);
+  // One prose slot and the page keeps its type's arrangement.
+  const mixed = { ...withBlocks, design: { spec: { pages: { 3: { blocks: [...blocks, { kind: "sidefact", slot: "col-10-12" }] } } } } };
+  assert.deepEqual(blocksOf(mixed, page), []);
+
+  assert.deepEqual(figureOf(page), { value: "11,871", unit: "mm / year", caption: "rain in an average year" });
+  assert.deepEqual(notesOf(page), [{ label: "Wettest months", value: "Jun–Aug" }, { label: "A bridge grows in", value: "15–30 years" }]);
+
+  const script = onePageScript(withBlocks, page, null, {});
+  assert.doesNotThrow(() => new Function(script), "the block page script parses");
+  assert.match(script, /"built"|built: P\.blocks\.length/);
+  assert.match(script, /"brand":"Petrichor"/);
 });

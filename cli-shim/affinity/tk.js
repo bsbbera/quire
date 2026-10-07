@@ -127,11 +127,16 @@
   // Faces the spec asked for, if this machine has them. A named font that is
   // not installed is dropped back to the default rather than thrown, because a
   // missing typeface should cost a typeface and not a whole issue.
+  // Font preflight: a face the spec names and this machine lacks is said, not
+  // swallowed, so the page's findings show what it was set in instead.
+  const MISSING = [];
   if (SPEC && SPEC.type) {
     var have = function (name) {
       if (typeof name !== 'string' || !name.trim()) return null;
-      try { return FontFamily.all.find(function (x) { return x.name === name.trim(); }) ? name.trim() : null; }
-      catch (e) { return null; }
+      var found = false;
+      try { found = !!FontFamily.all.find(function (x) { return x.name === name.trim(); }); } catch (e) {}
+      if (!found) MISSING.push(name.trim());
+      return found ? name.trim() : null;
     };
     var disp = have(SPEC.type.display), bodyFace = have(SPEC.type.text);
     if (disp) { F.disp = disp; FACE.disp = 'Bold'; FACE.dispReg = 'Regular'; FACE.dispIt = 'Italic'; }
@@ -704,7 +709,98 @@
     });
   }
 
+  // ---- the block grid (Phase 5, core page-blocks.ts gridOf) ----------------
+  // Symmetric margins, the spec's columns and baseline. The per-type layouts
+  // above keep the house grid; only a page built from blocks uses this one.
+  function blockGrid() {
+    const g = (SPEC && SPEC.grid) || {};
+    const pos = (v, d) => (typeof v === 'number' && v > 0 ? v : d);
+    const cols = Math.round(pos(g.columns, 12)), gut = pos(g.gutterMm, 4), m = pos(g.marginMm, 14), base = pos(g.baselineMm, 4.7625);
+    const rows = Math.floor((297 - 2 * m - 10) / base);
+    const colw = (210 - 2 * m - (cols - 1) * gut) / cols;
+    return { x0: m, x1: 210 - m, top: m, foot: m + rows * base, cols, gut, colw, base, rows };
+  }
+
+  // The largest size at which runs(size) sits in the box on as few lines as
+  // the box allows: a wordmark across its measure, a figure in its rows.
+  // Overset is the only measure the SDK gives, so it is a search on it.
+  function fitText(P, x, y, w, h, runs, lo, hi, o) {
+    o = o || {};
+    let best = lo;
+    for (let i = 0; i < 9 && hi - lo > 0.5; i++) {
+      const mid = (lo + hi) / 2;
+      const probe = text(P, x, y, w, h, runs(mid), { tag: 'mag-probe', lead: mid * (o.lead || .9), align: o.align });
+      const over = overflows(probe);
+      kill('mag-probe', [P]);
+      if (over) hi = mid; else { best = mid; lo = mid; }
+    }
+    return { size: best, node: text(P, x, y, w, h, runs(best), { tag: o.tag, lead: best * (o.lead || .9), align: o.align }) };
+  }
+
+  // Drawn art: a surveyor's contours of a few hills and slanted rain, as
+  // vectors, seeded so the same page draws the same picture. Lines are cut at
+  // the box: the SDK gives no clipping, so a ring leaving the box is split.
+  function drawn(P, x, y, w, h, o) {
+    o = o || {};
+    let seed = (o.seed || 7) | 0;
+    const rnd = () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    // The field carries the block's role; its strokes are art inside it, not frames of their own.
+    const kind = o.kind || 'contours+rain', tag = o.artTag || o.tag;
+    rect(P, x, y, w, h, { fill: o.field || C.ink, tag: o.tag });
+    const inside = (p) => p[0] >= x && p[0] <= x + w && p[1] >= y && p[1] <= y + h;
+    const cut = (a, b) => {           // where a (inside) -> b (outside) leaves the box
+      let t = 1;
+      if (b[0] < x) t = Math.min(t, (x - a[0]) / (b[0] - a[0]));
+      if (b[0] > x + w) t = Math.min(t, (x + w - a[0]) / (b[0] - a[0]));
+      if (b[1] < y) t = Math.min(t, (y - a[1]) / (b[1] - a[1]));
+      if (b[1] > y + h) t = Math.min(t, (y + h - a[1]) / (b[1] - a[1]));
+      return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+    };
+    const stroke = (pts, colour, alpha, weight) => {
+      let run = [];
+      const flush = () => { if (run.length > 2) smooth(P, run, { stroke: colour, strokeAlpha: alpha, weight, tag }); run = []; };
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i], prev = pts[i - 1];
+        if (inside(p)) { if (!run.length && prev && !inside(prev)) run.push(cut(p, prev)); run.push(p); }
+        else if (run.length) { run.push(cut(prev, p)); flush(); }
+      }
+      flush();
+    };
+    let summit = null;
+    if (kind.indexOf('contours') >= 0) {
+      const hills = [[x + w * .7, y + h * .72, 1], [x + w * .22, y + h * .98, .85], [x + w * 1.02, y + h * .32, .7]];
+      hills.forEach((hl, k) => {
+        const p1 = rnd() * 6.28, p2 = rnd() * 6.28, p3 = rnd() * 6.28, rings = 15 - k * 2;
+        for (let i = 1; i <= rings; i++) {
+          const base = i * 6.2 * hl[2], pts = [];
+          for (let a = 0; a <= 6.2832 + .001; a += .07) {
+            const f = 1 + .10 * Math.sin(3 * a + p1 + i * .13) + .06 * Math.sin(5 * a + p2 - i * .2) + .04 * Math.sin(2 * a + p3);
+            pts.push([hl[0] + Math.cos(a) * base * f * 1.25, hl[1] + Math.sin(a) * base * f * .8]);
+          }
+          const index = i % 5 === 0;
+          stroke(pts, index ? (o.paper || C.bone) : (o.line || C.grey), index ? .42 : .26, index ? .9 : .55);
+        }
+      });
+      summit = { x: hills[0][0], y: hills[0][1] };
+    }
+    if (kind.indexOf('rain') >= 0) {
+      const slant = Math.tan(14 * Math.PI / 180);
+      for (let i = 0; i < (o.drops || 140); i++) {
+        const px = x + rnd() * w, py = y + rnd() * h, len = 4 + rnd() * 9;
+        const a = [px, py], b = [px - len * slant, py + len];
+        if (inside(a) && inside(b)) polyline(P, [a, b], { close: false, stroke: o.paper || C.bone, strokeAlpha: .08 + rnd() * .2, weight: .4 + rnd() * .4, tag });
+      }
+    }
+    if (summit && o.mark) {
+      ring(P, summit.x, summit.y, 6.4, { stroke: o.mark, weight: .85, tag });
+      line(P, summit.x + 4.5, summit.y, summit.x + 16, summit.y, { fill: o.mark, t: .3, tag });
+      if (o.label) label(P, summit.x + 18, summit.y - 3.4, 60, o.label, { color: o.paper || C.bone, size: 6.8, tag });
+    }
+    return summit;
+  }
+
   globalThis.TK = {
+    blockGrid, fitText, drawn, MISSING,
     linkNote, webMap,
     doc, DPI, MM, PT, SPREADS, ROOT, IMG, TEXT, C, F, FACE, ACT, actOf, tint, col, font,
     pg, live, gx, gw, bl, lines, BASE, LINES, Y0, Y1, NCOL, COLW, GUT,

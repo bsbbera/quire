@@ -130,6 +130,22 @@ async function run(script, ms = 300000, { launch = false } = {}) {
 }
 
 /**
+ * The font families Affinity can set, for the design stage to choose from
+ * (font preflight, Phase 5). Read once per shim run; never launches Affinity.
+ */
+let fontList = null;
+export async function fonts() {
+  if (fontList) return { fonts: fontList };
+  if (!(await ssePort())) return { fonts: [], reason: "Affinity is not running" };
+  const out = await run(`(function () {
+  const { FontFamily } = require("/fonts");
+  console.log(JSON.stringify({ fonts: [...new Set(FontFamily.all.map(function (f) { return f.name; }))].sort() }));
+})();`, 60000);
+  if (Array.isArray(out.fonts) && out.fonts.length) fontList = out.fonts;
+  return { fonts: fontList || [] };
+}
+
+/**
  * What Affinity is doing, without making it do anything.
  *
  * Asking used to answer by launching: `run` calls `ensureRunning`, so the
@@ -735,7 +751,45 @@ const FLOW_JS = `
 
 /** One page's layout. The shared helpers are restated because each script is
  *  a fresh context — there is nowhere to keep them between calls. */
+const BLOCK_KINDS = ["image", "drawn", "figure", "title", "deck", "kicker", "body", "dropcap",
+  "pull", "panel", "runhead", "wordmark", "rule", "folio"];
+const isSlot = (s) => !!s && typeof s === "object" && ["col", "span", "row", "rows"].every((k) => Number.isInteger(s[k]));
+
+/**
+ * The blocks a page is built from (core page-blocks.ts `placedBlocks`): its
+ * own, after the brand's fixed furniture. Empty unless every block of the page
+ * has a grid slot, so a half-structured page keeps its type's arrangement.
+ */
+export function blocksOf(issue, page) {
+  const own = issue.design?.spec?.pages?.[String(page.n)]?.blocks || [];
+  if (!own.length || !own.every((b) => BLOCK_KINDS.includes(b.kind) && isSlot(b.slot))) return [];
+  const fixed = (issue.design?.fixed?.blocks || []).filter((b) => BLOCK_KINDS.includes(b.kind) && isSlot(b.slot)
+    && !own.some((o) => o.kind === b.kind));
+  return [...fixed, ...own];
+}
+
+/** "11,871 mm / year — rain in an average year" -> value, unit, caption. */
+export function figureOf(page) {
+  const f = (page.furniture || []).find((x) => x.kind === "pull-number");
+  if (!f) return null;
+  const m = /^\s*(\S*\d[\d.,%]*)\s*(.*)$/.exec(f.text);
+  if (!m) return { value: f.text, unit: "", caption: "" };
+  const [unit, caption] = m[2].split(/\s+[—–-]\s+/);
+  return { value: m[1], unit: (unit || "").trim(), caption: (caption || "").trim() };
+}
+
+/** Sidefacts as label/value rows: "Rain, average year: 11,871 mm". */
+export function notesOf(page) {
+  return (page.furniture || []).filter((x) => x.kind === "sidefact" || x.kind === "did-you-know").map((x) => {
+    const at = x.text.search(/:\s|\s[—–]\s/);
+    return at > 0
+      ? { label: x.text.slice(0, at).trim(), value: x.text.slice(at).replace(/^[:—–\s]+/, "").trim() }
+      : { label: "", value: x.text.trim() };
+  });
+}
+
 export function onePageScript(issue, page, world, staged) {
+  const section = (issue.sections || []).find((s) => page.n >= s.from && page.n <= s.to);
   const p = {
     n: page.n, type: page.type, density: page.density, section: page.section,
     title: page.title || "", deck: page.deck || "", items: bodyItems(page.body),
@@ -750,6 +804,13 @@ export function onePageScript(issue, page, world, staged) {
       && (issue.pages || []).some((q) => q.n === page.n + 1 && q.type === "map"),
     mapRight: page.type === "map" && page.n % 2 === 1
       && (issue.pages || []).some((q) => q.n === page.n - 1 && q.type === "map"),
+    // Built from the spec when it says how (Phase 5); otherwise by type, below.
+    blocks: blocksOf(issue, page),
+    brand: issue.series || "", issueTitle: issue.title || "",
+    sectionLabel: section?.label || "",
+    figure: figureOf(page), notes: notesOf(page),
+    scale: issue.design?.spec?.type?.scale || [],
+    accent: issue.design?.spec?.palette?.accent || null,
   };
 
   return `(function () {
@@ -789,8 +850,146 @@ export function onePageScript(issue, page, world, staged) {
   }
 
   var L = T.live(P.n);
+  T.MISSING.forEach(function (f) { log.push("font " + f + " is not installed; set in the house face"); });
+  var BUILT = null;
 
-  if (P.type === "map") {
+  // ---- built from blocks (Phase 5, core page-blocks.ts) -------------------
+  function blockPage() {
+    var G = T.blockGrid();
+    var ACC = P.accent || FIELD;
+    var HEX = { ink: INK, paper: PAPER, accent: ACC, field: FIELD };
+    var PT2MM = 25.4 / 72, BODY = 9.5, LEAD = 13.5 * PT2MM;
+    function box(s) {
+      var x = G.x0 + (s.col - 1) * (G.colw + G.gut), w = s.span * G.colw + (s.span - 1) * G.gut;
+      var y = G.top + s.row * G.base, h = s.rows * G.base;
+      if (s.bleed) {
+        if (s.col === 1) { w += x; x = 0; }
+        if (s.col + s.span - 1 === G.cols) w = 210 - x;
+        if (s.row === 0) { h += y; y = 0; }
+        if (s.row + s.rows === G.rows) h = 297 - y;
+      }
+      return { x: x, y: y, w: w, h: h };
+    }
+    function meets(a, b) { return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h; }
+    // Same defaults as core sizeOf, so the score checks the sizes that were set.
+    var S = P.scale.filter(function (n) { return n > 0; }).sort(function (a, b) { return b - a; });
+    var TOP = S[0] || 28, MID = S[1] || TOP / 2;
+    function size(b) {
+      if (b.size) return b.size;
+      return b.kind === "title" ? TOP : b.kind === "pull" ? MID
+        : b.kind === "deck" ? Math.max(BODY * 1.2, Math.min(MID * 0.6, BODY * 1.6)) : 7.5;
+    }
+
+    T.rect(P.n, 0, 0, 210, 297, { tag: R_("ground"), fill: PAPER });
+    var pics = [];
+    // Pictures first: everything else is set over or beside them.
+    P.blocks.forEach(function (b) {
+      if (b.kind !== "image" && b.kind !== "drawn") return;
+      var r = box(b.slot); pics.push(r);
+      if (b.kind === "drawn") {
+        T.drawn(P.n, r.x, r.y, r.w, r.h, { kind: b.drawn, seed: b.seed, field: FIELD, line: C.grey, paper: PAPER,
+          mark: ACC, label: b.text || "", tag: R_("drawn"), artTag: R_("art") });
+      } else if (P.image) {
+        T.img(P.n, r.x, r.y, r.w, r.h, P.image, { tag: R_("image"), contain: !b.slot.bleed });
+      } else {
+        T.ph(P.n, r.x, r.y, r.w, r.h, "p" + P.n, (P.treatment || ""), { tag: R_("image"), accent: ACC });
+      }
+    });
+    function onPic(r) { return pics.some(function (q) { return meets(q, r); }); }
+    function colour(b, r, fallback) {
+      return HEX[b.color] || (fallback ? HEX[fallback] : onPic(r) ? PAPER : INK);
+    }
+
+    var dropcap = P.blocks.find(function (b) { return b.kind === "dropcap"; });
+    P.blocks.forEach(function (b) {
+      var r = box(b.slot);
+      if (b.kind === "title" && P.title) {
+        var ts = size(b), runs = function (s) { return [{ t: P.title, fam: F.disp, face: FACE.dispReg, size: s, color: colour(b, r) }]; };
+        // Set at its size, smaller only if the slot cannot hold it.
+        var probe = T.text(P.n, r.x, r.y, r.w, r.h, runs(ts), { tag: "mag-probe", lead: ts });
+        var over = T.overflows(probe); T.kill("mag-probe", [P.n]);
+        if (over) T.fitText(P.n, r.x, r.y, r.w, r.h, runs, ts * 0.5, ts, { tag: R_("title"), lead: 1.0 });
+        else T.text(P.n, r.x, r.y, r.w, r.h, runs(ts), { tag: R_("title"), lead: ts });
+      } else if (b.kind === "deck" && P.deck) {
+        var ds = size(b);
+        T.vr(P.n, r.x, r.y, r.h, { fill: ACC, t: .6, tag: R_("rule") });
+        T.text(P.n, r.x + 4, r.y, r.w - 4, r.h,
+          [{ t: P.deck, fam: F.body, ital: true, size: ds, color: colour(b, r) }], { tag: R_("deck"), lead: ds * 1.35 });
+      } else if (b.kind === "kicker") {
+        var kt = b.text || [P.type, P.sectionLabel].filter(Boolean).join(" · ");
+        T.label(P.n, r.x, r.y, r.w, kt, { size: size(b), color: colour(b, r), tag: R_("kicker"), track: .16, h: r.h });
+      } else if (b.kind === "runhead") {
+        var rc = colour(b, r);
+        T.label(P.n, r.x, r.y, r.w * .6, [P.brand, P.issueTitle].filter(Boolean).join(" — "), { size: 7, color: rc, tag: R_("runhead"), track: .14, h: r.h - .8 });
+        if (P.sectionLabel) T.label(P.n, r.x + r.w * .6, r.y, r.w * .4, P.sectionLabel, { size: 7, color: rc, align: "Right", tag: R_("runhead"), track: .14, h: r.h - .8 });
+        T.hr(P.n, r.x, r.y + r.h - .5, r.w, { fill: rc, alpha: .45, t: .25, tag: R_("rule") });
+      } else if (b.kind === "wordmark" && P.brand) {
+        // The display face at its heaviest: wide enough that the measure, not
+        // the slot's height, is what stops it - a wordmark spans its slot.
+        T.fitText(P.n, r.x, r.y, r.w, r.h, function (s) {
+          return [{ t: P.brand.toUpperCase(), fam: F.disp, face: FACE.disp, size: s, color: colour(b, r) }];
+        }, 12, r.h / PT2MM * 1.4, { tag: R_("wordmark"), lead: .82 });
+      } else if (b.kind === "figure" && P.figure) {
+        var fc = colour(b, r, "accent");
+        T.fitText(P.n, r.x, r.y, r.w, r.h, function (s) {
+          return [{ t: P.figure.value, fam: F.disp, face: FACE.dispReg, size: s, color: fc }];
+        }, 24, r.h / PT2MM * 1.45, { tag: R_("figure"), lead: .8 });
+        // The unit on the line under the figure's slot.
+        if (P.figure.unit) T.label(P.n, r.x, r.y + r.h + 1, r.w, P.figure.unit, { size: 7.5, color: INK, tag: R_("kicker"), track: .14 });
+      } else if (b.kind === "pull" && P.pull) {
+        var ps = size(b);
+        T.hr(P.n, r.x, r.y, r.w, { fill: INK, t: .25, tag: R_("rule") });
+        T.text(P.n, r.x, r.y + 3, r.w, r.h - 6,
+          [{ t: "\u201C" + P.pull + "\u201D", fam: F.disp, face: FACE.dispReg, size: ps, color: colour(b, r, "field") }],
+          { tag: R_("pull"), lead: ps * 1.15 });
+        T.hr(P.n, r.x, r.y + r.h, r.w, { fill: INK, t: .25, tag: R_("rule") });
+      } else if (b.kind === "panel" && P.notes.length) {
+        T.rect(P.n, r.x, r.y, r.w, r.h, { fill: FIELD, tag: R_("panel") });
+        var py = r.y + 5, pw = r.w - 9;
+        T.label(P.n, r.x + 4.5, py, pw, b.text || "Notes", { size: 7, color: ACC, tag: R_("notes"), track: .16 });
+        py += 8;
+        for (var i = 0; i < P.notes.length && py < r.y + r.h - 12; i++) {
+          var nt = P.notes[i];
+          if (nt.label) { T.label(P.n, r.x + 4.5, py, pw, nt.label, { size: 6.2, color: PAPER, tag: R_("notes"), track: .12, h: 4.4 }); py += 5; }
+          T.text(P.n, r.x + 4.5, py, pw, 9, [{ t: nt.value, fam: F.disp, face: FACE.dispReg, size: 14, color: PAPER }], { tag: R_("notes"), lead: 15 });
+          py += 9;
+          if (i < P.notes.length - 1) { T.hr(P.n, r.x + 4.5, py, pw, { fill: PAPER, alpha: .3, t: .25, tag: R_("rule") }); py += 3.5; }
+        }
+      } else if (b.kind === "rule") {
+        T.hr(P.n, r.x, r.y, r.w, { fill: colour(b, r), t: .25, tag: R_("rule") });
+      } else if (b.kind === "body") {
+        var cols = b.columns || (r.w > 120 ? 2 : 1);
+        var cw = cols === 2 ? (r.w - G.gut) / 2 : r.w;
+        var items = P.items.slice();
+        CTX.measure = { chars: Math.round(cw / (BODY * PT2MM * 0.47)) };
+        var tops = [r.y, r.y];
+        if (dropcap && items.length && items[0].k !== "h") {
+          // The cap stands in N body lines; the words beside it are their own frame.
+          var n = dropcap.lines || 3, capMm = ((n - 1) * LEAD + 0.7 * BODY * PT2MM) / 0.7, capW = capMm * 0.78;
+          var letter = items[0].t.charAt(0);
+          items[0] = Object.assign({}, items[0], { t: items[0].t.slice(1) });
+          T.text(P.n, r.x, r.y - LEAD * 0.18, capW, n * LEAD, [{ t: letter, fam: F.disp, face: FACE.dispReg, size: capMm / PT2MM, color: HEX[dropcap.color] || ACC }],
+            { tag: R_("dropcap"), lead: capMm / PT2MM * 0.8 });
+          var k = fit(r.x + capW + 1.2, r.y, cw - capW - 1.2, n * LEAD, items);
+          place(r.x + capW + 1.2, r.y, cw - capW - 1.2, n * LEAD, items.slice(0, k));
+          items = items.slice(k);
+          tops[0] = r.y + n * LEAD;
+        }
+        if (cols === 2) pourBalanced([r.x, r.x + cw + G.gut], tops, cw, r.y + r.h, items);
+        else {
+          var rest = pour(r.x, tops[0], cw, r.y + r.h - tops[0], items);
+          CTX.cols = { words: [P.items.length - rest.length], overset: rest.length };
+          if (rest.length) log.push(rest.length + " words overset");
+        }
+      }
+    });
+    BUILT = { x0: G.x0, x1: G.x1, top: G.top, foot: G.foot, col: G.colw, gut: G.gut, ncol: G.cols };
+    folio();
+  }
+
+  if (P.blocks.length) {
+    blockPage();
+  } else if (P.type === "map") {
     // The right half of a two-page map is drawn with its left; it keeps its folio.
     if (!P.mapRight) {
       T.rect(P.n, 0, 0, P.spread ? 420 : 210, 297, { tag: R_("ground"), fill: PAPER });
@@ -879,7 +1078,8 @@ export function onePageScript(issue, page, world, staged) {
     folio();
   }
 
-  globalThis.TK_RESULT = { page: P.n, warnings: log, cols: CTX.cols || null, variant: P.variant };
+  globalThis.TK_RESULT = { page: P.n, warnings: log, cols: CTX.cols || null, variant: P.variant,
+    built: P.blocks.length ? "blocks" : "type", grid: BUILT, measure: CTX.measure || null };
 })();`;
 }
 
@@ -896,7 +1096,9 @@ export function onePageScript(issue, page, world, staged) {
 const INSPECT = (n) => `(function () {
   const T = globalThis.TK;
   const R = globalThis.TK_RESULT || { page: ${n}, warnings: [] };
-  const g = T.pg(${n}), L = T.live(${n}), MM = T.MM;
+  const g = T.pg(${n}), MM = T.MM;
+  // A page built from blocks is on the spec's grid, not the house one.
+  const L = R.grid ? { x0: R.grid.x0, x1: R.grid.x1 } : T.live(${n});
   const FULL = ${JSON.stringify(["cover", "plate", "photo-spread"])};
   const findings = [];
 
@@ -927,10 +1129,12 @@ const INSPECT = (n) => `(function () {
 
     // The geometry the score reads for grid and hierarchy (page-score.ts G, H).
     var d = node.userDescription, role = d.indexOf(":") > 0 ? d.slice(d.indexOf(":") + 1) : "";
+    // Strokes inside drawn art: the field they sit in is the frame.
+    if (role === "art") return;
     // A tagged frame says what it is. lineBox alone is not enough: on 3.3 a
     // plain rectangle has one too, and the paper ground "overlapped" every frame.
     var isText = false;
-    if (role) isText = ["title", "deck", "body", "pull", "folio"].indexOf(role) >= 0;
+    if (role) isText = ["title", "deck", "body", "pull", "folio", "figure", "kicker", "runhead", "wordmark", "notes", "dropcap"].indexOf(role) >= 0;
     else try { isText = !!node.lineBox; } catch (e) {}
     frames.push({ role: role, text: isText, x: r1(b.x), y: r1(b.y), w: r1(b.w), h: r1(b.h) });
 
@@ -958,7 +1162,7 @@ const INSPECT = (n) => `(function () {
 
   R.findings = findings;
   R.frames = frames;
-  R.grid = { x0: L.x0, x1: L.x1, top: T.bl(0), foot: 266, col: T.COLW, gut: T.GUT, ncol: T.NCOL };
+  if (!R.grid) R.grid = { x0: L.x0, x1: L.x1, top: T.bl(0), foot: 266, col: T.COLW, gut: T.GUT, ncol: T.NCOL };
   R.errors = findings.filter(function (f) { return f.level === "error"; }).length;
   R.nodes = nodes.length;
   console.log(JSON.stringify(R));

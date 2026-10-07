@@ -130,9 +130,13 @@ Done when: a bad page is redesigned by its cause before the user sees it.
 
 ## Phase 5 — Pages built from the spec (25, 07, 08, design-skill §12b)
 
-Planned 2026-10-07 (`25-pages-from-the-spec.md`). Quire drives Affinity, but
-`onePageScript` draws a fixed arrangement per page type: the spec's blocks,
-fonts and grid never reach it. This makes the spec the page.
+**Built 2026-10-07, one live check open.** All six steps are in (ARCHITECTURE.md "Pages built from
+blocks"). Live on Affinity 3.3: the PETRICHOR fixture builds from its spec alone and scores 99 with no
+findings; font preflight lists 219 installed families. Open: a design the model writes with blocks has not
+been run, because the pipeline cannot stop after `design.artplan` and the next step uses the GPU;
+moved to Phase 7 step 7.
+Deviations from the plan: figure and notes read the existing `pull-number`/`sidefact` furniture instead of
+new fields; legacy prose blocks are kept unplaced rather than mapped; variants stay with type-built pages.
 
 1. Closed block vocabulary (`figure`, `dropcap`, `panel`, `kicker`, `runhead`,
    `wordmark`, `drawn`, …) with grid slots; `figure` and `notes` in the page
@@ -176,6 +180,9 @@ powered off twice on Qwen reference encoding.
 4. Cast refs into the render seam (IPAdapter / native refs); inpaint + Tweak.
 5. Engine settings + workflow/LoRA manager UI; upscale-2x.
 6. Later: Openverse/Commons photo search, personal world LoRA.
+
+7. Carried from Phase 5: once generation is safe, run the design stage on a copy of
+   Photography and check that p.8 builds from the blocks the model wrote (hero, figure, panel).
 
 Done when: generate → extract → edit → stage runs over `/image/render` and a
 storybook protagonist stays the same across spreads.

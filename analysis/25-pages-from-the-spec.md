@@ -2,6 +2,11 @@
 
 > Planned 2026-10-07. Phase 5 of `00-overview.md`, between the page score
 > (Phase 4, closed) and the approval UI (Phase 6), which shows these renders.
+>
+> **Status 2026-10-07: built; fixture verified live (score 99).** See
+> `00-overview.md` Phase 5 for what is open and where the build differs from
+> the steps below. Correction to "Why": `tk.js` already took the spec's
+> palette and its fonts when installed; the grid and the blocks were the gaps.
 
 ## Why
 
