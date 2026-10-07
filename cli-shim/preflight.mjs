@@ -44,14 +44,15 @@ async function quireCheck() {
         "npm i -g @actalk/quire — Studio and the writing pipeline both call it.");
 }
 
-/** At least one agent CLI must exist; the shim serves whichever are present. */
-async function agentCheck() {
-  const names = ["claude", "codex", "devin", "antigravity"];
-  const found = (await Promise.all(names.map(async (n) => ((await which(n)) ? n : null)))).filter(Boolean);
+/**
+ * At least one agent CLI must exist; the shim serves whichever are present.
+ * `found` and `known` come from the shim, which reads them from providers.json.
+ */
+function agentCheck(found = [], known = []) {
   return found.length
     ? ok("agents", "Model providers", found.join(", "))
     : bad("agents", "Model providers", "no agent CLI found",
-        "Install at least one of: claude, codex, devin, antigravity. "
+        `Install at least one of: ${known.join(", ") || "an agent CLI"}. `
         + "The shim exposes their models; with none, nothing can be written.");
 }
 
@@ -120,11 +121,11 @@ function mcpCheck(servers) {
 }
 
 /** Run every check. Each source is passed in so this file stays side-effect free. */
-export async function doctor({ comfyStatus, affinityStatus, servers, magRoot }) {
+export async function doctor({ comfyStatus, affinityStatus, servers, magRoot, agents = [], knownAgents = [] }) {
   const checks = [
     await nodeCheck(),
     await quireCheck(),
-    await agentCheck(),
+    agentCheck(agents, knownAgents),
     writableCheck(magRoot),
     comfyCheck(comfyStatus),
     comfyModelCheck(comfyStatus),

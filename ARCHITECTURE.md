@@ -127,6 +127,87 @@ start heals itself instead of reporting 33 models for five minutes.
 
 `GET /v1/status?fresh=1` forces a rescan.
 
+**Which CLIs exist is data (2026-10-07).** `cli-shim/server.mjs` `loadAgents()` reads the cli
+entries of core `providers.json` (staged copy first, source checkout second), then
+`~/.quire/providers.json` field by field. An entry carries `protocol` (acp · plain ·
+claude-json · codex-json), `bins` (`~` and `%VAR%` expand, `*` globs), `acpArgs`,
+`fallback`. The shim agent id is the catalogue id without `Cli`. `QUIRKS` holds only
+what cannot be data (claude/codex/devin/agy sign-in checks, model listings, args); a
+CLI without quirks runs on its protocol, so an ACP agent is one JSON entry. Core builds
+one endpoint per cli entry (`cliEndpoints()` in `providers/endpoints/cliAgents.ts`),
+and preflight lists what the shim detected. The last live list per CLI is kept in
+`~/.quire/cli-models.json` and served before the static fallback on a cold start.
+One ACP process per run is kept on purpose: a shared one would change how Stop works.
+
+**Claude Code ignores the shim env filter for `~/.claude/settings.json` (2026-10-07).** That file
+can carry an `env` block (here `ANTHROPIC_BASE_URL=http://localhost:11434`, Ollama), which the CLI
+applies itself, so a run hung retrying a dead URL and `claude auth status` reported signed in
+on that file's key. `CLAUDE_SETTINGS` in `cli-shim/server.mjs` is passed as `--settings` (before the
+subcommand for `auth status`) and outranks the user file, so the shim's claude uses the user's own login.
+
+## pi 1.0
+
+`@earendil-works/pi-ai` + `pi-agent-core` 1.0.4 (was `@mariozechner` 0.67.1), and
+`typebox` 1 in place of `@sinclair/typebox`. What changed under us:
+- The old global API (`getModel`, `getEnvApiKey`, `streamSimple`, `completeSimple`) lives
+  on `@earendil-works/pi-ai/compat`, which pi says will be removed. `provider.ts`,
+  `pi-stream.ts`, `agent-session.ts`, `service-resolver.ts` import from it; tests that
+  mock pi must mock `/compat`. Moving to `createModels()` is the upgrade path.
+- The agent loop hands a stream function a transcript whose **system messages carry
+  the prompt and the tool declarations** (`toolsAdded`), not `context.systemPrompt` /
+  `context.tools`. `convertAgentMessagesForModel` used to drop them and every chat turn
+  would have gone out with no prompt and no tools; it now passes system messages
+  through (test: "hands the model its system prompt and its tools").
+- `Static<any>` is `unknown` in typebox 1; tools typed at their own `execute` use
+  `LooseAgentTool` (agent-tools.ts).
+
+## Connect via (Anthropic, OpenAI)
+
+`core/src/llm/subscription.ts`. Per provider, `~/.quire/connect-via.json`: `api-key`
+(default), `subscription` (Claude Pro/Max, ChatGPT, signed in through pi's OAuth; tokens
+in `~/.quire/credentials.json`), or `cli` (the installed Claude Code / Codex through
+the shim, as `claude/<opus|sonnet|haiku>` or `codex/<id>`). Applied in `viaStream`,
+the one transport both `chatCompletion` and the agent stream use, and only for
+requests to api.anthropic.com / api.openai.com, so a gateway pi calls "openai" is never
+sent to a ChatGPT login. A subscription or CLI connection needs no key:
+`getServiceApiKey` returns `SUBSCRIPTION_KEY`, which `viaStream` never sends.
+Studio: `PUT /api/v1/connections/:id/via`, sign-in `POST|GET|DELETE
+/api/v1/connections/:id/login` + `POST .../login/code` (`api/subscription-login.ts`);
+the Connections row has a Connect-via select and a Sign in button.
+
+## Presets (who uses what without a pin)
+
+`core/src/llm/model-presets.ts`: a card per connected model (reasoning, speed, cost,
+context, vision, web: from pi's facts where known, the name otherwise), `AGENT_NEEDS`
+per agent, and `pickForAgent` for Best · Balanced · Frugal. `resolveAgentRoute` is
+pin → preset → default, with a `reason` the routing page shows. `quire.json
+modelPreset`; absent routes exactly as before. Studio builds the cards in the routing
+snapshot only when a preset is set (listing models is a probe) and hands
+`modelPreset` to every run; the runner carries a preset choice out like a service pin.
+A production's own pins live in its `pipeline.json` `modelOverrides` (`PUT
+/api/v1/productions/:type/:id/model-overrides`) and win over the project's.
+
+## Run telemetry and the budget
+
+`core/src/llm/telemetry.ts`. `runStage` runs each unit inside `withRunMeter(runDir)`
+(AsyncLocalStorage); every call inside it is appended to `<runDir>/_telemetry/llm.jsonl`
+by `chatCompletion` (pipelines) or the stream guard (agent turns), with the agent
+named by `asAgent` (BaseAgent, publication stages). Cost is list price × tokens; CLI
+and local calls cost $0 but count tokens. `quire.json budget {perRunUsd?,
+perRunTokens?}` is checked before each unit against the in-memory total; over it, the
+run is paused (idle, `run:cancelled` with the reason as its note, `stage:blocked`
+emitted), not failed, so resume picks up the unit. The ceiling is between units: one
+unit can overshoot by its own cost. The Run screen shows spend and "who wrote it"
+(agent · model pills) from `GET /api/v1/productions/:type/:id/pipeline` (`spend`,
+`budget`, `who`); the routing page sets the preset and the ceiling.
+
+
+**Per-production pins (2026-10-07).** The Run screen's "Models for this production" panel
+(`pages/RunPins.tsx`) writes `PUT /productions/:type/:id/model-overrides`; the pins live in the
+run's pipeline state and win over the project's for that run only. The run meter is cached in
+memory per run for the life of the process (`telemetry.ts` `meters`): it reads the file once, so a
+telemetry file edited from outside while Studio runs is not seen until restart.
+
 ## Skills
 
 `packages/core/src/skills/external-loader.ts` scans, always and unconditionally:

@@ -261,32 +261,36 @@ function acp(bin, args, handler) {
 const agentServers = (agentId) => launchServers(agentId, () => mcp.servers());
 const acpServers = (agentId) => launchServersAcp(agentId, () => mcp.servers());
 
-const DEVIN_ACP_ARGS = ["--permission-mode", "dangerous", "--respect-workspace-trust", "false", "acp"];
-
 // ------------------------------------------------------------------- adapters
-const AGENTS = [
-  {
-    id: "claude", bins: ["claude", "openclaude"], label: "Claude Code",
+/*
+ * Which CLIs exist is data: the cli entries of core's providers.json, then
+ * ~/.quire/providers.json over them, field by field (20 §6 step 1). What stays
+ * here is what cannot be data: a known CLI's own sign-in check, model listing
+ * and argument quirks. A CLI with no quirks runs on its protocol alone, so an
+ * ACP agent is added by one JSON entry and no code.
+ */
+const CLAUDE_SETTINGS = JSON.stringify({ env: { ANTHROPIC_BASE_URL: "https://api.anthropic.com", ANTHROPIC_API_KEY: "" } });
+const QUIRKS = {
+  claude: {
     // Signed in, asked of the CLI itself rather than guessed from a config
     // file. `claude auth status` answers as JSON on stdout.
-    auth: (bin) => { try { return JSON.parse(run(bin, ["auth", "status"], 12000)).loggedIn === true; } catch { return null; } },
-    // `claude` has no list-models subcommand; the aliases already track latest.
+    auth: (bin) => { try { return JSON.parse(run(bin, ["--settings", CLAUDE_SETTINGS, "auth", "status"], 12000)).loggedIn === true; } catch { return null; } },
+    // `claude` has no list-models subcommand; the aliases already track latest,
+    // and they are the fallback too: unlike a pinned id they cannot go stale.
     models: () => ["default", "opus", "sonnet", "haiku"],
-    // Same four, kept as the fallback too: they are aliases Anthropic keeps
-    // pointing at the current model, so unlike a pinned id they cannot go
-    // stale. Without this a failed probe left the picker offering "default".
-    fallback: ["default", "opus", "sonnet", "haiku"],
     args: (m) => ["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
+      // The user settings.json may point ANTHROPIC_BASE_URL elsewhere (Ollama on
+      // :11434 here); the CLI reads that file itself, past the env filter above.
+      // This flag outranks it, so the shim talks to Anthropic with the user login.
+      "--settings", CLAUDE_SETTINGS,
       ...(m && m !== "default" ? ["--model", m] : []), "--permission-mode", "bypassPermissions",
       // --strict-mcp-config so the user's own configured servers do not load
       // either: for this turn the CLI is a language model and nothing else.
       // Anything it should be able to reach arrives in the host's tool table.
       "--strict-mcp-config", "--mcp-config",
       JSON.stringify({ mcpServers: agentServers("claude-code") })],
-    stream: "claude-json",
   },
-  {
-    id: "codex", bins: ["codex", join(process.env.LOCALAPPDATA || "", "OpenAI/Codex/bin/*/codex.exe")], label: "Codex",
+  codex: {
     // codex prints "Logged in using ChatGPT" on STDERR, which run() discards,
     // so this one is read from the exit code instead of the output.
     auth: (bin) => okExit(bin, ["login", "status"], 12000),
@@ -296,7 +300,6 @@ const AGENTS = [
           .filter((m) => m.visibility !== "hidden").map((m) => m.slug).filter(Boolean);
       } catch { return []; }
     },
-    fallback: ["default", "gpt-5.6-terra", "gpt-5.3-codex", "gpt-5-codex", "gpt-5"],
     args: (m) => ["exec", "--json", "--skip-git-repo-check", "--sandbox", "danger-full-access",
       ...(m && m !== "default" ? ["-m", m] : []),
       // codex exec has no --mcp-config and no strict mode: servers in the
@@ -307,41 +310,21 @@ const AGENTS = [
         "-c", `mcp_servers.${n}.command=${JSON.stringify(sp.command)}`,
         "-c", `mcp_servers.${n}.args=[${(sp.args || []).map((a) => JSON.stringify(a)).join(",")}]`,
       ])],
-    stream: "codex-json",
   },
-  {
-    id: "devin", bins: ["devin", join(HOME, "AppData/Local/devin/cli/bin/devin.exe")], label: "Devin",
+  devin: {
     auth: (bin) => /logged in/i.test(run(bin, ["auth", "status"], 12000)),
-    // Devin's full catalog only exists over ACP: initialize -> session/new -> result.models
-    models: async (bin) => {
-      try {
-        const list = await acp(bin, DEVIN_ACP_ARGS, null);
-        return list;
-      } catch { return []; }
-    },
-    fallback: ["default", "adaptive", "swe", "opus", "sonnet", "codex", "gpt", "gemini"],
-    stream: "acp",
   },
-  {
-    id: "antigravity", bins: ["agy", join(HOME, "AppData/Local/agy/bin/agy.exe")], label: "Antigravity",
+  antigravity: {
     // agy has no auth subcommand at all. Rather than invent a probe, this one
     // reports unknown and is judged by whether `agy models` answers.
     auth: null,
-    // `agy models` prints "<slug>\tLabel" lines. Open Design mirrors this list
-    // statically because it hangs on an stdin pipe that never closes — but with
-    // stdin ignored (as run() does) it returns fine, so fetch it live and let
-    // the static copy below be the fallback.
+    // `agy models` prints "<slug>\tLabel" lines. With stdin ignored (as run()
+    // does) it returns fine, so fetch it live; the catalogue's list is the fallback.
     models: (bin) => {
       const ids = run(bin, ["models"], 30000).split(/\r?\n/)
         .filter((l) => l.includes("\t")).map((l) => l.split("\t")[0].trim()).filter(Boolean);
       return ids.length ? ["default", ...ids] : [];
     },
-    fallback: ["default",
-      "gemini-3.7-flash-high", "gemini-3.7-flash-medium", "gemini-3.7-flash-low",
-      "gemini-3.6-flash-high", "gemini-3.6-flash-medium", "gemini-3.6-flash-low",
-      "gemini-3.5-flash-high", "gemini-3.5-flash-medium", "gemini-3.5-flash-low",
-      "gemini-3.1-pro-high", "gemini-3.1-pro-low",
-      "claude-sonnet-4-6", "claude-opus-4-6-thinking", "gpt-oss-120b-medium"],
     // agy takes a literal "-" as the prompt and drops the pipe, so pass no
     // prompt flag at all: bare stdin. Flags must precede any positional arg.
     // agy gives up after 5 minutes by default and exits 0 with nothing. Its
@@ -349,9 +332,42 @@ const AGENTS = [
     // slow turn can finish and a stuck one is still reported by agy itself.
     args: (m) => [...(m && m !== "default" ? ["--model", m] : []), "--dangerously-skip-permissions",
       "--print-timeout", `${Math.max(1, Math.floor(RUN_IDLE_MS / 60_000) - 1)}m`],
-    stream: "plain",
   },
-];
+};
+
+// The staged engine's copy first; the source checkout's when run unstaged.
+const CATALOGUE = [
+  join(HERE, "engine/node_modules/@actalk/quire-core/providers.json"),
+  join(HERE, "../vendor/studio/packages/core/providers.json"),
+].find((f) => existsSync(f));
+const readCatalogue = (file) => {
+  try { const p = JSON.parse(readFileSync(file, "utf-8")).providers; return Array.isArray(p) ? p : []; } catch { return []; }
+};
+const expandPath = (p) => p.replace(/^~(?=[\/])/, HOME).replace(/%([A-Z_]+)%/gi, (_, v) => process.env[v] || "");
+
+/** Every runnable CLI the catalogue names. Read on each detect sweep, so an edit needs no restart. */
+export function loadAgents() {
+  const byId = new Map(readCatalogue(CATALOGUE).map((p) => [p.id, p]));
+  for (const p of readCatalogue(join(HOME, ".quire", "providers.json"))) byId.set(p.id, { ...byId.get(p.id), ...p });
+  return [...byId.values()]
+    .filter((p) => p?.kind === "cli" && /Cli$/.test(p.id) && p.protocol && Array.isArray(p.bins) && p.bins.length)
+    .map((p) => {
+      const id = p.id.replace(/Cli$/, "");
+      const q = QUIRKS[id] || {};
+      const acpArgs = p.acpArgs || ["acp"];
+      return {
+        id, label: p.label, bins: p.bins.map(expandPath), fallback: p.fallback || ["default"],
+        stream: p.protocol, acpArgs,
+        auth: q.auth ?? null,
+        // An ACP agent's catalogue only exists over a session: initialize ->
+        // session/new -> result.models. Any ACP CLI lists models this way.
+        models: q.models || (p.protocol === "acp"
+          ? async (bin) => { try { return await acp(bin, acpArgs, null); } catch { return []; } }
+          : () => []),
+        args: q.args || (() => []),
+      };
+    });
+}
 
 const resolveBin = (a) => {
   for (const b of a.bins) {
@@ -368,7 +384,7 @@ let binCache = { at: 0, list: [] };
 const detect = () => { // 30s cache: install / uninstall / update picked up with no restart
   if (Date.now() - binCache.at < 30000) return binCache.list;
   const list = [];
-  for (const a of AGENTS) {
+  for (const a of loadAgents()) {
     const bin = resolveBin(a);
     if (!bin) continue;
     const prev = binCache.list.find((p) => p.id === a.id);
@@ -402,6 +418,19 @@ const MODELS_TTL = 300000;
 // listing that fell back, so the next request goes and asks again.
 const FALLBACK_TTL = 15000;
 
+/*
+ * The last live catalogue per CLI, kept across restarts (~/.quire/cli-models.json).
+ *
+ * An ACP catalogue only exists over a session, and the first session after a
+ * restart is slow, so a cold shim used to serve the static fallback. Serving
+ * the last real list instead is what 20 §6 step 6 asked of session reuse;
+ * ponytail: one process per run is kept, a shared ACP process would change
+ * how Stop works. Revisit if first-run latency, not the list, is the problem.
+ */
+const LIVE_FILE = join(HOME, ".quire", "cli-models.json");
+const lastLive = (() => { try { return JSON.parse(readFileSync(LIVE_FILE, "utf-8")); } catch { return {}; } })();
+const saveLive = () => { try { mkdirSync(dirname(LIVE_FILE), { recursive: true }); writeFileSync(LIVE_FILE, JSON.stringify(lastLive)); } catch { /* a cache */ } };
+
 async function listModels() {
   const agents = detect();
   const key = fingerprint(agents);
@@ -418,7 +447,9 @@ async function listModels() {
     if (!agentState.isEnabled(a.id)) continue;
     let listed = [];
     try { listed = await a.models(a.bin); } catch {}
-    if (!listed.length) { listed = a.fallback || ["default"]; guessed = true; }
+    if (listed.length) lastLive[a.id] = listed;
+    // The last live list beats the static aliases: Devin's 197 models, not 8.
+    else { listed = lastLive[a.id] || a.fallback || ["default"]; guessed = true; }
     // Adapters answer either way: a bare id, or the object an ACP CLI sends
     // with the name it wants shown. Normalising here rather than in each
     // adapter keeps `name` optional — a CLI that has no display name for its
@@ -439,6 +470,7 @@ async function listModels() {
     }
   }
   modelCache = { at: Date.now(), key, data: out, ttl: guessed ? FALLBACK_TTL : MODELS_TTL };
+  saveLive();
   return out;
 }
 
@@ -690,7 +722,7 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
     }
   };
 
-  if (agent.stream === "acp") { // devin
+  if (agent.stream === "acp") {
     let rpc = null, sid = null;
     const sendPrompt = () => rpc(4, "session/prompt",
       { sessionId: sid, prompt: [{ type: "text", text: prompt }] });
@@ -733,7 +765,7 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
       },
     };
     let acpError = null;
-    try { await acp(agent.bin, DEVIN_ACP_ARGS, handler); }
+    try { await acp(agent.bin, agent.acpArgs, handler); }
     catch (e) { acpError = e; }
     finally { stopBeat(); }
     if (run.aborted) return fail("cancelled", "the run was cancelled");
@@ -1022,7 +1054,8 @@ createServer((req, res) => {
       ]);
       let servers = {};
       try { servers = await mcp.servers(); } catch {}
-      const report = await preflight.doctor({ comfyStatus, affinityStatus, servers, magRoot: PUBLICATION_ROOT });
+      const report = await preflight.doctor({ comfyStatus, affinityStatus, servers, magRoot: PUBLICATION_ROOT,
+        agents: detect().map((a) => a.label), knownAgents: loadAgents().map((a) => a.label) });
       /* Whether anything is listening to progress. A Studio that has lost the
          event stream still serves every screen, so the only way to notice is
          to ask. */

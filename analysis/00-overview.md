@@ -76,11 +76,24 @@ per-page audit checkpoint + resume, Audit screen sync, plate label.
    and budget guard (pause with a card at the ceiling).
 4. Agent · model pill on run transcript blocks and job rows; model overrides per
    production in `pipeline.json` (21).
-5. Last, optional: pi `@mariozechner` 0.67.1 → `@earendil-works` 0.85 and native
-   Anthropic/OpenAI behind "connect via"; generic ACP adapter + session reuse.
+5. Pi integration (mandatory, decided 2026-10-06): pi `@mariozechner` 0.67.1 →
+   `@earendil-works` 0.85 and native Anthropic/OpenAI behind "connect via";
+   generic ACP adapter + session reuse.
 
 Done when: a fresh workspace routes every agent without a pin, the run shows
-who wrote what and what it cost, and a ceiling pauses a run.
+who wrote what and what it cost, a ceiling pauses a run, and the engine runs on
+pi 0.85 with native Anthropic/OpenAI and ACP selectable under "connect via".
+
+**Built 2026-10-07, live-tested on dev** (ARCHITECTURE.md "pi 1.0", "Connect via",
+"Presets", "Run telemetry and the budget"). pi went to 1.0.4, not 0.85: 0.87 breaks
+the same way, and 1.0 is the maintained line. Live: a JSON-only ACP CLI connected
+and listed; a chat turn named Quire and its tools (prompt and tools reach the model);
+OpenAI via the Codex CLI answered; subscription sign-in reaches claude.ai and waits
+for the person; Frugal routed with reasons; the Indigo audit (53 calls) was metered
+with agent · model rows. Open: the budget pause is unit-tested only; a subscription
+sign-in has not been completed; per-production pins have an API and no screen; Claude
+Code on this machine fails with "Connection refused" (not this change), and a preset
+can still pick it because a connection test only lists models.
 
 ## Phase 3 — Gates and validators that enforce (19, 18, 08)
 
@@ -157,7 +170,7 @@ World library + Worlds page; Kit library; kit strip on the World card; kit verbs
 
 - SQLite index (14) — `allRuns()` walks the disk; add only when Home is slow.
 - zh prompt extraction (17 §1.2) — language support, not leakage.
-- Tool envelope (17 §4) — only if Phase 2 step 5 needs it.
+- Tool envelope (17 §4) — only if Phase 2 step 5 (pi) needs it.
 - Affinity reflow script (14, 07) — Typst covers reflow.
 
 ## File map
