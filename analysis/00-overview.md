@@ -1,6 +1,6 @@
 # Quire — Execution Plan
 
-> Re-baselined **2026-10-06** against the code (`vendor/studio` @ `74b8f3fd`,
+> Re-planned **2026-10-08** (plan 26). Re-baselined **2026-10-06** against the code (`vendor/studio` @ `74b8f3fd`,
 > `cli-shim`, `desktop`), every claim checked by reading source, not the plans.
 > Source of truth for what exists: `Quire-Dev/ARCHITECTURE.md`. The numbered
 > plan files hold the design detail; this file holds the **order**.
@@ -29,181 +29,70 @@ anachronism pass, Setting card, Series (22). Taste: capture, distill, rules,
 trial, Taste Packs; rules reach book, short, script, storyboard, storybook and
 magazine writers (18). Models: Connections (API · CLI · Local), validated-only
 picker, keys in `~/.quire` (20). UI: guard at 0, tokens, `motion.css`, working
-states (02, 03, 04-ease). Magazine: brand book, connection web, signature pages,
+states (02). Magazine: brand book, connection web, signature pages,
 writing bar, surface mix, personal sources (Markdown + Zotero), recurring (13).
 
-## Phase 1 — Magazine on the shared pipeline (13 C)
+## Closed phases 1–6 (2026-10-06 → 10-07)
 
-**Corrected 2026-10-06 (the first draft of this phase was wrong).** The code
-already does steps 1 and 2: `publicationExecutor(ctx, stage)` in
-`publication-runner.ts` holds `content.plan/write/factcheck/audit`,
-`design.artplan/generate` and `build.export` as executors, and `run()` drives
-them with the shared `runStage` against `pipeline.json` (ARCHITECTURE.md, "The
-magazine runs on the shared pipeline"). The executors are resolved per run,
-not registered at boot, on purpose: a magazine run carries its model call in
-its context. `STAGE_ORDER` survives as the short names routes and the chat
-tool use, not as a second engine. `publication.json` (content) beside
-`pipeline.json` (run state) is two files by design.
+1. **Magazine on the shared pipeline:** Indigo ran research → audit on `runStage`.
+   Its copy gate is held by p14 `readability/over-cap`, yours to rewrite or sign.
+2. **Models:**
+   - pi 1.0.4, Connect via (API · CLI · ACP), presets, telemetry and budget pause,
+     per-production pins.
+   - Yours: Claude Code's sign-in has expired.
+3. **Gates that enforce:** blocking categories, reader personas, golden rules,
+   number rules from taste.
+4. **One page score:** place → render → score → mend by cause (≤ 2).
+5. **Pages built from the spec:** block vocabulary, `T.drawn`, font preflight;
+   the PETRICHOR fixture scores 99.
+6. **Approval UI:**
+   - section board (keep/lock), beauty gate (four verdicts, score card),
+     taste per world
+   - **built and verified, not committed**
+   - also uncommitted: the `design-rules.ts` fix ({rule, why} breaks crashed the
+     design stage).
 
-Evidence it ran: `Magazine/indigo-…/pipeline.json` walked research, plan and
-7 of 16 pages on 2026-10-05, then stopped on a provider quota (429), resumable.
+**Folio test, 2026-10-08:** Quire's first issue end to end (research → design →
+Affinity), using the user publication type `Output/publications/folio.json` and
+drawn vectors only.
+- **Result:** 1 of 5 pages passed.
+- **Faults:** design notes printed on the page, the standfirst over the body,
+  text that doesn't fit its frame, grey covers and too much accent, the slug
+  wordmark.
+- **Underneath:** one hard-coded look, and coordinates written by the model.
 
-What is left:
+That led to plan 26.
 
-1. Finish that run (resume from `write`, stop at `audit`) and read the Run
-   screen, rail card and gates for it.
-2. Run it on to design and build only after you approve the copy gate; art
-   uses the GPU, so Phase 7's safety work comes first.
-3. `de-slop` (`runDeslop`) is the audit with a filter, not a stage; leave it.
+## The plan from here: 26 — one house, many worlds
 
-Done when: one issue runs start → audit on the shared pipeline and the Run
-screen, rail card and gates show it like any other type.
+The brand is a grammar (house book), the art changes per subject (section world),
+the model chooses and code computes, and design is decided before pictures. Detail
+and "Done when" for each phase: `26-design-engine.md`.
 
-**Closed 2026-10-06.** Indigo ran research → plan → write (16/16) →
-fact-check (57 claims) → audit on `runStage`; Run screen, rail card and gates
-checked live. Audit tested on 9 of 16 pages (47 page findings, shown per page
-on the Audit screen after the sync fix); finishing the other 7 is a resume, not
-a test. Copy gate shows, warns "the audit has not finished", and is yours to
-sign off. **Update 2026-10-07:** the audit finished all 16 pages (pipeline history). Indigo then
-walked through the copy gate (a gate signs, it does not stop) into `design.artplan` and shows
-`failed` only because the app was closed mid-stage; resuming runs art generation on the GPU, so it
-waits for Phase 7. The copy gate is held by p14 `readability/over-cap`: yours to rewrite or sign. Fixes made on the way: plain model path for page/audit/revise,
-per-page audit checkpoint + resume, Audit screen sync, plate label.
+| Phase | What | Gate it adds |
+|---|---|---|
+| 7 | House book + style library (absorbs the old world/kit library) | House approved once |
+| 8 | Layout engine: grid systems, pattern library, fitting solver, vector kit, the five folio faults | — |
+| 9 | Design signals from writing + art direction with 2–3 world options | Gate 1: choose a world |
+| 10 | Wireframe proof: Affinity build with placeholders, scored | Gate 2: approve spreads |
+| 11 | Pictures driven by the design (09; GPU safety first) | Regenerate art at the beauty gate |
+| 12 | Learning loop: preferences, exemplars, repetition, read back your Affinity edits | — |
+| 13 | Leftovers (below) | — |
 
-## Phase 2 — Models finished (20, 21, 02)
+## Phase 13 — Leftovers
 
-1. Shim reads `providers.json` (drop the in-code `AGENTS` list).
-2. Model needs per agent + Best · Balanced · Frugal preset; resolver
-   `pin → preset → needs`; Models page shows the reason per row (20 §4).
-3. Telemetry `_telemetry/llm.jsonl` from the usage envelope → cost meter per run
-   and budget guard (pause with a card at the ceiling).
-4. Agent · model pill on run transcript blocks and job rows; model overrides per
-   production in `pipeline.json` (21).
-5. Pi integration (mandatory, decided 2026-10-06): pi `@mariozechner` 0.67.1 →
-   `@earendil-works` 0.85 and native Anthropic/OpenAI behind "connect via";
-   generic ACP adapter + session reuse.
-
-Done when: a fresh workspace routes every agent without a pin, the run shows
-who wrote what and what it cost, a ceiling pauses a run, and the engine runs on
-pi 0.85 with native Anthropic/OpenAI and ACP selectable under "connect via".
-
-**Built 2026-10-07, live-tested on dev** (ARCHITECTURE.md "pi 1.0", "Connect via",
-"Presets", "Run telemetry and the budget"). pi went to 1.0.4, not 0.85: 0.87 breaks
-the same way, and 1.0 is the maintained line. Live: a JSON-only ACP CLI connected
-and listed; a chat turn named Quire and its tools (prompt and tools reach the model);
-OpenAI via the Codex CLI answered; subscription sign-in reaches claude.ai and waits
-for the person; Frugal routed with reasons; the Indigo audit (53 calls) was metered
-with agent · model rows. **Closed 2026-10-07:** the budget pause held live (a copy of Indigo
-resumed under a 1,000-token ceiling paused before any call); per-production pins have their screen
-(`RunPins.tsx`); "Connection refused" is gone with the settings override, and a CLI whose real calls
-fail is now marked `failing` by the shim and fails its connection test, so no preset picks it (live:
-Claude Code). Yours: Claude Code's OAuth session has expired (run `claude` and sign in), and a
-subscription sign-in has not been completed.
-
-## Phase 3 — Gates and validators that enforce (19, 18, 08)
-
-**Built 2026-10-07.** All five steps are in (ARCHITECTURE.md "Gates that enforce"). The golden rules a spec cannot answer (whitespace, dominant share, 60-30-10) are measured on the render by Phase 4 and read `math.json`; old audit verdicts show their finding's quote. The old-verdict passage is unit-tested only: this workspace has no proposal resting on verdicts.
-
-1. Gates read the pack's `blocking` categories (copy gate actually gates).
-2. Reader-map personas from the work's audience field.
-3. Golden rules in `checkDesign` (dominant element, 60-30-10, whitespace,
-   no three full-bleeds, declared breaks) — today only contrast + world validity.
-4. `kind: number` taste rules written into the world/type `math` block on
-   accept, so `checkDesign` enforces them.
-5. Taste evidence popover shows the passage, not the finding title.
-
-Done when: a blocking finding holds the content gate, and an accepted number
-rule rejects a spec before render.
-
-## Phase 4 — One scoring module (07, 09 §0.3b, 13, 18 §8, design-skill §12b)
-
-**Closed 2026-10-07, live on Affinity 3.3.** All four steps are in (ARCHITECTURE.md "The page score"). The layout stage runs place → render → score → mend by cause (≤ 2) per page; G and H come from the frames Affinity reports, T catches leaked markup and unbalanced columns, H uses measured visual weight. Automatic mends: `repair` and `re-archetype` (page variants); `recolour` and `redo-image` stay with the person (a world's colours; pictures are Phase 7). Live: Photography p.8 laid out, rendered and scored; a redesign by cause ran 76 → 87.
-
-1. Fix `renderPage` (still unverified) or rasterise the PDF page.
-2. `measurePage(png, spec, assets)` → the seven dimensions; `scorePage` =
-   measure + spec checks + cause routing → `pages/<nn>/score.json`.
-3. Same module, three checkpoints: **spec-lint** (before build),
-   **asset-check** (before staging), **page-score** (after render).
-4. Cause-routed auto-redesign ≤ 2 passes; `surface: "score"` taste events.
-
-Done when: a bad page is redesigned by its cause before the user sees it.
-
-## Phase 5 — Pages built from the spec (25, 07, 08, design-skill §12b)
-
-**Built 2026-10-07, one live check open.** All six steps are in (ARCHITECTURE.md "Pages built from
-blocks"). Live on Affinity 3.3: the PETRICHOR fixture builds from its spec alone and scores 99 with no
-findings; font preflight lists 219 installed families. Open: a design the model writes with blocks has not
-been run, because the pipeline cannot stop after `design.artplan` and the next step uses the GPU;
-moved to Phase 7 step 7.
-Deviations from the plan: figure and notes read the existing `pull-number`/`sidefact` furniture instead of
-new fields; legacy prose blocks are kept unplaced rather than mapped; variants stay with type-built pages.
-
-1. Closed block vocabulary (`figure`, `dropcap`, `panel`, `kicker`, `runhead`,
-   `wordmark`, `drawn`, …) with grid slots; `figure` and `notes` in the page
-   content; `checkSpec` refuses what the builder cannot place.
-2. `spec.type` and `spec.grid` replace the hard-coded fonts and grid in `tk.js`;
-   font preflight (moved from Phase 8).
-3. Toolkit verbs for each block, role-tagged; `T.drawn` for seeded vector art.
-4. `onePageScript` interprets the block list; today's arrangements become the
-   default lists, variants become block rewrites (the Phase 4 loop keeps working).
-5. Design prompt gets the vocabulary, installed fonts and the rules as numbers;
-   brand furniture becomes structured; `drawn` joins the art ladder.
-6. Score adds scale steps ≥ 1.2×, contrast per text block, shared left edge,
-   line length, drop cap on whole lines, undeclared transgressions.
-
-Done when: Quire builds a page from its spec alone in Affinity, with no hand
-edits — the PETRICHOR reference re-expressed as a fixture scores ≥ 80 — and
-the score checks every rule the spec declares.
-
-## Phase 6 — Magazine approval UI (13, 02)
-
-1. Page bundles `pages/<nn>/{content,spec,art,render.png,score.json}`.
-2. Section board = unit of approval (world, kit, opener, beats, copy proof;
-   keep / re-world / lock).
-3. Beauty-gate flipbook with the four verdicts and the score card.
-4. Per-page re-run routes (rewrite / redesign / re-world / regenerate art).
-5. Taste accumulated per world.
-
-Done when: the six-step UX in 13 ("What the user actually does") works.
-
-## Phase 7 — Pictures (09)
-
-Keep refs at 1024 px and GPU temperature safety **first** — the laptop has hard
-powered off twice on Qwen reference encoding.
-
-1. GPU safety (pre-job cool-down, temp in recipe), workflow schema with
-   `mode`, `refs[]`, `caps`, `license`.
-2. `qwen-image-21.json`: generate → extract → edit; postprocess `alphaClean`,
-   `cropToObject`, `invert`; gallery Edit / Extract.
-3. `hooks[]` from writing; `graph.json` asset graph, decision table, DAG holds,
-   budget.
-4. Cast refs into the render seam (IPAdapter / native refs); inpaint + Tweak.
-5. Engine settings + workflow/LoRA manager UI; upscale-2x.
-6. Later: Openverse/Commons photo search, personal world LoRA.
-
-7. Carried from Phase 5: once generation is safe, run the design stage on a copy of
-   Photography and check that p.8 builds from the blocks the model wrote (hero, figure, panel).
-
-Done when: generate → extract → edit → stage runs over `/image/render` and a
-storybook protagonist stays the same across spreads.
-
-## Phase 8 — Libraries (08, 07)
-
-World library + Worlds page; Kit library; kit strip on the World card; kit verbs
-`T.symbol / T.fill / T.fx / T.text(style)` (only `pattern` exists); template
-`.afdesign`; node-side text measurement. (Font preflight moved to Phase 5.)
-
-## Phase 9 — Leftovers
-
-- 05: live "Sample" in the mixer; per-facet merged guide.
-- 22: `speech` per character in roles (only setting-wide exists); Setting
-  library screen; Series shelf on Home; taste scope `setting`.
-- 04: `.afdesign` read-back from `my-final/` (needs Affinity open).
-- 19: image ↔ text coherence check; whole-work repetition scan.
+- 05: a live "Sample" in the mixer; a merged guide per facet.
+- 22: `speech` per character in roles; Setting library screen; Series shelf on Home;
+  taste scope `setting`.
+- 19: image ↔ text coherence check; a repetition scan across the whole work.
 - 21: ImageSmith / DesignAuditor / AffinityBuilder as named agents.
-- 02: delete `studio-patch/patch.js`, `cli-shim/ui.html`; drop `lucide-react`
-  and `motion` from `package.json`; desktop notification when a gate opens;
-  degraded-mode banners; gate cards say what happens next.
+- 07: template `.afdesign`; node-side text measurement.
+- 02:
+  - delete `studio-patch/patch.js` and `cli-shim/ui.html`
+  - drop `lucide-react` and `motion` from `package.json`
+  - a desktop notification when a gate opens
+  - banners for degraded mode
+  - gate cards say what happens next
 
 ## Deliberately not doing
 
@@ -216,9 +105,7 @@ World library + Worlds page; Kit library; kit strip on the World card; kit verbs
 
 | File | Topic |
 |---|---|
-| `01-what-works.md` | Status at first analysis (history) |
 | `02-ui-improvement.md` | Generic UI, components, motion, screens list |
-| `03-ui-consistency-sweep.md` · `04-ease-of-use-and-motion.md` | Done sweeps (history) |
 | `04-organisation.md` | Workspace, sidecars, Gallery, final folder, Verdict |
 | `05-writing-styles.md` | Fingerprint, restyle, blends |
 | `07-affinity.md` | Affinity build, Design Kit, Print |
@@ -232,8 +119,8 @@ World library + Worlds page; Kit library; kit strip on the World card; kit verbs
 | `20-harness-and-models.md` | Connections, providers.json, routing |
 | `21-multi-agent-workflow.md` | Roster, per-agent models |
 | `22-setting-and-research.md` | Setting Bible, research, Series |
-| `24-centralisation.md` | One registry, one screen, one pipeline |
-| `25-pages-from-the-spec.md` | Block vocabulary, spec → Affinity, the missing rules |
+| `25-pages-from-the-spec.md` | Block vocabulary, spec → Affinity (built) |
+| `26-design-engine.md` | **The plan:** house book, worlds, layout engine, gates, learning |
 | `design-skill.md` · `illustration-skill.md` | Skill drafts (shipped as skills) |
 | `debt.md` | Parked work and its return condition |
 | `workflow.md` | Workflow diagram |

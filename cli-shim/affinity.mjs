@@ -943,17 +943,29 @@ export function onePageScript(issue, page, world, staged) {
           [{ t: "\u201C" + P.pull + "\u201D", fam: F.disp, face: FACE.dispReg, size: ps, color: colour(b, r, "field") }],
           { tag: R_("pull"), lead: ps * 1.15 });
         T.hr(P.n, r.x, r.y + r.h, r.w, { fill: INK, t: .25, tag: R_("rule") });
-      } else if (b.kind === "panel" && P.notes.length) {
-        T.rect(P.n, r.x, r.y, r.w, r.h, { fill: FIELD, tag: R_("panel") });
+      } else if (b.kind === "panel" && (P.notes.length || P.figure)) {
+        // A page with a figure and no figure block carries it as the panel's first row.
+        var rows = P.notes.slice();
+        if (P.figure && !P.blocks.some(function (x) { return x.kind === "figure"; })) {
+          rows.unshift({ label: P.figure.caption || "", value: P.figure.value + (P.figure.unit ? " " + P.figure.unit : "") });
+        }
+        // As tall as what it holds, never taller than its slot: an empty field reads as a hole.
+        var need = 5 + 8, fitRows = 0;
+        for (var j = 0; j < rows.length; j++) {
+          var hj = (rows[j].label ? 5 : 0) + 9 + (j < rows.length - 1 ? 3.5 : 0);
+          if (need + hj + 4 > r.h) break;
+          need += hj; fitRows++;
+        }
+        T.rect(P.n, r.x, r.y, r.w, Math.min(r.h, need + 4), { fill: FIELD, tag: R_("panel") });
         var py = r.y + 5, pw = r.w - 9;
         T.label(P.n, r.x + 4.5, py, pw, b.text || "Notes", { size: 7, color: ACC, tag: R_("notes"), track: .16 });
         py += 8;
-        for (var i = 0; i < P.notes.length && py < r.y + r.h - 12; i++) {
-          var nt = P.notes[i];
+        for (var i = 0; i < fitRows; i++) {
+          var nt = rows[i];
           if (nt.label) { T.label(P.n, r.x + 4.5, py, pw, nt.label, { size: 6.2, color: PAPER, tag: R_("notes"), track: .12, h: 4.4 }); py += 5; }
           T.text(P.n, r.x + 4.5, py, pw, 9, [{ t: nt.value, fam: F.disp, face: FACE.dispReg, size: 14, color: PAPER }], { tag: R_("notes"), lead: 15 });
           py += 9;
-          if (i < P.notes.length - 1) { T.hr(P.n, r.x + 4.5, py, pw, { fill: PAPER, alpha: .3, t: .25, tag: R_("rule") }); py += 3.5; }
+          if (i < fitRows - 1) { T.hr(P.n, r.x + 4.5, py, pw, { fill: PAPER, alpha: .3, t: .25, tag: R_("rule") }); py += 3.5; }
         }
       } else if (b.kind === "rule") {
         T.hr(P.n, r.x, r.y, r.w, { fill: colour(b, r), t: .25, tag: R_("rule") });

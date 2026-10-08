@@ -351,6 +351,43 @@ overwrite, so a re-render went to `name_1.png` and the stale picture was scored)
   builds page 3 from blocks in ~30 s and scores 99, no findings. Not yet verified: a design written by the
   model with blocks. The pipeline cannot stop after `design.artplan`, and `design.generate` uses the GPU (Phase 7).
 
+## The beauty gate and the section board (Phase 6)
+
+`vendor/studio/packages/studio/src/api/page-review.ts` · `components/BeautyGate.tsx` (Proofs tab) ·
+`pages/PublicationDetail.tsx` (Sections tab) · core `publication-runner.ts` (`markSection`,
+`redesignPage`, `appendReview`, `readReviews`) · `taste-engine.ts` (world scope).
+
+- **Page bundle, assembled not migrated.** `GET /publications/:id/pages/:n/bundle` reads the page and its
+  spec from `publication.json` and the rest from `pages/<nn>/` (`layout.json`, `render.png`, `score.json`,
+  `reviews.jsonl`). Moving content and spec into the folder (13 data model) was not done: one file stays
+  the source, and nothing needed the move.
+- **Section board.** `POST /publications/:id/sections/:n/mark {state: approved|locked|null}` writes
+  `issue.sectionBoard`. A locked section refuses another world (`designSection`, the route and the
+  verdict all say 409/throw) and keeps its world through a design run. The board shows each section's
+  mark, its opener as rendered (when laid out), its beats and the first written page's copy.
+- **Proofs (the beauty gate).** One rendered page at a time (J/K), the score card (seven dimensions,
+  cause line, notes, history) and four verdicts: keep, redesign, re-world, tweak. The "what went wrong?"
+  chips are the score's seven dimension names. `POST .../pages/:n/verdict` writes the page's
+  `reviews.jsonl` and the taste stream (`surface: design`, `scope.world` = the section's register), then
+  for anything but keep queues a job: **redesign/tweak** = `redesignPage` (one model call for this page's
+  blocks, told the old blocks, the causes, the note and the world's rules; unplaceable blocks dropped and
+  said) then `layoutScored`; **re-world** = `designSection` for the page's section, then the page laid out
+  again. Regenerating art waits for Phase 7.
+- **The sign-off stands through a gate redo.** Layout requires the design approved; the beauty gate is
+  where it is approved page by page, so a redesign or re-world asked for there keeps
+  `designApproved` (`keepSignOff`). A re-world from the Sections tab still clears it.
+- **Taste per world.** `applies()` honours a `world` scope key; `rulesFor` takes `world`; `causeProposals`
+  groups negative verdicts carrying `scope.world` per world (weight 5 proposes `{surface, world}`).
+  `CAUSE_RULES.design` gained the seven dimension chips. `redesignPage` reads the world's rules.
+- **Score changes found live.** Overset words fail T past a dozen (`30 + 2 x words`, max 60); the mend
+  loop grows a block page's body down to the grid foot when its columns are free (`growBody`). The notes
+  panel is drawn as tall as its rows, and carries the page's figure when it has no figure block.
+- **Verified live (2026-10-07, Affinity 3.3, PETRICHOR fixture).** Bundle before and after layout,
+  `render.png` served, lock refused re-world (route and job), keep recorded in both streams with
+  `scope.world`; a tweak and a redesign each ran the model (~2 min), which wrote valid blocks, laid
+  out and scored 98 and 89; the 89 had 21 words overset, now caught (T 40) and mended to 96. UI measured
+  at 1440, 746 and 375 px: page column 675/482 at 1440, one column below, no horizontal overflow.
+
 ## Skills
 
 `packages/core/src/skills/external-loader.ts` scans, always and unconditionally:
