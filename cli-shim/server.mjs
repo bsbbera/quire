@@ -28,6 +28,9 @@ const STUDIO_URL = process.env.STUDIO_URL || `http://localhost:${process.env.STU
 // Integrations. Loaded eagerly: a broken module should fail at boot with a
 // stack, not at 3am inside a request handler.
 const mcp = await import("./mcp.mjs");
+// Servers other agents gained since the last launch are added now, so a newly
+// installed MCP shows up in Quire without anyone pressing Rescan.
+try { mcp.rescan(); } catch { /* detection is best effort; the file still works */ }
 const comfy = await import("./comfy.mjs");
 const engines = await import("./engines.mjs");
 const affinity = await import("./affinity.mjs");
@@ -984,7 +987,16 @@ createServer((req, res) => {
   }
 
   if (path === "/mcp/servers") {
-    return handle(Promise.resolve({ servers: mcp.servers() }));
+    return handle(Promise.resolve({ servers: mcp.servers(), config: mcp.configPath() }));
+  }
+  if (path === "/mcp/rescan" && req.method === "POST") {
+    return handle(Promise.resolve().then(() => mcp.rescan()));
+  }
+  if (path === "/mcp/add" && req.method === "POST") {
+    return handle(bodyOf().then((b) => mcp.add(b.json ?? b)));
+  }
+  if (path === "/mcp/remove" && req.method === "POST") {
+    return handle(bodyOf().then((b) => mcp.remove(b.server)));
   }
   if (path === "/mcp/tools") {
     const name = new URL(req.url, "http://x").searchParams.get("server");

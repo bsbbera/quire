@@ -1,11 +1,13 @@
 // Minimal MCP client — discovery + stdio JSON-RPC, no SDK.
 //
-// Every MCP server on this machine is already configured for some other agent
-// (Claude Desktop extensions, Claude Code, Codex). Asking the user to declare
-// them a second time is pointless, so on first run those configs are read
-// where they live and copied into ~/.quire/mcp.json — credentials included, so
-// nothing needs reconnecting. From then on that file is the only source and
-// Quire owns its own tool list.
+// ~/.quire/mcp.json is Quire's one MCP config, in the same { "mcpServers": {} }
+// shape Claude, Cursor, Devin and the rest use, so an entry can be pasted
+// straight in. Servers other agents on this machine already have (Claude
+// Desktop and its extensions, Claude Code, Codex, Devin, Cursor, Windsurf,
+// Antigravity/Gemini, VS Code) are detected at every launch and on Rescan and
+// added to it — credentials included, so nothing needs reconnecting. Detection
+// only adds: an entry already in the file, or one the user removed, is never
+// touched again, so the file stays the user's.
 //
 // The wire protocol is newline-delimited JSON-RPC 2.0 over stdio. That is the
 // whole of it for initialize/tools/list/tools/call, so the SDK buys nothing.
@@ -51,8 +53,8 @@ function codexServers() {
  * Without that substitution the filesystem server starts and immediately dies
  * on a literal "${user_config.allowed_directories}" path.
  */
-function extensionServers() {
-  const dir = join(HOME, "AppData", "Roaming", "Claude", "Claude Extensions");
+function extensionServers(root) {
+  const dir = join(root, "Claude Extensions");
   if (!existsSync(dir)) return {};
   const out = {};
   for (const slug of readdirSync(dir)) {
@@ -92,9 +94,9 @@ function extensionServers() {
  * no command — nothing here can spawn those, so they are skipped rather than
  * listed as broken.
  */
-function jsonConfigServers(path, source) {
-  const cfg = readJson(path)?.mcpServers;
-  if (!cfg) return {};
+function jsonConfigServers(path, source, key = "mcpServers", given = null) {
+  const cfg = given ?? readJson(path)?.[key];
+  if (!cfg || typeof cfg !== "object") return {};
   const out = {};
   for (const [rawName, v] of Object.entries(cfg)) {
     if (!v?.command) continue;                       // remote/url server: not stdio
@@ -111,8 +113,47 @@ function jsonConfigServers(path, source) {
   return out;
 }
 
-const DEVIN = join(HOME, "AppData", "Roaming", "devin", "mcp_config.json");
-const DESKTOP = join(HOME, "AppData", "Roaming", "Claude", "claude_desktop_config.json");
+const ROAMING = join(HOME, "AppData", "Roaming");
+
+/**
+ * Where Claude Desktop keeps its settings. The classic installer writes to
+ * Roaming\Claude; the Microsoft Store build is packaged, so the same files land
+ * under Local\Packages\Claude_*\LocalCache\Roaming\Claude and the Roaming path
+ * does not exist at all. Reading only Roaming is why a Store install's servers
+ * never reached Quire. macOS for completeness.
+ */
+function claudeRoots() {
+  const roots = [join(ROAMING, "Claude"), join(HOME, "Library", "Application Support", "Claude")];
+  const packages = join(HOME, "AppData", "Local", "Packages");
+  try {
+    for (const d of readdirSync(packages)) if (/^Claude_/i.test(d)) roots.push(join(packages, d, "LocalCache", "Roaming", "Claude"));
+  } catch { /* not Windows, or no Store apps */ }
+  return roots.filter((r) => existsSync(r));
+}
+
+/** Claude Code: user-level servers, and the ones it keeps per project. */
+function claudeCodeServers() {
+  const cfg = readJson(join(HOME, ".claude.json")) || {};
+  const out = {};
+  const add = (list) => Object.assign(out, jsonConfigServers(null, "claude-code", null, list));
+  for (const p of Object.values(cfg.projects || {})) if (p?.mcpServers) add(p.mcpServers);
+  if (cfg.mcpServers) add(cfg.mcpServers);
+  return out;
+}
+
+/**
+ * Every config file another agent keeps MCP servers in, with the key it uses.
+ * Adding an app is one line here.
+ */
+const SOURCES = () => [
+  ...claudeRoots().map((r) => [join(r, "claude_desktop_config.json"), "claude-desktop"]),
+  [join(ROAMING, "devin", "mcp_config.json"), "devin"],
+  [join(HOME, ".cursor", "mcp.json"), "cursor"],
+  [join(HOME, ".codeium", "windsurf", "mcp_config.json"), "windsurf"],
+  [join(HOME, ".gemini", "antigravity", "mcp_config.json"), "antigravity"],
+  [join(HOME, ".gemini", "settings.json"), "gemini"],
+  [join(ROAMING, "Code", "User", "mcp.json"), "vscode", "servers"],
+];
 
 /**
  * Servers Quire depends on itself, rather than inheriting from another app.
@@ -173,63 +214,98 @@ function builtinServers() {
  *
  * Read once, at first run, and then never again — see servers().
  */
-function discovered() {
-  const claude = readJson(join(HOME, ".claude.json"))?.mcpServers || {};
-  return {
-    ...extensionServers(),
-    ...jsonConfigServers(DESKTOP, "claude-desktop"),
-    ...jsonConfigServers(DEVIN, "devin"),
-    ...Object.fromEntries(Object.entries(codexServers())
-      // Codex's own sandbox helper is not a tool server anyone here should call.
-      .filter(([k]) => k !== "node_repl")),
-    ...Object.fromEntries(Object.entries(claude).map(([k, v]) => [k, { ...v, source: "claude-code" }])),
-  };
+export function discovered() {
+  const out = {};
+  // First found wins: the same server named in two apps is one server.
+  const take = (found) => { for (const [k, v] of Object.entries(found)) if (!(k in out)) out[k] = v; };
+  for (const root of claudeRoots()) take(extensionServers(root));
+  for (const [path, source, key] of SOURCES()) take(jsonConfigServers(path, source, key));
+  take(claudeCodeServers());
+  // Codex's own sandbox helper is not a tool server anyone here should call.
+  take(Object.fromEntries(Object.entries(codexServers()).filter(([k]) => k !== "node_repl")));
+  return out;
+}
+
+const writeConfig = (cfg) => {
+  mkdirSync(dirname(OVERRIDES), { recursive: true });
+  writeFileSync(OVERRIDES, JSON.stringify(cfg, null, 2));
+};
+
+/**
+ * Add every detected server Quire does not have yet. Never changes an entry
+ * already in the file and never brings back one the user removed: detection
+ * fills the file, the user owns it. Runs at shim start and on Rescan.
+ *
+ * The file holds live credentials. It sits under the user's home, not the repo,
+ * and .quire/ is gitignored; mcp-config.test.mjs fails if it is ever tracked.
+ */
+export function rescan() {
+  const cfg = readJson(OVERRIDES) || {};
+  const own = cfg.mcpServers && typeof cfg.mcpServers === "object" ? cfg.mcpServers : {};
+  const removed = new Set(cfg.removed || []);
+  const added = [];
+  for (const [k, v] of Object.entries(discovered())) {
+    if (k in own || removed.has(k) || k in builtinServers()) continue;
+    own[k] = { ...v, imported: true };
+    added.push(k);
+  }
+  cfg.mcpServers = own;
+  // An unwritable home means detecting on every call. Degraded, not broken.
+  try { writeConfig(cfg); } catch {}
+  return { added, path: OVERRIDES };
 }
 
 /**
- * Copy what the other agents have configured into Quire's own file, once.
- *
- * Discovery used to run on every call, which meant Quire's tool list was
- * really Claude Desktop's: edit that app's config and Quire's capabilities
- * changed underneath it, with nothing in Quire recording what it was supposed
- * to have. So the discovered entries — command, args, cwd and env, API keys
- * included, so nothing needs reconnecting — are written to ~/.quire/mcp.json
- * the first time and read from there forever after. After this Quire spawns
- * its servers from its own configuration and another app's settings are that
- * app's business.
- *
- * The written file holds live credentials. It sits under the user's home, not
- * the repo, and .quire/ is gitignored; mcp-config.test.mjs fails if it is ever
- * tracked.
- *
- * Provenance is kept on each entry's `source` — where it originally came from
- * is worth knowing — with `imported: true` marking that it is Quire's copy
- * now. A server whose program lives inside another app's install directory
- * still breaks if that app is removed: the configuration survives, the files
- * it points at are not ours to keep.
+ * Add servers by hand, from the same JSON other apps use: a whole
+ * { "mcpServers": { … } } block, a bare { name: { command, args, env } } map, or
+ * one { name, command, args, env } entry.
  */
-function importDiscovered() {
-  const found = Object.fromEntries(
-    Object.entries(discovered()).map(([k, v]) => [k, { ...v, imported: true }]),
-  );
+export function add(input) {
+  const raw = typeof input === "string" ? JSON.parse(input) : input;
+  const map = raw?.mcpServers ?? raw?.servers
+    ?? (raw?.name && (raw.command || raw.url) ? { [raw.name]: raw } : raw);
+  if (!map || typeof map !== "object" || Array.isArray(map)) throw new Error("expected { \"mcpServers\": { \"name\": { \"command\": … } } }");
   const cfg = readJson(OVERRIDES) || {};
-  cfg.mcpServers = found;
-  try {
-    mkdirSync(dirname(OVERRIDES), { recursive: true });
-    writeFileSync(OVERRIDES, JSON.stringify(cfg, null, 2));
-  } catch {
-    // An unwritable home means importing every call, which is what discovery
-    // did anyway. Degraded, not broken.
+  cfg.mcpServers = cfg.mcpServers || {};
+  const removed = new Set(cfg.removed || []);
+  const added = [];
+  for (const [rawName, v] of Object.entries(map)) {
+    const name = String(rawName).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (!name || !v || typeof v !== "object") continue;
+    if (!v.command) throw new Error(`${rawName}: ${v.url ? "remote (url) servers are not supported yet, only ones started with a command" : "needs a \"command\""}`);
+    if (name in builtinServers()) throw new Error(`${name} is built into Quire`);
+    cfg.mcpServers[name] = {
+      command: String(v.command), args: (v.args || []).map(String), env: v.env || {},
+      ...(v.cwd ? { cwd: v.cwd } : {}), source: "user",
+    };
+    removed.delete(name);
+    added.push(name);
   }
-  return found;
+  if (!added.length) throw new Error("no servers in that JSON");
+  cfg.removed = [...removed];
+  writeConfig(cfg);
+  return { added, path: OVERRIDES };
 }
 
+/** Remove a server, and remember it so Rescan does not bring it back. */
+export function remove(name) {
+  if (name in builtinServers()) throw new Error(`${name} is built into Quire and cannot be removed`);
+  const cfg = readJson(OVERRIDES) || {};
+  if (!cfg.mcpServers?.[name]) throw new Error(`no server named ${name}`);
+  delete cfg.mcpServers[name];
+  cfg.removed = [...new Set([...(cfg.removed || []), name])];
+  writeConfig(cfg);
+  close(name);
+  return { removed: name, path: OVERRIDES };
+}
+
+export const configPath = () => OVERRIDES;
+
 export function servers() {
+  // No list yet means first run: detect before answering.
+  if (!readJson(OVERRIDES)?.mcpServers) rescan();
   const ov = readJson(OVERRIDES) || {};
-  // `mcpServers` present — even empty — means the import already happened and
-  // the user's own file is the only source. Absent means first run.
-  const own = ov.mcpServers ?? importDiscovered();
-  const merged = { ...builtinServers(), ...own };
+  const merged = { ...builtinServers(), ...(ov.mcpServers || {}) };
   // A server that was disabled where it came from stays off here, but the
   // enabled list can turn it back on — otherwise a server imported in a
   // disabled state would be unreachable with no way to say otherwise.

@@ -33,6 +33,19 @@ settings (`.env`, `mcp.json`, the workspace pointer, API keys in
 `secrets.json`, connection results in `connections.json`, extra providers in
 `providers.json`), `QUIRE_*` for environment settings, `quire` for the CLI.
 
+## MCP servers
+
+`~/.quire/mcp.json` is the one list, in the `{ "mcpServers": {} }` shape every
+other agent uses (`cli-shim/mcp.mjs`). The bundled `quire` server is always
+added on top. Servers other agents have are detected and added at shim start
+and on Rescan (`POST /mcp/rescan`): Claude Desktop (classic and Store install,
+plus its extensions), Claude Code (user and per-project), Codex, Devin, Cursor,
+Windsurf, Antigravity, Gemini CLI, VS Code. Detection only adds: an entry
+already in the file is never rewritten, and one removed (`POST /mcp/remove`,
+kept in `removed`) never comes back. `POST /mcp/add` takes pasted JSON (a whole
+`mcpServers` block, a name map, or one entry). Remote `url`-only servers are
+refused: only command-started (stdio) servers can run. Page: MCP.
+
 The InkOS names (`.inkos/`, `inkos.json`, `INKOS_*`) survive in two
 places and nowhere else:
 
