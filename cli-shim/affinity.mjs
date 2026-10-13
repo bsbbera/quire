@@ -13,11 +13,15 @@
 //     EDITORIAL-METHOD section 3). Body copy is therefore poured column by
 //     column, with break points found by measuring overflow rather than guessed.
 import * as events from "./events.mjs";
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { colourGrain } from "./postprocess.mjs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import * as mcp from "./mcp.mjs";
+import { BENGALI, brandDir, shapeBengali } from "./bengali.mjs";
+import { shapeTexts } from "./spread.mjs";
+import { makeTiles } from "./brand-tiles.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 // Read per build, not once at import: editing the toolkit should not need a
@@ -117,16 +121,49 @@ async function ensurePreamble() {
 async function run(script, ms = 300000, { launch = false } = {}) {
   await ensureRunning({ launch });
   await ensurePreamble();
-  let r = await mcp.call("affinity", "execute_script", { script }, ms);
-  if (/preamble documentation topic has not yet been read/i.test(String(r.text))) {
+  // A reconnected MCP session forgets the preamble; it says so as text or as a thrown error.
+  const PREAMBLE = /preamble documentation topic has not yet been read/i;
+  const once = () => mcp.call("affinity", "execute_script", { script }, ms)
+    .catch((e) => { if (PREAMBLE.test(String(e?.message))) return { text: e.message }; throw e; });
+  let r = await once();
+  if (PREAMBLE.test(String(r.text))) {
     preambleRead = false;
     await ensurePreamble();
-    r = await mcp.call("affinity", "execute_script", { script }, ms);
+    r = await once();
   }
   const text = String(r.text || "").trim();
   const m = /\{[\s\S]*\}$/.exec(text);
   if (!m) return { raw: text };
   try { return JSON.parse(m[0]); } catch { return { raw: text }; }
+}
+
+/**
+ * The brand's faces, seen by Affinity before anything is set in them. Per-user fonts drop out of
+ * Affinity across restarts ("missing font family" on every block); announcing them again with
+ * AddFontResourceW + WM_FONTCHANGE brings them back after a delay, no admin and no restart.
+ */
+async function ensureBrandFonts(issue) {
+  const dir = issue?.brand && brandDir(issue.brand);
+  if (!dir) return;
+  const type = JSON.parse(readFileSync(join(dir, "brand.json"), "utf-8")).type ?? {};
+  const want = [...new Set([type.mark, type.display, type.text].filter(Boolean))];
+  const seen = async () => {
+    const out = await run(`(function () { const { FontFamily } = require("/fonts");
+  console.log(JSON.stringify({ names: FontFamily.all.map(function (f) { return f.name; }) })); })();`, 60000);
+    return want.filter((f) => !(out.names ?? []).includes(f));
+  };
+  let missing = await seen();
+  if (!missing.length) return;
+  const userFonts = join(process.env.LOCALAPPDATA ?? "", "Microsoft", "Windows", "Fonts");
+  const files = Object.values(type.files ?? {}).map((f) => join(userFonts, f)).filter(existsSync);
+  if (!files.length) throw new Error(`Affinity is missing the brand's fonts (${missing.join(", ")}) and they are not installed`);
+  await new Promise((done) => spawn("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(HERE, "affinity", "fontchange.ps1"), ...files], { stdio: "ignore" }).on("close", done));
+  for (let i = 0; i < 40 && missing.length; i++) {
+    await new Promise((r) => setTimeout(r, 15000));
+    missing = await seen();
+  }
+  fontList = null;
+  if (missing.length) throw new Error(`Affinity still cannot see the brand's fonts after 10 minutes: ${missing.join(", ")}`);
 }
 
 /**
@@ -449,11 +486,12 @@ export function layoutScript(issue, staged) {
 /** Export the whole document. "PDF (for print)" is one of Affinity's own presets. */
 const EXPORT = (pdf) => `
   const out = globalThis.TK_RESULT || {};
-  const _doc = globalThis.TK_DOC;
-  out.spreads = _doc.spreadCount;
+  // Not _doc: FIND() declares that, and closeIssue sends the two as one script.
+  const _xdoc = globalThis.TK_DOC;
+  out.spreads = _xdoc.spreadCount;
   try {
     const { FileExportOptions } = require("/document");
-    _doc.export(${JSON.stringify(win(pdf))}, FileExportOptions.createWithPresetName("PDF (for print)"));
+    _xdoc.export(${JSON.stringify(win(pdf))}, FileExportOptions.createWithPresetName("PDF (for print)"));
     out.exported = true; out.path = ${JSON.stringify(win(pdf))};
   } catch (e) {
     out.exported = false; out.exportError = e.message;
@@ -461,45 +499,31 @@ const EXPORT = (pdf) => `
   console.log(JSON.stringify(out));`;
 
 /**
- * Create the document, lay the issue out, export the PDF.
- *
- * Returns rather than throws when only the export fails: the pages are laid
- * out in the open document either way, and that is most of the value.
+ * The whole issue, laid out the way the design stage composed it: one page at
+ * a time through buildPage, which reads each page's designed blocks. The old
+ * single-script layout (layoutScript) knows only page types, so it dropped
+ * every panel, pull, kicker and drawn shape the design had placed.
  */
 export async function build(issue, { pdf, issueDir }) {
   const st = await status();
   if (!st.up) throw new Error(st.reason);
-
-  const stage = stageAssets(issue, issueDir, st.desktop);
-  // Affinity can only write to the Desktop, so export there and copy back.
-  const deskPdf = join(st.desktop, "Quire", issue.id, basename(pdf));
-
-  const script = [
-    CREATE(issue.pages.length),
-    `globalThis.TK_CFG = ${JSON.stringify({
-      root: win(join(st.desktop, "Quire", issue.id)) + "\\",
-      img: win(stage.dir) + "\\",
-      sections: (issue.sections || []).map((s) => ({ n: s.n, from: s.from, to: s.to })),
-      // The design decision, when one has been made. tk.js takes its
-      // palette, faces and grid from here and falls back to its own
-      // defaults per atom, so a spec naming a font this machine does
-      // not have loses that font, not the build.
-      spec: (issue.design && issue.design.spec) || null,
-    })};`,
-    TK(),
-    layoutScript(issue, stage.staged),
-    EXPORT(deskPdf),
-  ].join("\n");
-
   events.emit("affinity:build:start", { issue: issue.id, pages: issue.pages.length });
-  const out = await run(script, 1800000, { launch: true });
-
-  if (out.exported && existsSync(deskPdf)) {
-    mkdirSync(dirname(pdf), { recursive: true });
-    copyFileSync(deskPdf, pdf);
+  // A fresh document every build: a reused session would lay pages over the last one.
+  session = null;
+  const opened = await openIssue(issue, { issueDir, pdf, fresh: true });
+  const pages = [];
+  for (const page of issue.pages) {
+    const out = await buildPage(issue, page);
+    if (out.raw && !out.ok) throw new Error(`page ${page.n} did not lay out: ${String(out.raw).slice(0, 300)}`);
+    // What Affinity measured on the laid page; the runner decides what blocks the build.
+    pages.push({ n: page.n, findings: out.findings || [], leaks: out.leaks || [] });
   }
+  const closed = await closeIssue({ pdf });
+  // The pages stay laid out in the open document either way, but a build that
+  // wrote no PDF is not done: an old PDF on disk would otherwise pass for this one.
+  if (!closed.exported) throw new Error(`the pages are laid out but the PDF did not export: ${closed.exportError || String(closed.raw || "no answer").slice(0, 300)}`);
   events.emit("affinity:build:done", { issue: issue.id, pdf: existsSync(pdf) ? pdf : null });
-  return { ...out, staged: Object.keys(stage.staged).length };
+  return { ...closed, pages, staged: opened.staged };
 }
 
 /* ---------------------------------------------------- per-page build session
@@ -559,9 +583,10 @@ function cfgFor(issue, stageDir, desktop) {
   };
 }
 
-export async function openIssue(issue, { issueDir, pdf } = {}) {
+export async function openIssue(issue, { issueDir, pdf, fresh = false } = {}) {
   const st = await status();
   if (!st.up) throw new Error(st.reason);
+  await ensureBrandFonts(issue);
   // A page build opens each time; one document per issue, not one per page.
   if (session && session.id === issue.id && session.uuid) {
     return { ok: true, staged: Object.keys(session.stage.staged).length, reused: true };
@@ -571,9 +596,24 @@ export async function openIssue(issue, { issueDir, pdf } = {}) {
     id: issue.id, desktop: st.desktop, stage, pdf,
     cfg: cfgFor(issue, stage.dir, st.desktop),
   };
+  // Affinity's scripting cannot close a document (doc.close() is NOT_IMPLEMENTED), so every new
+  // one stays open as "Untitled" until the user closes it. The issue's document is remembered on
+  // disk and found again by its session id: a second run, or a restarted shim, reuses it.
+  const mark = join(st.desktop, "Quire", issue.id, "document.json");
+  if (!fresh) {
+    try {
+      const { uuid, pages } = JSON.parse(readFileSync(mark, "utf-8"));
+      if (uuid && pages === issue.pages.length) {
+        const seen = await run(`const { Document } = require("/document"); console.log(JSON.stringify({ open: Array.from(Document.all).some((d) => d.sessionUuid === ${JSON.stringify(uuid)}) }));`, 60000, { launch: true });
+        if (seen.open) { session.uuid = uuid; return { ok: true, staged: Object.keys(stage.staged).length, reused: true }; }
+      }
+    } catch { /* none remembered */ }
+  }
   const out = await run(CREATE_TAGGED(issue.pages.length), 300000, { launch: true });
   if (out.raw || !out.uuid) throw new Error("could not create the build document: " + (out.raw || "no session id").slice(0, 200));
   session.uuid = out.uuid;
+  mkdirSync(dirname(mark), { recursive: true });
+  writeFileSync(mark, JSON.stringify({ uuid: out.uuid, pages: issue.pages.length }));
   return { ok: true, staged: Object.keys(stage.staged).length };
 }
 
@@ -626,8 +666,9 @@ export async function renderPage(issue, page, out) {
   try {
     const { FileExportOptions, FileExportArea } = require("/document");
     const opts = FileExportOptions.createWithPresetName("PNG");
-    // Without an area the export writes every spread, numbered; ask for one.
-    _doc.export(${JSON.stringify(win(target))}, opts, FileExportArea.createForSpreads(${JSON.stringify(String(Number(page)))}));
+    // Without an area the export writes every spread, numbered; ask for one. 150 dpi: the eye
+    // needs no more, and 300-dpi pages (10 MB each) kept the designer past its time limit.
+    _doc.export(${JSON.stringify(win(target))}, opts, FileExportArea.createForSpreads(${JSON.stringify(String(Number(page)))}), { width: 1240, height: 1754 });
     out.rendered = true; out.path = ${JSON.stringify(win(target))};
   } catch (e) {
     out.rendered = false; out.renderError = e.message;
@@ -649,18 +690,33 @@ export async function renderPage(issue, page, out) {
  * Lay out one page and inspect it. Returns the page's findings so the queue can
  * record them per page rather than as one undifferentiated warning list.
  */
+/**
+ * A page's section world (core publication-runner.ts `worldFor`). Front matter
+ * wears the first section's world and back matter the last's: a cover with no
+ * world fell back to the toolkit's tint and came out grey.
+ */
+export function worldOf(issue, n) {
+  const worlds = [...(issue.design?.sections || [])].sort((a, b) => a.n - b.n);
+  const sec = (issue.sections || []).find((s) => n >= s.from && n <= s.to);
+  if (sec) return worlds.find((w) => w.n === sec.n) || null;
+  if (!worlds.length) return null;
+  const first = Math.min(...(issue.sections || []).map((s) => s.from));
+  return n < first ? worlds[0] : worlds[worlds.length - 1];
+}
+
 export async function buildPage(issue, page) {
   if (!session) throw new Error("no build session - openIssue first");
-  const world = (issue.design?.sections || []).find((w) => {
-    const sec = (issue.sections || []).find((s) => page.n >= s.from && page.n <= s.to);
-    return w.n === sec?.n;
-  }) || null;
+  const world = worldOf(issue, page.n);
+  const brand = brandOf(issue);
+  const bn = brand ? await shapeBengali(brand.id, bengaliItems(issue, page, world, brand)) : {};
 
   const script = [
     FIND(session.uuid),
     `globalThis.TK_CFG = ${JSON.stringify(session.cfg)};`,
+    // The brand's shape kit before the toolkit: it defines G and ochinShape, which tk.js draws brand shapes with.
+    brand ? brand.kit : "",
     TK(),
-    onePageScript(issue, page, world, session.stage.staged),
+    onePageScript(issue, page, world, session.stage.staged, brand ? { id: brand.id, name: brand.name, bn } : null),
     INSPECT(page.n),
   ].join("\n");
   events.emit("affinity:page:start", { issue: issue.id, page: page.n });
@@ -669,6 +725,88 @@ export async function buildPage(issue, page) {
   // Checked on what was handed to Affinity, after bodyItems: anything here prints.
   out.leaks = leaksOf([page.title, page.deck, bodyItems(page.body).map((i) => i.t).join(" ")]);
   return out;
+}
+
+/**
+ * One authored spread (core spread-author.ts): a designer's script, written against the brand's
+ * kit (brands/<id>/author/lib.js), run on the open build document. The script owns its pages: it
+ * clears them and draws everything. Its text blocks are shaped first (spread.mjs). Nothing it
+ * prints reaches the caller but the report: what it placed, where, and whether it threw.
+ */
+export async function runSpread(issue, { pages, script, texts, issueDir }) {
+  if (!session) throw new Error("no build session - openIssue first");
+  const brand = brandOf(issue);
+  if (!brand) throw new Error("an authored spread needs the issue's brand");
+  const dir = brandDir(issue.brand);
+  const lib = readFileSync(join(dir, "author", "lib.js"), "utf-8");
+  // pictures found since the document was opened are staged now
+  const src = join(issueDir || "", "_assets");
+  if (issueDir && existsSync(src)) {
+    for (const f of readdirSync(src).filter((f) => /\.(png|jpe?g)$/i.test(f))) {
+      if (!session.stage.staged[f]) { copyFileSync(join(src, f), join(session.stage.dir, f)); session.stage.staged[f] = win(join(session.stage.dir, f)); }
+    }
+  }
+  const tiles = join(session.desktop, "Quire", "_tiles");
+  makeTiles(tiles, Object.values(brand.colours || {}).map((c) => c.hex || c).filter((h) => /^#[0-9a-f]{6}$/i.test(h)));
+  const shaped = await shapeTexts(issue.brand, texts);
+  if (shaped.errors.length) return { ok: false, error: "text: " + shaped.errors.join("; ") };
+  const OCHIN = { texts: shaped.blocks, img: win(session.stage.dir) + "\\", tiles: win(tiles) + "\\", title: issue.title || issue.subject || "" };
+  const body = [
+    FIND(session.uuid),
+    `globalThis.TK_CFG = ${JSON.stringify(session.cfg)};`,
+    brand.kit,
+    TK(),
+    lib,
+    `globalThis.OCHIN = ${JSON.stringify(OCHIN)};`,
+    `(function () {
+  const _log = console.log, said = [];
+  console.log = (...a) => said.push(a.map(String).join(" ").slice(0, 300));
+  let error = null;
+  try { (new Function(${JSON.stringify(String(script))}))(); }
+  catch (e) { error = { message: String(e && e.message || e), stack: String(e && e.stack || "").split(String.fromCharCode(10)).slice(0, 4).join(" | ") }; }
+  console.log = _log;
+  const P = globalThis.OCHIN_PLACED || { text: [], photo: [], cleared: [] };
+  _log(JSON.stringify({ ok: !error, error, placed: P, said: said.slice(-6) }));
+})();`,
+  ].join("\n");
+  if (process.env.QUIRE_SPREAD_DUMP) writeFileSync(process.env.QUIRE_SPREAD_DUMP, body);
+  events.emit("affinity:page:start", { issue: issue.id, page: pages[0] });
+  const out = await run(body, 600000);
+  events.emit("affinity:page:done", { issue: issue.id, page: pages[0] });
+  if (out.raw !== undefined) return { ok: false, error: "Affinity: " + String(out.raw).slice(0, 600) };
+  return { ...out, sizes: Object.fromEntries(Object.entries(shaped.blocks).map(([id, b]) => [id, { w: b.w, h: b.h, lines: b.lines.length }])) };
+}
+
+/**
+ * The issue's brand (core brand.ts), with its shape kit's source, or null. Read from the staged
+ * core (prod) or the checkout (dev); a brand that is named but missing builds without its shapes.
+ */
+export function brandOf(issue) {
+  const dir = issue && issue.brand ? brandDir(issue.brand) : null;
+  if (!dir) return null;
+  try {
+    const data = JSON.parse(readFileSync(join(dir, "brand.json"), "utf-8"));
+    const kitDir = join(dir, "kit");
+    const kit = existsSync(kitDir) ? readdirSync(kitDir).filter((f) => f.endsWith(".js")).map((f) => readFileSync(join(kitDir, f), "utf-8")).join("\n") : "";
+    return { ...data, kit };
+  } catch { return null; }
+}
+
+/** The page's Bengali (brand bilingual rule): the section's name, folio digits, the Bengali line and word box, and any Bengali in its type. */
+export function bengaliItems(issue, page, world, brand) {
+  const items = [];
+  const bnDigits = String(page.n).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[Number(d)]);
+  items.push({ text: bnDigits, face: "text", wght: 400 });
+  if (world?.bn) items.push({ text: world.bn, face: "display" });
+  for (const f of page.furniture || []) {
+    const parts = String(f.text || "").split("|").map((x) => x.trim());
+    if (f.kind === "bengali-line" && parts[0]) items.push({ text: parts[0], face: "display" });
+    if (f.kind === "wordbox" && parts[0]) items.push({ text: parts[0], face: "mark" });
+  }
+  for (const t of [page.title, page.pullQuote]) if (t && BENGALI.test(t)) items.push({ text: t, face: "display" });
+  if (page.deck && BENGALI.test(page.deck)) items.push({ text: page.deck, face: "text", wght: 300 });
+  if (page.type === "cover" || page.n === 1) items.push({ text: brand.mark, face: "mark" });
+  return items;
 }
 
 /** Column pouring shared by the whole-issue and the one-page layouts. Reads CTX = { pn, tag, ink }. */
@@ -763,6 +901,8 @@ const isSlot = (s) => !!s && typeof s === "object" && ["col", "span", "row", "ro
 export function blocksOf(issue, page) {
   const own = issue.design?.spec?.pages?.[String(page.n)]?.blocks || [];
   if (!own.length || !own.every((b) => BLOCK_KINDS.includes(b.kind) && isSlot(b.slot))) return [];
+  // A cover is the brand's face: no running head, no folio.
+  if (page.type === "cover") return own.filter((b) => b.kind !== "runhead" && b.kind !== "folio");
   const fixed = (issue.design?.fixed?.blocks || []).filter((b) => BLOCK_KINDS.includes(b.kind) && isSlot(b.slot)
     && !own.some((o) => o.kind === b.kind));
   return [...fixed, ...own];
@@ -788,7 +928,39 @@ export function notesOf(page) {
   });
 }
 
-export function onePageScript(issue, page, world, staged) {
+/**
+ * A picture kept with its painted ground (treatment "plate"): the ground's edge colour and
+ * grain as the art stage measured them (postprocess `ground`), and a grain tile at that
+ * strength staged beside the pictures, so the page's shapes are drawn in that colour and
+ * texture. Null for any other picture.
+ */
+export function plateOf(page, staged, colours = []) {
+  const file = page.image || (page.images || []).find(Boolean);
+  const pic = staged[String(page.n).padStart(2, "0") + ".png"];
+  if (!file || !pic) return null;
+  try {
+    const r = JSON.parse(readFileSync(String(file).replace(/\.png$/i, ".recipe.json"), "utf-8"));
+    const m = (r.postProcess || []).find((x) => x && x.op === "ground");
+    if (r.treatment !== "plate" || !m || !m.edge) return null;
+    const level = Math.max(0, Math.round(Number(m.grain) || 0));
+    // The grain as measured (brightness and colour apart), and the picture's pixel size from
+    // its PNG header, which the page needs to lay the tiles at the picture's own scale.
+    const g = m.lum != null ? { lum: m.lum, chroma: m.chroma } : level;
+    const head = readFileSync(String(file));
+    const size = [head.readUInt32BE(16), head.readUInt32BE(20)];
+    // One tile per colour the page can draw in, the plate's own ground among them.
+    const tiles = {};
+    if (level) for (const hex of new Set([m.edge, ...colours].filter((c) => /^#[0-9a-f]{6}$/i.test(String(c))).map((c) => c.toLowerCase()))) {
+      const tile = join(dirname(pic), `grain-${hex.slice(1)}-${typeof g === "number" ? g : `${g.lum}-${g.chroma}`}.png`);
+      if (!existsSync(tile)) writeFileSync(tile, colourGrain(hex, g));
+      tiles[hex] = win(tile);
+    }
+    return { edge: m.edge, ground: m.ground || m.edge, grain: level ? { tiles, px: 512, mm: 64 } : null, size,
+      ...(Array.isArray(m.subject) ? { subject: m.subject } : {}), cut: Array.isArray(m.cut) ? m.cut : [] };
+  } catch { return null; }
+}
+
+export function onePageScript(issue, page, world, staged, brand = null) {
   const section = (issue.sections || []).find((s) => page.n >= s.from && page.n <= s.to);
   const p = {
     n: page.n, type: page.type, density: page.density, section: page.section,
@@ -796,6 +968,8 @@ export function onePageScript(issue, page, world, staged) {
     pull: page.pullQuote || "", furniture: (page.furniture || []).slice(0, 4),
     image: staged[String(page.n).padStart(2, "0") + ".png"] || null,
     treatment: (page.briefs && page.briefs[0] && page.briefs[0].treatment) || null,
+    plate: plateOf(page, staged, [world?.paper, world?.ink, world?.hue, issue.design?.spec?.palette?.accent,
+      ...Object.values(world?.language || {}).filter((v) => typeof v === "string")]),
     link: linkOf(page),
     // How the page score last asked this page to be arranged (page-score-run.ts).
     variant: issue.design?.spec?.pages?.[String(page.n)]?.variant || null,
@@ -806,11 +980,24 @@ export function onePageScript(issue, page, world, staged) {
       && (issue.pages || []).some((q) => q.n === page.n - 1 && q.type === "map"),
     // Built from the spec when it says how (Phase 5); otherwise by type, below.
     blocks: blocksOf(issue, page),
-    brand: issue.series || "", issueTitle: issue.title || "",
+    // The house's masthead (core house.ts); the series slug only before a house exists.
+    brand: issue.design?.fixed?.masthead || issue.series || "", issueTitle: issue.title || "",
     sectionLabel: section?.label || "",
     figure: figureOf(page), notes: notesOf(page),
     scale: issue.design?.spec?.type?.scale || [],
     accent: issue.design?.spec?.palette?.accent || null,
+    // The page's grid lines and the house's devices (core layout-engine.ts, house.ts).
+    edges: issue.design?.spec?.pages?.[String(page.n)]?.edges || null,
+    panelStyle: issue.design?.fixed?.panel || "filled",
+    ruleStyle: issue.design?.fixed?.rule || "hairline",
+    // The page's art, composed by the model (core page-art.ts), drawn in its section's colours.
+    shapes: issue.design?.spec?.pages?.[String(page.n)]?.shapes || [],
+    // The brand (core brand.ts): its Bengali shaped in Node (bengali.mjs), its bilingual furniture.
+    brandMode: brand ? { id: brand.id, name: brand.name, bn: brand.bn, sectionBn: world?.bn || "",
+      digits: String(page.n).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[Number(d)]),
+      line: (() => { const f = (page.furniture || []).find((x) => x.kind === "bengali-line"); if (!f) return null; const [b, e] = String(f.text).split("|").map((x) => x.trim()); return b ? { bn: b, en: e || "" } : null; })(),
+      word: (() => { const f = (page.furniture || []).find((x) => x.kind === "wordbox"); if (!f) return null; const [w, snd, mean] = String(f.text).split("|").map((x) => x.trim()); return w ? { bn: w, sound: snd || "", meaning: mean || "" } : null; })(),
+    } : null,
   };
 
   return `(function () {
@@ -839,11 +1026,27 @@ export function onePageScript(issue, page, world, staged) {
   var CTX = { pn: P.n, tag: R_("body"), ink: INK };
   ${FLOW_JS}
 
+  // A brand string's shaped outlines (bengali.mjs), by text and face.
+  function BN(t, face) { return P.brandMode && P.brandMode.bn ? P.brandMode.bn[String(t).trim() + "|" + face] : null; }
   function folio() {
-    if (P.n === 1 || P.type === "plate") return;   // a plate carries no folio
+    if (P.n === 1 || P.type === "plate" || P.type === "cover") return;   // plates and covers carry no folio
     var L = T.live(P.n);
+    if (P.brandMode) {
+      // Bengali digits, then "Ochin · issue title", at the foot's outer corner (brand house.folio).
+      var dg = BN(P.brandMode.digits, "text"), fx = L.recto ? L.x1 : L.x0, words = P.brandMode.name + " \u00B7 " + P.issueTitle;
+      var dwid = dg ? dg.words.reduce(function (a, wd) { return a + wd.w * .8; }, 0) : 4;   // size 8 = 0.8 of the 10 pt it was shaped at
+      if (L.recto) {
+        T.text(P.n, fx - 90, 279, 90 - dwid - 4, 6, [{ t: words, fam: F.sans, size: 7.5, color: INK }], { tag: R_("folio"), align: "Right" });
+        if (dg) T.bn(P.n, fx - dwid, 278.6, dwid + 1, dg, INK, { size: 8, tag: R_("folio-bn") });
+      } else {
+        if (dg) T.bn(P.n, fx, 278.6, dwid + 1, dg, INK, { size: 8, tag: R_("folio-bn") });
+        T.text(P.n, fx + dwid + 4, 279, 90, 6, [{ t: words, fam: F.sans, size: 7.5, color: INK }], { tag: R_("folio") });
+      }
+      if (P.link) T.linkNote(P.n, P.link, { tag: TAG });
+      return;
+    }
     T.text(P.n, L.recto ? L.x1 - 20 : L.x0, 277, 20, 6,
-      [{ t: String(P.n), fam: F.sans, size: 8, color: FIELD }],
+      [{ t: String(P.n), fam: F.sans, size: 8, color: INK }],
       { tag: R_("folio"), align: L.recto ? "Right" : "Left" });
     // The page it is tied to, in the accent: the brand's connection line.
     if (P.link) T.linkNote(P.n, P.link, { tag: TAG });
@@ -856,8 +1059,23 @@ export function onePageScript(issue, page, world, staged) {
   // ---- built from blocks (Phase 5, core page-blocks.ts) -------------------
   function blockPage() {
     var G = T.blockGrid();
-    var ACC = P.accent || FIELD;
-    var HEX = { ink: INK, paper: PAPER, accent: ACC, field: FIELD };
+    var LANG = (W && W.language) || null;
+    var ACC = (LANG && LANG.accent) || P.accent || FIELD;
+    // A plate's painted ground: its edge colour is a role ("ground") and its grain textures
+    // every flat shape on the page, so drawn colour and the painting read as one surface.
+    var PLATE = P.image && P.treatment === "plate" ? P.plate : null;
+    var GRAIN = PLATE ? PLATE.grain : null;
+    var HEX = { ink: INK, paper: PAPER, accent: ACC, field: FIELD,
+      second: (LANG && LANG.second) || ACC, third: (LANG && LANG.third) || FIELD,
+      ground: PLATE ? PLATE.edge : null };
+    // Colour arithmetic, so type on art and panels picks what reads (WCAG contrast).
+    function hx(h) { h = String(h || "#000000").replace("#", ""); return [0, 2, 4].map(function (i) { return parseInt(h.substr(i, 2), 16) / 255; }); }
+    function lum(h) { var v = hx(h).map(function (c) { return c <= .03928 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4); }); return .2126 * v[0] + .7152 * v[1] + .0722 * v[2]; }
+    function cr(a, b) { var x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+    function best(bg) { return cr(INK, bg) >= cr(PAPER, bg) ? INK : PAPER; }
+    function mixHex(a, b, t) { var x = hx(a), y = hx(b); return "#" + x.map(function (v, i) { return ("0" + Math.round((v + (y[i] - v) * t) * 255).toString(16)).slice(-2); }).join(""); }
+    // The layout engine computes boxes; a hand-placed block is boxed here.
+    function boxOf(b) { return b.box ? b.box : box(b.slot); }
     var PT2MM = 25.4 / 72, BODY = 9.5, LEAD = 13.5 * PT2MM;
     function box(s) {
       var x = G.x0 + (s.col - 1) * (G.colw + G.gut), w = s.span * G.colw + (s.span - 1) * G.gut;
@@ -880,31 +1098,107 @@ export function onePageScript(issue, page, world, staged) {
         : b.kind === "deck" ? Math.max(BODY * 1.2, Math.min(MID * 0.6, BODY * 1.6)) : 7.5;
     }
 
-    T.rect(P.n, 0, 0, 210, 297, { tag: R_("ground"), fill: PAPER });
+    var G0 = T.rect(P.n, 0, 0, 210, 297, { tag: R_("ground"), fill: PAPER });
     var pics = [];
+    var ART = P.shapes && P.shapes.length;
+    var layer = function (which) { return P.shapes.filter(function (s) { return (s.layer || "back") === which; }); };
+    // A shape that stands under the whole of a block, solidly, is the ground its type is set on.
+    function grounds(list) {
+      list.forEach(function (s) {
+        if ((s.opacity == null ? 1 : s.opacity) >= .6 && s.fill && (s.s === "rect" || s.s === "circle" || s.s === "blob" || s.s === "poly")) {
+          pics.push({ x: s.x, y: s.y, w: s.w, h: s.h, bg: HEX[s.fill] });
+        }
+      });
+    }
+    // A page with a picture slot (filled or a placeholder) puts its "back" shapes behind it.
+    var SLOTTED = P.image || P.blocks.some(function (b) { return b.kind === "image"; });
+    // They are grounds too: a deck set on a block of colour reads in whichever of ink or
+    // paper holds against it, not in ink by default.
+    // A shape that holds the plate is drawn with the picture, below.
+    var HOLD = PLATE ? P.shapes.find(function (s) { return s.hold; }) : null;
+    var BACK = ART ? layer("back").filter(function (s) { return s !== HOLD; }) : [];
+    // Grain is laid at the picture's own scale (mm per pixel as placed), so the shapes' speckle
+    // is the painting's speckle. ponytail: a plate with no holding shape assumes a contained fit.
+    if (GRAIN && PLATE.size) {
+      var IMB = P.blocks.find(function (b) { return b.kind === "image"; }), ib = IMB ? boxOf(IMB) : null;
+      var kmm = HOLD ? T.plateFit(HOLD, { size: PLATE.size, subject: PLATE.subject, cut: PLATE.cut }).k
+        : ib ? Math.min(ib.w / PLATE.size[0], ib.h / PLATE.size[1]) : 0;
+      if (kmm > 0) GRAIN.mm = GRAIN.px * kmm;
+    }
+    if (GRAIN) T.texture(G0, PAPER, GRAIN);
+    if (ART && SLOTTED) { T.shapes(P.n, BACK, HEX, { tag: R_("art"), log: log, grain: GRAIN }); grounds(BACK); }
     // Pictures first: everything else is set over or beside them.
     P.blocks.forEach(function (b) {
       if (b.kind !== "image" && b.kind !== "drawn") return;
-      var r = box(b.slot); pics.push(r);
-      if (b.kind === "drawn") {
-        T.drawn(P.n, r.x, r.y, r.w, r.h, { kind: b.drawn, seed: b.seed, field: FIELD, line: C.grey, paper: PAPER,
-          mark: ACC, label: b.text || "", tag: R_("drawn"), artTag: R_("art") });
+      var r = boxOf(b); pics.push({ x: r.x, y: r.y, w: r.w, h: r.h, bg: b.kind === "drawn" ? FIELD : null });
+      if (b.kind === "image" && !P.image) {
+        // The wireframe: a grey plate at the slot's exact size, labelled with what the picture
+        // will show, so the page is judged as composed and the slot can be generated to fit.
+        // Filled at the tone the composer promised, so type set on it is judged on the
+        // ground the picture will give it; the brief sits in a corner, off the type.
+        var br = b.brief || {};
+        var TONE = { dark: "#3a3a3a", mid: "#8c8c8c", light: "#d4d4d4" }[br.tone] || "#8c8c8c";
+        var on = br.tone === "dark" ? "#bdbdbd" : "#2e2e2e";
+        pics[pics.length - 1].bg = TONE;
+        T.rect(P.n, r.x, r.y, r.w, r.h, { fill: TONE, tag: R_("image") });
+        T.line(P.n, r.x, r.y, r.x + r.w, r.y + r.h, { fill: on, alpha: .25, t: .3, tag: R_("image") + "-x" });
+        T.line(P.n, r.x + r.w, r.y, r.x, r.y + r.h, { fill: on, alpha: .25, t: .3, tag: R_("image") + "-x" });
+        var lx = Math.max(r.x + 4, 8), lw = Math.min(r.w - 8, 90);
+        T.label(P.n, lx, Math.max(r.y + 4, 8), lw, "PICTURE · " + (br.id || ("p" + P.n)) + " · " + (br.tone || "mid"),
+          { size: 6, color: on, track: .12, tag: R_("image") + "-lab" });
+        if (br.shows) T.text(P.n, lx, Math.min(r.y + r.h, 289) - 16, lw, 12,
+          [{ t: br.shows, fam: F.body, ital: true, size: 6, color: on }], { tag: R_("image") + "-brief", lead: 7.5 });
+        return;
+      }
+      if (ART && (b.kind === "drawn" || !P.image)) {
+        // The page has its own art: the slot is its field, the shapes are drawn over it below.
+        if (FIELD !== PAPER) T.rect(P.n, r.x, r.y, r.w, r.h, { tag: R_("drawn"), fill: FIELD });
+        else pics.pop();
+      } else if (b.kind === "drawn") {
+        // Type that sits on the art is kept clear: strokes stop short of it.
+        var quiet = P.blocks.filter(function (q) { return q !== b && q.kind !== "drawn" && q.kind !== "image" && q.kind !== "rule"; })
+          .map(boxOf).filter(function (q) { return meets(q, r); })
+          .map(function (q) { return { x: q.x - 2.5, y: q.y - 2.5, w: q.w + 5, h: q.h + 5 }; });
+        var ink = best(FIELD);
+        T.drawn(P.n, r.x, r.y, r.w, r.h, { kind: b.drawn, seed: b.seed, field: FIELD, line: ink, paper: ink,
+          mark: ACC, label: b.text || "", quiet: quiet, tag: R_("drawn"), artTag: R_("art") });
       } else if (P.image) {
-        T.img(P.n, r.x, r.y, r.w, r.h, P.image, { tag: R_("image"), contain: !b.slot.bleed });
+        // A cutout stands whole on the page's paper, inside its frame; a plate covers it.
+        if (HOLD) {
+          T.held(P.n, HOLD, HEX, P.image, { tag: R_("image"), grain: GRAIN, subject: PLATE.subject, cut: PLATE.cut, size: PLATE.size });
+          pics[pics.length - 1] = { x: HOLD.x, y: HOLD.y, w: HOLD.w, h: HOLD.h, bg: PLATE.edge };
+        } else T.img(P.n, r.x, r.y, r.w, r.h, P.image, { tag: R_("image"), contain: !b.slot.bleed || P.treatment === "cutout" });
       } else {
         T.ph(P.n, r.x, r.y, r.w, r.h, "p" + P.n, (P.treatment || ""), { tag: R_("image"), accent: ACC });
       }
     });
-    function onPic(r) { return pics.some(function (q) { return meets(q, r); }); }
+    // Over the art fields, under the panels and the type. With a photograph on the
+    // page, "back" shapes go behind it and only "front" ones over it.
+    if (ART) {
+      var over = SLOTTED ? layer("front") : P.shapes;
+      T.shapes(P.n, over, HEX, { tag: R_("art"), log: log, grain: GRAIN });
+      grounds(over);
+    }
+    // The topmost ground a block sits on decides its colour.
+    function picUnder(r) { return pics.filter(function (q) { return meets(q, r); }).slice(-1)[0] || null; }
     function colour(b, r, fallback) {
-      return HEX[b.color] || (fallback ? HEX[fallback] : onPic(r) ? PAPER : INK);
+      if (HEX[b.color]) return HEX[b.color];
+      if (fallback) return HEX[fallback];
+      var q = picUnder(r);
+      return q ? (q.bg ? best(q.bg) : PAPER) : INK;
     }
 
     var dropcap = P.blocks.find(function (b) { return b.kind === "dropcap"; });
     P.blocks.forEach(function (b) {
-      var r = box(b.slot);
+      var r = boxOf(b);
       if (b.kind === "title" && P.title) {
-        var ts = size(b), runs = function (s) { return [{ t: P.title, fam: F.disp, face: FACE.dispReg, size: s, color: colour(b, r) }]; };
+        var tc = colour(b, r), under = picUnder(r), want = LANG && HEX[LANG.title];
+        if (want && cr(want, under && under.bg ? under.bg : PAPER) >= 3) tc = want;
+        // The brand's matra: every headline hangs from a rule in its own colour.
+        if (P.brandMode) T.rect(P.n, r.x, r.y - 2.6, r.w, 1.1, { fill: tc, tag: R_("matra") });
+        var tb = P.brandMode && BN(P.title, "display");
+        if (tb) { T.bn(P.n, r.x, r.y, r.w, tb, tc, { size: Math.min(size(b), 42), tag: R_("title") }); return; }
+        var ts = size(b), runs = function (s) { return [{ t: P.title, fam: F.disp, face: FACE.dispReg, size: s, color: tc }]; };
         // Set at its size, smaller only if the slot cannot hold it.
         var probe = T.text(P.n, r.x, r.y, r.w, r.h, runs(ts), { tag: "mag-probe", lead: ts });
         var over = T.overflows(probe); T.kill("mag-probe", [P.n]);
@@ -912,12 +1206,35 @@ export function onePageScript(issue, page, world, staged) {
         else T.text(P.n, r.x, r.y, r.w, r.h, runs(ts), { tag: R_("title"), lead: ts });
       } else if (b.kind === "deck" && P.deck) {
         var ds = size(b);
-        T.vr(P.n, r.x, r.y, r.h, { fill: ACC, t: .6, tag: R_("rule") });
-        T.text(P.n, r.x + 4, r.y, r.w - 4, r.h,
-          [{ t: P.deck, fam: F.body, ital: true, size: ds, color: colour(b, r) }], { tag: R_("deck"), lead: ds * 1.35 });
+        var dc = colour(b, r);
+        // Fitted to its slot: a deck set at its size over a short slot ran into the body below.
+        var dk = T.fitText(P.n, r.x + 4, r.y, r.w - 4, r.h, function (s) {
+          return [{ t: P.deck, fam: F.body, ital: true, size: s, color: dc }];
+        }, Math.max(8.5, ds * 0.6), ds, { tag: R_("deck"), lead: 1.3 });
+        var dlines = Math.max(1, Math.ceil(P.deck.length * dk.size * PT2MM * 0.46 / (r.w - 4)));
+        // A deck on a block of colour is set off by the block; the inset rule is for a deck on paper.
+        var dg = picUnder(r);
+        if (!(dg && dg.bg)) T.vr(P.n, r.x, r.y, Math.min(r.h, dlines * dk.size * 1.3 * PT2MM + 1), { fill: ACC, t: .6, tag: R_("rule") });
       } else if (b.kind === "kicker") {
         var kt = b.text || [P.type, P.sectionLabel].filter(Boolean).join(" · ");
-        T.label(P.n, r.x, r.y, r.w, kt, { size: size(b), color: colour(b, r), tag: R_("kicker"), track: .16, h: r.h });
+        // Open values (core visual-language.ts); an older issue named "tag" or "bar".
+        var KS = LANG ? LANG.kicker : null;
+        if (typeof KS === "string") KS = { ground: KS === "tag" ? "accent" : null, bar: KS === "bar" ? "accent" : null, track: .16 };
+        KS = KS || { ground: null, bar: null, track: .16 };
+        var kx = r.x, kc = colour(b, r);
+        if (KS.bar && HEX[KS.bar]) { T.rect(P.n, kx, r.y + size(b) * PT2MM * .3, 7, 1.4, { fill: HEX[KS.bar], tag: R_("rule") }); kx += 9; }
+        if (KS.ground && HEX[KS.ground]) {
+          var kg = HEX[KS.ground], kw = Math.min(r.w - (kx - r.x), kt.length * size(b) * PT2MM * (.62 + KS.track) + 6);
+          T.rect(P.n, kx, r.y - .6, kw, Math.min(r.h, size(b) * PT2MM * 1.9), { fill: kg, tag: R_("panel") });
+          T.label(P.n, kx + 3, r.y + .4, kw - 4, kt, { size: size(b), color: best(kg), tag: R_("kicker"), track: KS.track, h: r.h });
+        } else if (P.brandMode) {
+          // The brand's eyebrow: label caps in sindur, the section's Bengali name beside it.
+          var kcol = cr(HEX.third, picUnder(r) && picUnder(r).bg ? picUnder(r).bg : PAPER) >= 3 ? HEX.third : kc;
+          T.label(P.n, kx, r.y, r.w - (kx - r.x), kt, { size: size(b), color: kcol, tag: R_("kicker"), track: KS.track, h: r.h });
+          var kb = P.brandMode.sectionBn && BN(P.brandMode.sectionBn, "display");
+          var kw = kt.length * size(b) * PT2MM * (.62 + KS.track);
+          if (kb && kw + 6 < r.w) T.bn(P.n, kx + kw + 3, r.y - .4, r.w - kw - 3, kb, kcol, { size: size(b) * 1.25, tag: R_("kicker-bn") });
+        } else T.label(P.n, kx, r.y, r.w - (kx - r.x), kt, { size: size(b), color: kc, tag: R_("kicker"), track: KS.track, h: r.h });
       } else if (b.kind === "runhead") {
         var rc = colour(b, r);
         T.label(P.n, r.x, r.y, r.w * .6, [P.brand, P.issueTitle].filter(Boolean).join(" — "), { size: 7, color: rc, tag: R_("runhead"), track: .14, h: r.h - .8 });
@@ -931,17 +1248,21 @@ export function onePageScript(issue, page, world, staged) {
         }, 12, r.h / PT2MM * 1.4, { tag: R_("wordmark"), lead: .82 });
       } else if (b.kind === "figure" && P.figure) {
         var fc = colour(b, r, "accent");
-        T.fitText(P.n, r.x, r.y, r.w, r.h, function (s) {
+        // The unit sits on the frame's last line, inside it: under the frame it ran into
+        // whatever the composer placed below (Swing Drumming p2).
+        var fh = P.figure.unit ? r.h - 5 : r.h;
+        T.fitText(P.n, r.x, r.y, r.w, fh, function (s) {
           return [{ t: P.figure.value, fam: F.disp, face: FACE.dispReg, size: s, color: fc }];
-        }, 24, r.h / PT2MM * 1.45, { tag: R_("figure"), lead: .8 });
-        // The unit on the line under the figure's slot.
-        if (P.figure.unit) T.label(P.n, r.x, r.y + r.h + 1, r.w, P.figure.unit, { size: 7.5, color: INK, tag: R_("kicker"), track: .14 });
+        }, 12, fh / PT2MM * 1.45, { tag: R_("figure"), lead: .8 });
+        // h 4: a label is 6 mm tall by default, which hung 2 mm under the frame into the body (Rain p2).
+        if (P.figure.unit) T.label(P.n, r.x, r.y + r.h - 4, r.w, P.figure.unit, { size: 7.5, color: colour(b, r), tag: R_("figure"), track: .14, h: 4 });
       } else if (b.kind === "pull" && P.pull) {
         var ps = size(b);
         T.hr(P.n, r.x, r.y, r.w, { fill: INK, t: .25, tag: R_("rule") });
-        T.text(P.n, r.x, r.y + 3, r.w, r.h - 6,
-          [{ t: "\u201C" + P.pull + "\u201D", fam: F.disp, face: FACE.dispReg, size: ps, color: colour(b, r, "field") }],
-          { tag: R_("pull"), lead: ps * 1.15 });
+        var pc = picUnder(r) ? colour(b, r) : (cr(ACC, PAPER) >= 3 ? ACC : INK);
+        T.fitText(P.n, r.x, r.y + 3, r.w, r.h - 6, function (s) {
+          return [{ t: "\u201C" + P.pull + "\u201D", fam: F.disp, face: FACE.dispReg, size: s, color: pc }];
+        }, 9, ps, { tag: R_("pull"), lead: 1.15 });
         T.hr(P.n, r.x, r.y + r.h, r.w, { fill: INK, t: .25, tag: R_("rule") });
       } else if (b.kind === "panel" && (P.notes.length || P.figure)) {
         // A page with a figure and no figure block carries it as the panel's first row.
@@ -950,35 +1271,63 @@ export function onePageScript(issue, page, world, staged) {
           rows.unshift({ label: P.figure.caption || "", value: P.figure.value + (P.figure.unit ? " " + P.figure.unit : "") });
         }
         // As tall as what it holds, never taller than its slot: an empty field reads as a hole.
-        var need = 5 + 8, fitRows = 0;
-        for (var j = 0; j < rows.length; j++) {
-          var hj = (rows[j].label ? 5 : 0) + 9 + (j < rows.length - 1 ? 3.5 : 0);
+        // Each value is sized by its length, so a sentence is not set at display size.
+        var pw = r.w - 9, sized = rows.map(function (nt) {
+          var vs = nt.value.length > 34 ? 10 : 14;
+          var lines = Math.max(1, Math.ceil(nt.value.length * vs * PT2MM * 0.5 / pw));
+          return { nt: nt, vs: vs, vh: lines * vs * PT2MM * 1.25 + 1.5 };
+        });
+        var need = 13, fitRows = 0;
+        for (var j = 0; j < sized.length; j++) {
+          var lj = sized[j].nt.label ? Math.max(1, Math.ceil(sized[j].nt.label.length * 6.2 * PT2MM * 0.62 / pw)) * 3.4 + 1.6 : 0;
+          var hj = lj + sized[j].vh + (j < sized.length - 1 ? 3.5 : 0);
           if (need + hj + 4 > r.h) break;
           need += hj; fitRows++;
         }
-        T.rect(P.n, r.x, r.y, r.w, Math.min(r.h, need + 4), { fill: FIELD, tag: R_("panel") });
-        var py = r.y + 5, pw = r.w - 9;
-        T.label(P.n, r.x + 4.5, py, pw, b.text || "Notes", { size: 7, color: ACC, tag: R_("notes"), track: .16 });
+        var ph = Math.min(r.h, need + 4), PS = P.panelStyle, bg;
+        if (LANG) {
+          bg = T.panel(P.n, r.x, r.y, r.w - 2.4, ph - 2.4, LANG.panel, HEX, { tag: R_("panel") }).fill;
+        } else {
+          bg = PS === "outlined" || PS === "rule-top" ? PAPER : PS === "tinted" ? mixHex(PAPER, ACC, .14) : FIELD;
+          if (PS === "outlined") T.rect(P.n, r.x, r.y, r.w, ph, { stroke: INK, weight: .5, tag: R_("panel") });
+          else if (PS === "rule-top") T.rect(P.n, r.x, r.y, r.w, 1.2, { fill: ACC, tag: R_("panel") });
+          else if (PS === "corner-cut") T.polyline(P.n, [[r.x, r.y], [r.x + r.w - 7, r.y], [r.x + r.w, r.y + 7], [r.x + r.w, r.y + ph], [r.x, r.y + ph]], { fill: bg, tag: R_("panel") });
+          else T.rect(P.n, r.x, r.y, r.w, ph, { fill: bg, tag: R_("panel") });
+        }
+        var on = best(bg), head = cr(ACC, bg) >= 3 && bg !== ACC ? ACC : on;
+        var py = r.y + 5;
+        T.label(P.n, r.x + 4.5, py, pw, b.text || "Notes", { size: 7, color: head, tag: R_("notes"), track: .16 });
         py += 8;
         for (var i = 0; i < fitRows; i++) {
-          var nt = rows[i];
-          if (nt.label) { T.label(P.n, r.x + 4.5, py, pw, nt.label, { size: 6.2, color: PAPER, tag: R_("notes"), track: .12, h: 4.4 }); py += 5; }
-          T.text(P.n, r.x + 4.5, py, pw, 9, [{ t: nt.value, fam: F.disp, face: FACE.dispReg, size: 14, color: PAPER }], { tag: R_("notes"), lead: 15 });
-          py += 9;
-          if (i < fitRows - 1) { T.hr(P.n, r.x + 4.5, py, pw, { fill: PAPER, alpha: .3, t: .25, tag: R_("rule") }); py += 3.5; }
+          var it = sized[i];
+          // A label as tall as its lines: a two-line label set in one line's height sat on its value.
+          if (it.nt.label) {
+            var lh = Math.max(1, Math.ceil(it.nt.label.length * 6.2 * PT2MM * 0.62 / pw)) * 3.4;
+            T.label(P.n, r.x + 4.5, py, pw, it.nt.label, { size: 6.2, color: on, tag: R_("notes"), track: .12, h: lh + 1 }); py += lh + 1.6;
+          }
+          T.fitText(P.n, r.x + 4.5, py, pw, it.vh, function (sz) {
+            return [{ t: it.nt.value, fam: F.disp, face: FACE.dispReg, size: sz, color: on }];
+          }, 7.5, it.vs, { tag: R_("notes"), lead: 1.2 });
+          py += it.vh;
+          if (i < fitRows - 1) { T.hr(P.n, r.x + 4.5, py, pw, { fill: on, alpha: .3, t: .25, tag: R_("rule") }); py += 3.5; }
         }
       } else if (b.kind === "rule") {
-        T.hr(P.n, r.x, r.y, r.w, { fill: colour(b, r), t: .25, tag: R_("rule") });
+        T.rule(P.n, r.x, r.y, r.w, P.ruleStyle, { fill: colour(b, r), tag: R_("rule") });
       } else if (b.kind === "body") {
         var cols = b.columns || (r.w > 120 ? 2 : 1);
         var cw = cols === 2 ? (r.w - G.gut) / 2 : r.w;
         var items = P.items.slice();
+        // Body on a coloured field reads in whichever of ink or paper holds against it.
+        var under = picUnder(r);
+        CTX.ink = under && under.bg ? best(under.bg) : INK;
         CTX.measure = { chars: Math.round(cw / (BODY * PT2MM * 0.47)) };
         var tops = [r.y, r.y];
         if (dropcap && items.length && items[0].k !== "h") {
           // The cap stands in N body lines; the words beside it are their own frame.
-          var n = dropcap.lines || 3, capMm = ((n - 1) * LEAD + 0.7 * BODY * PT2MM) / 0.7, capW = capMm * 0.78;
           var letter = items[0].t.charAt(0);
+          // As wide as its letter: a narrow I in a frame cut for a W left "I  nside" (Birds p14).
+          var n = dropcap.lines || 3, capMm = ((n - 1) * LEAD + 0.7 * BODY * PT2MM) / 0.7,
+            capW = capMm * (/[IJlij1]/.test(letter) ? 0.42 : /[MW]/.test(letter) ? 0.95 : 0.72);
           items[0] = Object.assign({}, items[0], { t: items[0].t.slice(1) });
           T.text(P.n, r.x, r.y - LEAD * 0.18, capW, n * LEAD, [{ t: letter, fam: F.disp, face: FACE.dispReg, size: capMm / PT2MM, color: HEX[dropcap.color] || ACC }],
             { tag: R_("dropcap"), lead: capMm / PT2MM * 0.8 });
@@ -995,8 +1344,54 @@ export function onePageScript(issue, page, world, staged) {
         }
       }
     });
-    BUILT = { x0: G.x0, x1: G.x1, top: G.top, foot: G.foot, col: G.colw, gut: G.gut, ncol: G.cols };
+    if (P.brandMode) bilingual(HEX);
+    BUILT = { x0: P.edges ? P.edges[0] : G.x0, x1: P.edges ? P.edges[P.edges.length - 1] : G.x1, top: G.top, foot: G.foot, col: G.colw, gut: G.gut, ncol: G.cols, edges: P.edges };
     folio();
+  }
+
+  // The brand's bilingual furniture (core brand.ts): set where the page has room, never over anything.
+  function bilingual(HEX) {
+    var B = P.brandMode, G = T.blockGrid();
+    var taken = P.blocks.filter(function (b) { return b.kind !== "rule"; }).map(function (b) {
+      var r = b.box ? b.box : { x: G.x0 + (b.slot.col - 1) * (G.colw + G.gut), y: G.top + b.slot.row * G.base, w: b.slot.span * G.colw + (b.slot.span - 1) * G.gut, h: b.slot.rows * G.base };
+      return { x: r.x - 2, y: r.y - 2, w: r.w + 4, h: r.h + 4 };
+    });
+    function clear(x, y, w, h) {
+      if (x < G.x0 - .5 || x + w > G.x1 + .5 || y < 12 || y + h > 274) return false;
+      return !taken.some(function (q) { return x < q.x + q.w && q.x < x + w && y < q.y + q.h && q.y < y + h; });
+    }
+    // Under the deck, the pull or the title first; then the foot of any column run above the folio.
+    function spot(w, h) {
+      var near = P.blocks.filter(function (b) { return ["deck", "pull", "title", "panel"].indexOf(b.kind) >= 0; });
+      for (var i = 0; i < near.length; i++) {
+        var r = near[i].box || null; if (!r) continue;
+        var ww = Math.min(w, r.w);
+        if (clear(r.x, r.y + r.h + 3, ww, h)) return { x: r.x, y: r.y + r.h + 3, w: ww };
+      }
+      for (var c = 0; c + 1 < G.cols; c++) {
+        var x = G.x0 + c * (G.colw + G.gut), ww2 = Math.min(w, G.x1 - x);
+        for (var y = 270 - h; y > 40; y -= G.base) if (clear(x, y, ww2, h)) return { x: x, y: y, w: ww2 };
+      }
+      return null;
+    }
+    if (B.line) {
+      var lb = BN(B.line.bn, "display"), at = lb ? spot(92, 16 + (B.line.en ? 6 : 0)) : null;
+      if (at) {
+        var m = T.bn(P.n, at.x, at.y, at.w, lb, INK, { size: 15, lead: 19, tag: R_("bengali") });
+        if (B.line.en) T.text(P.n, at.x, at.y + m.h + 1.5, at.w, 6, [{ t: B.line.en, fam: F.disp, ital: true, size: 9.2, color: INK }], { tag: R_("bengali-en"), lead: 13.4 });
+        taken.push({ x: at.x - 2, y: at.y - 2, w: at.w + 4, h: m.h + 12 });
+      } else log.push(lb ? "no room for the Bengali line" : "the Bengali line could not be shaped");
+    }
+    if (B.word) {
+      var wb = BN(B.word.bn, "mark"), wat = wb ? spot(62, 30) : null;
+      if (wat) {
+        T.hr(P.n, wat.x, wat.y, wat.w, { fill: HEX.third, t: .5, tag: R_("wordbox-rule") });
+        var wm = T.bn(P.n, wat.x, wat.y + 2.5, wat.w, wb, HEX.third, { size: 28, lead: 30, tag: R_("wordbox") });
+        var ty = wat.y + 2.5 + (wm ? wm.h : 10) + 1;
+        if (B.word.sound) { T.label(P.n, wat.x, ty, wat.w, B.word.sound, { size: 8.4, color: INK, tag: R_("wordbox-sound"), track: .1, h: 4.4 }); ty += 4.6; }
+        if (B.word.meaning) T.text(P.n, wat.x, ty, wat.w, 30 - (ty - wat.y), [{ t: B.word.meaning, fam: F.body, size: 9.2, color: INK }], { tag: R_("wordbox-text"), lead: 13.4 });
+      } else log.push(wb ? "no room for the word box" : "the word box could not be shaped");
+    }
   }
 
   if (P.blocks.length) {
@@ -1146,13 +1541,14 @@ const INSPECT = (n) => `(function () {
     // A tagged frame says what it is. lineBox alone is not enough: on 3.3 a
     // plain rectangle has one too, and the paper ground "overlapped" every frame.
     var isText = false;
-    if (role) isText = ["title", "deck", "body", "pull", "folio", "figure", "kicker", "runhead", "wordmark", "notes", "dropcap"].indexOf(role) >= 0;
+    if (role) isText = ["title", "deck", "body", "pull", "folio", "figure", "kicker", "runhead", "wordmark", "notes", "dropcap", "bengali", "bengali-en", "wordbox", "wordbox-sound", "wordbox-text", "kicker-bn", "folio-bn"].indexOf(role) >= 0;
     else try { isText = !!node.lineBox; } catch (e) {}
     frames.push({ role: role, text: isText, x: r1(b.x), y: r1(b.y), w: r1(b.w), h: r1(b.h) });
 
     if (isText) {
       texts.push({ node: node, b: b });
-      if (T.overflows(node)) findings.push({ level: "error", what: "text frame oversets", at: Math.round(b.y) });
+      var over = false; try { over = T.overflows(node); } catch (e) { /* Bengali outlines: no line box, nothing to overset */ }
+      if (over) findings.push({ level: "error", what: "text frame oversets", at: Math.round(b.y) });
       // Type outside the live area is a margin violation on every page that is
       // not deliberately full-bleed.
       if (b.x < L.x0 - 1 || b.x + b.w > L.x1 + 1 || b.y < 8 || b.y + b.h > 289) {
@@ -1167,9 +1563,15 @@ const INSPECT = (n) => `(function () {
   for (var i = 0; i < texts.length; i++) {
     for (var j = i + 1; j < texts.length; j++) {
       var a = overlap(texts[i].b, texts[j].b);
-      if (a > 40) findings.push({ level: "error", what: "two text frames overlap", area: Math.round(a),
+      // 10 mm² is a deck's last line sitting on the body's first; under that is a touch.
+      if (a > 10) findings.push({ level: "error", what: "two text frames overlap", area: Math.round(a),
         roles: [texts[i].node.userDescription, texts[j].node.userDescription] });
     }
+  }
+
+  // Words the body could not hold are not on the page: the story stops mid-sentence.
+  if (R.cols && R.cols.overset > 0) {
+    findings.push({ level: "error", what: "the body oversets " + R.cols.overset + " words", roles: ["mag-p${n}:body"] });
   }
 
   R.findings = findings;

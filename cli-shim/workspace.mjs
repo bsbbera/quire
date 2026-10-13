@@ -6,7 +6,7 @@
 // QUIRE_WORKSPACE in the environment before launch or you lived in ~/Quire.
 // This owns the answer, and can write it down.
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync, accessSync, constants } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync, accessSync, constants } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 
@@ -46,6 +46,43 @@ const CONFIG = join(CONFIG_DIR, INSTANCE ? `workspace.${INSTANCE}.json` : "works
 const LEGACY = INSTANCE
   ? [join(HOME, `Quire-${INSTANCE}`)]
   : [join(HOME, "Quire"), join(HOME, "InkDesk")];
+
+/*
+ * This app's own settings: models and routing (quire.json), keys, MCP,
+ * connections, chat sessions, tasks, the log. The workspace is the work and
+ * dev and prod share it; settings are each app's own. They lived in the
+ * workspace, so the two apps shared one set, and one booting called the
+ * other's live run interrupted. Prod (the only app most people have) keeps
+ * ~/.quire; a dev install gets ~/.quire-dev. Set here, before anything is
+ * spawned, so Studio and every child inherit it (core/src/utils/config-dir).
+ */
+const NAMED = Boolean(process.env.QUIRE_CONFIG_DIR?.trim());
+export const CONFIG_HOME = process.env.QUIRE_CONFIG_DIR?.trim()
+  || join(HOME, INSTANCE ? `.quire-${INSTANCE}` : ".quire");
+process.env.QUIRE_CONFIG_DIR = CONFIG_HOME;
+
+/* Files that are app state, moved out of a workspace once. */
+const STATE = ["sessions", "tasks", "session.json", "personal-sources.json", "engines.json", "canva-usage.json", "comfy.json", "quire.log"];
+/* What a new dev install starts from, so it behaves like prod on day one. */
+const SHARED_START = ["mcp.json", "connections.json", "cli-models.json", "secrets.json", "providers.json", ".env"];
+
+/**
+ * Carry settings over once, never overwriting: from the workspace (where they
+ * used to live) and, for a new dev install, from prod's folder.
+ */
+export function adoptSettings(from = root()) {
+  mkdirSync(CONFIG_HOME, { recursive: true });
+  const copy = (src, dest) => {
+    if (existsSync(src) && !existsSync(dest)) cpSync(src, dest, { recursive: true });
+  };
+  // Only an install's own default folder starts from prod's; a folder named
+  // outright (a test, a custom launch) starts as given.
+  if (INSTANCE && !NAMED && CONFIG_HOME !== CONFIG_DIR) {
+    for (const f of SHARED_START) copy(join(CONFIG_DIR, f), join(CONFIG_HOME, f));
+  }
+  copy(join(from, "quire.json"), join(CONFIG_HOME, "quire.json"));
+  for (const f of STATE) copy(join(from, ".quire", f), join(CONFIG_HOME, f));
+}
 
 function readConfig() {
   try { return JSON.parse(readFileSync(CONFIG, "utf-8")); } catch { return {}; }
@@ -89,7 +126,9 @@ export function root() {
  * because only `books/` was counted; enumerating every kind of work instead
  * would be a list that goes stale every time Quire learns a new one.
  */
-const initialized = (p) => existsSync(join(p, "quire.json"));
+// Settings live in the app's own folder now; an old workspace still has them in it.
+const initialized = (p) => existsSync(join(p, "quire.json"))
+  || (resolve(p) === resolve(root()) && existsSync(join(CONFIG_HOME, "quire.json")));
 
 function writable(p) {
   try { accessSync(p, constants.W_OK); return true; } catch { return false; }
@@ -208,3 +247,6 @@ export async function pick(start = root()) {
   const r = await run("zenity", ["--file-selection", "--directory", `--title=${prompt}`]);
   return r || null;
 }
+
+// Once per process start, before Studio or the shim read anything.
+try { adoptSettings(); } catch (e) { console.warn(`settings not carried over: ${e.message}`); }

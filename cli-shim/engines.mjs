@@ -16,11 +16,11 @@ import * as canva from "./canva.mjs";
 import * as comfy from "./comfy.mjs";
 import * as events from "./events.mjs";
 import * as postprocess from "./postprocess.mjs";
-import { WORKSPACE } from "./workflows.mjs";
+import { CONFIG_HOME } from "./workspace.mjs";
 
 const HERE = dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
-const PREFS = join(WORKSPACE, ".quire", "engines.json");
-const USAGE = join(WORKSPACE, ".quire", "canva-usage.json");
+const PREFS = join(CONFIG_HOME, "engines.json");
+const USAGE = join(CONFIG_HOME, "canva-usage.json");
 
 /** The shipped registry: what each engine can do and what it costs. */
 export function registry() {

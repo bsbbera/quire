@@ -152,6 +152,120 @@ function edge(img, { width = 0.14, coarse = 14, fine = 48, amount = 0.9, hard = 
   });
 }
 
+/* ------------------------------------------------------- cutout helpers */
+/** A separable box blur of the rgb channels, as floats. */
+function boxBlur(data, w, h, r) {
+  const out = new Float32Array(w * h * 3), tmp = new Float32Array(w * h * 3), d = 2 * r + 1;
+  for (let y = 0; y < h; y++) for (let k = 0; k < 3; k++) {
+    const row = y * w;
+    let s = 0;
+    for (let x = -r; x <= r; x++) s += data[(row + Math.min(w - 1, Math.max(0, x))) * 4 + k];
+    for (let x = 0; x < w; x++) {
+      tmp[(row + x) * 3 + k] = s / d;
+      s += data[(row + Math.min(w - 1, x + r + 1)) * 4 + k] - data[(row + Math.max(0, x - r)) * 4 + k];
+    }
+  }
+  for (let x = 0; x < w; x++) for (let k = 0; k < 3; k++) {
+    let s = 0;
+    for (let y = -r; y <= r; y++) s += tmp[(Math.min(h - 1, Math.max(0, y)) * w + x) * 3 + k];
+    for (let y = 0; y < h; y++) {
+      out[(y * w + x) * 3 + k] = s / d;
+      s += tmp[(Math.min(h - 1, y + r + 1) * w + x) * 3 + k] - tmp[(Math.max(0, y - r) * w + x) * 3 + k];
+    }
+  }
+  return out;
+}
+
+const fieldTerms = (i, w, h) => { const x = (i % w) / w - 0.5, y = Math.floor(i / w) / h - 0.5; return [1, x, y, x * x, x * y, y * y]; };
+
+/** Least squares: a quadratic surface per channel through the given pixels. */
+function fitField(blur, w, h, pts) {
+  return [0, 1, 2].map((k) => {
+    const A = Array.from({ length: 6 }, () => new Array(7).fill(0));
+    for (const i of pts) {
+      const t = fieldTerms(i, w, h), v = blur[i * 3 + k];
+      for (let r = 0; r < 6; r++) { for (let c = 0; c < 6; c++) A[r][c] += t[r] * t[c]; A[r][6] += t[r] * v; }
+    }
+    for (let c = 0; c < 6; c++) {
+      let p = c;
+      for (let r = c + 1; r < 6; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+      [A[c], A[p]] = [A[p], A[c]];
+      if (Math.abs(A[c][c]) < 1e-9) continue;
+      for (let r = 0; r < 6; r++) if (r !== c) { const f = A[r][c] / A[c][c]; for (let q = c; q < 7; q++) A[r][q] -= f * A[c][q]; }
+    }
+    return A.map((row, c) => (Math.abs(row[c]) < 1e-9 ? 0 : row[6] / row[c]));
+  });
+}
+
+function fieldAt(cf, w, h, i) { const t = fieldTerms(i, w, h); return cf.map((co) => co.reduce((s, v, j) => s + v * t[j], 0)); }
+
+function offField(cf, blur, w, h, i) {
+  const m = fieldAt(cf, w, h, i);
+  return Math.max(Math.abs(blur[i * 3] - m[0]), Math.abs(blur[i * 3 + 1] - m[1]), Math.abs(blur[i * 3 + 2] - m[2]));
+}
+
+/** Foreground islands smaller than `min` pixels become ground. */
+function dropSpecks(bg, w, h, min) {
+  const n = w * h, seen = new Uint8Array(n);
+  for (let s0 = 0; s0 < n; s0++) {
+    if (bg[s0] || seen[s0]) continue;
+    const comp = [s0]; seen[s0] = 1;
+    for (let c = 0; c < comp.length; c++) {
+      const i = comp[c], x = i % w;
+      if (x > 0 && !bg[i - 1] && !seen[i - 1]) { seen[i - 1] = 1; comp.push(i - 1); }
+      if (x < w - 1 && !bg[i + 1] && !seen[i + 1]) { seen[i + 1] = 1; comp.push(i + 1); }
+      if (i >= w && !bg[i - w] && !seen[i - w]) { seen[i - w] = 1; comp.push(i - w); }
+      if (i < n - w && !bg[i + w] && !seen[i + w]) { seen[i + w] = 1; comp.push(i + w); }
+    }
+    if (comp.length < min) for (const i of comp) bg[i] = 1;
+  }
+}
+
+/** Ground not reached from the border, in islands under `max` pixels, becomes subject. */
+function fillHoles(bg, w, h, max) {
+  const n = w * h, reach = new Uint8Array(n), stack = [];
+  const go = (i) => { if (bg[i] && !reach[i]) { reach[i] = 1; stack.push(i); } };
+  for (let x = 0; x < w; x++) { go(x); go((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { go(y * w); go(y * w + w - 1); }
+  while (stack.length) {
+    const i = stack.pop(), x = i % w;
+    if (x > 0) go(i - 1);
+    if (x < w - 1) go(i + 1);
+    if (i >= w) go(i - w);
+    if (i < n - w) go(i + w);
+  }
+  const seen = new Uint8Array(n);
+  for (let s0 = 0; s0 < n; s0++) {
+    if (!bg[s0] || reach[s0] || seen[s0]) continue;
+    const comp = [s0]; seen[s0] = 1;
+    for (let c = 0; c < comp.length; c++) {
+      const i = comp[c], x = i % w;
+      for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i >= w ? i - w : -1, i < n - w ? i + w : -1]) {
+        if (j >= 0 && bg[j] && !reach[j] && !seen[j]) { seen[j] = 1; comp.push(j); }
+      }
+    }
+    if (comp.length < max) for (const i of comp) bg[i] = 0;
+  }
+}
+
+/** Grow the pixels equal to `val` by r (a square), separably. */
+function grow(src, w, h, r, val) {
+  const n = w * h, out = new Uint8Array(n), tmp = new Uint8Array(n);
+  for (let y = 0; y < h; y++) {
+    let last = -1e9;
+    for (let x = 0; x < w; x++) { if (src[y * w + x] === val) last = x; tmp[y * w + x] = x - last <= r ? val : 1 - val; }
+    last = 1e9;
+    for (let x = w - 1; x >= 0; x--) { if (src[y * w + x] === val) last = x; if (last - x <= r) tmp[y * w + x] = val; }
+  }
+  for (let x = 0; x < w; x++) {
+    let last = -1e9;
+    for (let y = 0; y < h; y++) { if (tmp[y * w + x] === val) last = y; out[y * w + x] = y - last <= r ? val : 1 - val; }
+    last = 1e9;
+    for (let y = h - 1; y >= 0; y--) { if (tmp[y * w + x] === val) last = y; if (last - y <= r) out[y * w + x] = val; }
+  }
+  return out;
+}
+
 /* ------------------------------------------------------------------- ops */
 /** "#rrggbb" as [r,g,b], or null for anything else — `rgbOf` above assumes a hex. */
 function groundRgb(value) {
@@ -159,6 +273,25 @@ function groundRgb(value) {
   if (!m) return null;
   const hex = m[1];
   return [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+}
+
+/**
+ * The ground as the picture actually painted it: the median of four corner
+ * patches, and how much it varies there (paper grain, gouache texture), so the
+ * key can be as wide as the ground is rough.
+ */
+function patchGround(data, w, h, size = 24) {
+  const s = Math.max(1, Math.min(size, Math.floor(w / 8), Math.floor(h / 8)));
+  const px = [];
+  for (const [x0, y0] of [[0, 0], [w - s, 0], [0, h - s], [w - s, h - s]]) {
+    for (let y = y0; y < y0 + s; y++) for (let x = x0; x < x0 + s; x++) {
+      const o = (y * w + x) * 4; px.push([data[o], data[o + 1], data[o + 2]]);
+    }
+  }
+  const rgb = [0, 1, 2].map((k) => { const v = px.map((p) => p[k]).sort((a, b) => a - b); return v[v.length >> 1]; });
+  // The spread that holds 90 % of the ground's pixels around its median.
+  const dev = px.map((p) => Math.max(...[0, 1, 2].map((k) => Math.abs(p[k] - rgb[k])))).sort((a, b) => a - b);
+  return { rgb, spread: dev[Math.floor(dev.length * 0.9)] ?? 0 };
 }
 
 /** The ground colour as the picture reports it: the median of its four corners. */
@@ -173,36 +306,42 @@ function corner(data, w, h) {
 
 export const OPS = {
   /**
-   * Take the white ground away. The prompt for every cutout treatment asks for
-   * the subject "isolated on plain white", so a flood fill from the border over
-   * near-white, low-chroma pixels finds the ground and leaves white inside the
-   * subject (a white shirt, a snowflake) alone. Edges are softened one pixel
-   * and de-fringed so no white halo is left round the figure.
-   * ponytail: flood-fill key, not a segmentation model — a subject touching
-   * every border keeps its ground. Upgrade: a BiRefNet/RMBG workflow in Comfy.
+   * Take the ground away and keep the subject whole.
+   *
+   * The ground is read as a smooth field: a quadratic surface fitted to the
+   * picture's border on a lightly blurred copy, twice, dropping the border
+   * pixels where the subject touches the edge. A pixel is ground when it sits
+   * as close to that field as the ground sits to itself, and is reached from the
+   * border. Blurring first is what lets a grainy painted ground key at all; the
+   * fitted field is what keys a ground that darkens toward the edges without
+   * eating a pale subject (an ivory casque on cream). Specks the fill went round
+   * are dropped, narrow bites into the subject are closed, and the edge is
+   * softened one pixel and de-fringed against the field.
+   * ponytail: a fitted-ground key, not a segmentation model - a subject the
+   * colour of its ground with no edge between them still loses that part.
+   * Upgrade: a BiRefNet/RMBG workflow in Comfy (its models folder is empty).
    */
-  cutout(img, { tolerance = 26, ground = null } = {}) {
+  cutout(img, { radius = 3, speck = 0.0004, close = 0.006 } = {}) {
     const { width: w, height: h, data } = img;
     const n = w * h;
-    /*
-     * The ground is whatever the picture was asked to stand on.
-     *
-     * This keyed near-white only, so a cutout could be ordered on a white
-     * ground and nothing else — and an element drawn on the section's own
-     * paper colour, or on a flat panel that suits it, came back with the panel
-     * baked in. The colour comes from the caller when the brief named one, and
-     * off the corners when it did not, which is still white for a white one.
-     */
-    const key = groundRgb(ground) ?? corner(data, w, h);
-    const white = (i) => {
-      const o = i * 4;
-      return Math.abs(data[o] - key[0]) <= tolerance
-        && Math.abs(data[o + 1] - key[1]) <= tolerance
-        && Math.abs(data[o + 2] - key[2]) <= tolerance;
-    };
+    const blur = boxBlur(data, w, h, radius);
+    const border = [];
+    for (let x = 0; x < w; x += 2) border.push(x, (h - 1) * w + x, Math.min(h - 1, 2) * w + x, Math.max(0, h - 3) * w + x);
+    for (let y = 0; y < h; y += 2) border.push(y * w, y * w + w - 1, y * w + Math.min(w - 1, 2), y * w + Math.max(0, w - 3));
+    const off = (cf, i) => offField(cf, blur, w, h, i);
+    let cf = fitField(blur, w, h, border), pts = border;
+    for (let pass = 0; pass < 2; pass++) {
+      const d = pts.map((i) => off(cf, i)).sort((a, b) => a - b), med = d[d.length >> 1];
+      const kept = border.filter((i) => off(cf, i) <= Math.max(3, med * 2.5));
+      if (kept.length < 12) break;
+      pts = kept; cf = fitField(blur, w, h, pts);
+    }
+    const res = pts.map((i) => off(cf, i)).sort((a, b) => a - b);
+    // As wide as the ground varies from its own field, and a little more.
+    const tol = Math.max(6, (res[Math.floor(res.length * 0.95)] ?? 0) * 1.5 + 3);
     const bg = new Uint8Array(n);
     const stack = [];
-    const push = (i) => { if (!bg[i] && white(i)) { bg[i] = 1; stack.push(i); } };
+    const push = (i) => { if (!bg[i] && off(cf, i) <= tol) { bg[i] = 1; stack.push(i); } };
     for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x); }
     for (let y = 0; y < h; y++) { push(y * w); push(y * w + w - 1); }
     while (stack.length) {
@@ -212,6 +351,29 @@ export const OPS = {
       if (i >= w) push(i - w);
       if (i < n - w) push(i + w);
     }
+    // The blur widened the subject by its radius: walk the edge back in on the
+    // sharp pixels, as far as the ground's own grain reaches.
+    const raw = (i) => { const m = fieldAt(cf, w, h, i); return Math.max(Math.abs(data[i * 4] - m[0]), Math.abs(data[i * 4 + 1] - m[1]), Math.abs(data[i * 4 + 2] - m[2])); };
+    for (let pass = 0; pass < radius; pass++) {
+      const edgeIn = [];
+      for (let i = 0; i < n; i++) {
+        if (bg[i]) continue;
+        const x = i % w;
+        if ((x > 0 && bg[i - 1]) || (x < w - 1 && bg[i + 1]) || (i >= w && bg[i - w]) || (i < n - w && bg[i + w])) {
+          if (raw(i) <= tol * 2) edgeIn.push(i);
+        }
+      }
+      for (const i of edgeIn) bg[i] = 1;
+    }
+    dropSpecks(bg, w, h, Math.max(30, Math.round(n * speck)));
+    // Grow the subject by r and shrink it back: only gaps narrower than 2r close.
+    const r = Math.max(2, Math.round(Math.min(w, h) * close));
+    const closed = grow(grow(bg, w, h, r, 0), w, h, r, 1);
+    for (let i = 0; i < n; i++) bg[i] = bg[i] && closed[i] ? 1 : 0;
+    // Closing a bite can leave the ground behind it enclosed in the subject: a pinhole that
+    // shows whatever is drawn behind the picture (Birds p14's arch through the hornbill's neck).
+    // Small enclosed ground is the subject's; a large one (a gap between two figures) stays open.
+    fillHoles(bg, w, h, Math.round(n * 0.005));
     let removed = 0;
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
@@ -230,17 +392,109 @@ export const OPS = {
         }
         const t = bg[i] ? 0 : fg / all;
         const o = i * 4;
-        // De-fringe against the ground that was actually keyed, not against white.
-        if (t > 0 && t < 1) for (let k = 0; k < 3; k++) data[o + k] = clamp(Math.round((data[o + k] - key[k] * (1 - t)) / t));
+        // De-fringe against the ground field at this pixel.
+        if (t > 0 && t < 1) {
+          const g = fieldAt(cf, w, h, i);
+          for (let k = 0; k < 3; k++) data[o + k] = clamp(Math.round((data[o + k] - g[k] * (1 - t)) / t));
+        }
         data[o + 3] = Math.round(data[o + 3] * t);
       }
     }
     const share = removed / n;
+    const mid = fieldAt(cf, w, h, Math.floor(h / 2) * w + (w >> 1)).map((c) => clamp(Math.round(c)));
     return {
       removed: Math.round(share * 1000) / 1000,
-      ground: `#${key.map((c) => c.toString(16).padStart(2, "0")).join("")}`,
+      ground: `#${mid.map((c) => c.toString(16).padStart(2, "0")).join("")}`,
       ...(share < 0.02 ? { warning: "no flat ground found round the subject" } : {}),
     };
+  },
+
+  /**
+   * Measure the painted ground: its colour where it meets the frame's edge
+   * (what the page around it must match), its colour at the middle, and its
+   * grain (how far its pixels stray from the smooth field), so Affinity can draw
+   * shapes in the same colour and texture. Then ease the ground's tone to that
+   * edge colour along every edge that does not cut the subject: a painted ground
+   * lightens towards its middle, and the flat shape the plate sits in would show
+   * where that ramp starts. Only the smoothed tone moves; the grain is kept and
+   * the subject (tone far from the ground) is left alone.
+   */
+  ground(img, { radius = 3, ease = 0.45 } = {}) {
+    const { width: w, height: h, data } = img;
+    const blur = boxBlur(data, w, h, radius);
+    const border = [];
+    for (let x = 0; x < w; x += 2) border.push(x, (h - 1) * w + x);
+    for (let y = 0; y < h; y += 2) border.push(y * w, y * w + w - 1);
+    const off = (cf, i) => offField(cf, blur, w, h, i);
+    let cf = fitField(blur, w, h, border), pts = border;
+    for (let pass = 0; pass < 2; pass++) {
+      const d = pts.map((i) => off(cf, i)).sort((a, b) => a - b), med = d[d.length >> 1];
+      const kept = border.filter((i) => off(cf, i) <= Math.max(3, med * 2.5));
+      if (kept.length < 12) break;
+      pts = kept; cf = fitField(blur, w, h, pts);
+    }
+    const hex = (c) => `#${c.map((v) => clamp(Math.round(v)).toString(16).padStart(2, "0")).join("")}`;
+    const edge = [0, 1, 2].map((k) => { const v = pts.map((i) => blur[i * 3 + k]).sort((a, b) => a - b); return v[v.length >> 1]; });
+    // Grain: the spread of the sharp pixels about the field, on the ground.
+    let sum = 0;
+    for (const i of pts) { const m = fieldAt(cf, w, h, i); for (let k = 0; k < 3; k++) { const d = data[i * 4 + k] - m[k]; sum += d * d; } }
+    const grain = Math.sqrt(sum / Math.max(1, pts.length * 3));
+    // Where the subject is: the box of what stands off the ground (rows and columns with
+    // more than a speck of it), and which edges of the picture cut it, so the page can
+    // crop the plate to its subject and put a cut edge on the trim.
+    const res = pts.map((i) => off(cf, i)).sort((a, b) => a - b);
+    const tol = Math.max(6, (res[Math.floor(res.length * 0.95)] ?? 0) * 1.5 + 3);
+    // The grain's two parts, as a print reproduces them: how far a pixel's brightness strays
+    // from its neighbourhood, and how far its colour strays from that brightness. Painted
+    // grounds out of the image model carry more of the second (coloured speckle) than the first.
+    // Measured on a ring inside the border, on ground only, so a frame artefact is not grain.
+    let L2 = 0, C2 = 0, nn = 0;
+    const inset = Math.min(8, Math.floor(Math.min(w, h) / 10));
+    for (const i of pts) {
+      const x = Math.min(w - 1 - inset, Math.max(inset, i % w)), y = Math.min(h - 1 - inset, Math.max(inset, Math.floor(i / w)));
+      const j = y * w + x;
+      if (off(cf, j) > tol) continue;
+      const d = [0, 1, 2].map((k) => data[j * 4 + k] - blur[j * 3 + k]), l = (d[0] + d[1] + d[2]) / 3;
+      L2 += l * l; C2 += d.reduce((s, v) => s + (v - l) ** 2, 0) / 3; nn++;
+    }
+    const lumGrain = Math.round(Math.sqrt(L2 / Math.max(1, nn)) * 10) / 10, chromaGrain = Math.round(Math.sqrt(C2 / Math.max(1, nn)) * 10) / 10;
+    const cols = new Uint32Array(w), rows = new Uint32Array(h);
+    for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) if (off(cf, y * w + x) > tol) { cols[x]++; rows[y]++; }
+    const span = (a, n, min) => { let lo = 0, hi = n - 1; while (lo < n && a[lo] < min) lo++; while (hi > lo && a[hi] < min) hi--; return [lo, hi]; };
+    const [x0, x1] = span(cols, w, Math.max(2, h / 2 * 0.01)), [y0, y1] = span(rows, h, Math.max(2, w / 2 * 0.01));
+    const r3 = (v) => Math.round(v * 1000) / 1000;
+    const subject = [r3(x0 / w), r3(y0 / h), r3((x1 + 1) / w), r3((y1 + 1) / h)];
+    // An edge cuts the subject when the subject runs into it along a real length.
+    const along = (list) => list.filter((v) => v > tol).length / Math.max(1, list.length);
+    const edgeOff = (xs, ys) => along(xs.flatMap((x) => ys.map((y) => off(cf, y * w + x))));
+    const every = (n) => Array.from({ length: Math.ceil(n / 4) }, (_, i) => i * 4).filter((v) => v < n);
+    const cut = [
+      ...(edgeOff([w - 2], every(h)) > 0.08 ? ["right"] : []), ...(edgeOff([1], every(h)) > 0.08 ? ["left"] : []),
+      ...(edgeOff(every(w), [h - 2]) > 0.08 ? ["bottom"] : []), ...(edgeOff(every(w), [1]) > 0.08 ? ["top"] : []),
+    ];
+    if (ease > 0) {
+      const m = Math.max(4, Math.round(Math.min(w, h) * ease)), R = Math.max(4, Math.round(Math.min(w, h) * 0.03));
+      // The ground's tone round each pixel from ground pixels only (a masked blur), so the
+      // subject's colour does not leak into it and leave a halo round the bird.
+      const isGround = (i) => Math.max(...[0, 1, 2].map((k) => Math.abs(blur[i * 3 + k] - edge[k]))) < 45;
+      const num = new Float32Array(w * h * 4), den = new Float32Array(w * h * 4);
+      for (let i = 0; i < w * h; i++) if (isGround(i)) { for (let k = 0; k < 3; k++) num[i * 4 + k] = data[i * 4 + k]; den[i * 4] = 1; }
+      const Bn = boxBlur(num, w, h, R), Bd = boxBlur(den, w, h, R);
+      const B = new Float32Array(w * h * 3);
+      for (let i = 0; i < w * h; i++) for (let k = 0; k < 3; k++) B[i * 3 + k] = Bd[i * 3] > 0.05 ? Bn[i * 3 + k] / Bd[i * 3] : edge[k];
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const d = Math.min(cut.includes("left") ? Infinity : x, cut.includes("right") ? Infinity : w - 1 - x,
+          cut.includes("top") ? Infinity : y, cut.includes("bottom") ? Infinity : h - 1 - y);
+        if (d >= m) continue;
+        const i = y * w + x, wt = 1 - smooth(0, 1, d / m);
+        // Only the ground moves: a subject pixel keeps its colour.
+        const far = Math.max(...[0, 1, 2].map((k) => Math.abs(blur[i * 3 + k] - B[i * 3 + k])));
+        const g = 1 - smooth(12, 30, far);
+        if (g <= 0) continue;
+        for (let k = 0; k < 3; k++) data[i * 4 + k] = clamp(Math.round(data[i * 4 + k] + (edge[k] - B[i * 3 + k]) * wt * g));
+      }
+    }
+    return { edge: hex(edge), ground: hex(fieldAt(cf, w, h, Math.floor(h / 2) * w + (w >> 1))), grain: Math.round(grain * 10) / 10, lum: lumGrain, chroma: chromaGrain, size: [w, h], subject, cut, removed: 0 };
   },
 
   /** Soft oval fade to nothing: the picture sits in the paper. */
@@ -351,6 +605,32 @@ export function paperGrain(hex, size = 256, seed = 7) {
   for (let i = 0; i < size * size; i++) {
     const v = (fine[i] - 0.5) * 16 + (broad[i] - 0.5) * 10;
     for (let k = 0; k < 3; k++) data[i * 4 + k] = clamp(Math.round(P[k] + v));
+    data[i * 4 + 3] = 255;
+  }
+  return encode({ width: size, height: size, data });
+}
+
+/**
+ * A colour with the painted ground's grain baked in: a small tile Affinity repeats
+ * as a bitmap fill, so a drawn shape carries the same texture as the picture
+ * beside it. `g` is the grain the picture measured (postprocess `ground`): `lum`,
+ * the spread of brightness, and `chroma`, the spread of colour about it, both per
+ * pixel and uncorrelated with the neighbour, as the picture's own are. The tile is
+ * laid at the picture's own pixel size on the page, so one speckle matches another.
+ */
+export function colourGrain(hex, g, size = 512, seed = 5) {
+  const P = rgbOf(hex || "#f4efe6");
+  // An old recipe has one number: split it as the image model's grounds measured.
+  const L = typeof g === "number" ? g * 0.45 : Number(g?.lum) || 0;
+  const C = typeof g === "number" ? g * 0.6 : Number(g?.chroma) || 0;
+  const r = rng(seed);
+  const gauss = () => Math.sqrt(-2 * Math.log(r() || 1e-9)) * Math.cos(2 * Math.PI * r());
+  // Three independent draws less their mean spread by sd*sqrt(2/3): scale back up to C.
+  const cs = C / Math.sqrt(2 / 3);
+  const data = Buffer.alloc(size * size * 4);
+  for (let i = 0; i < size * size; i++) {
+    const l = gauss() * L, e = [gauss(), gauss(), gauss()], m = (e[0] + e[1] + e[2]) / 3;
+    for (let k = 0; k < 3; k++) data[i * 4 + k] = clamp(Math.round(P[k] + l + (e[k] - m) * cs));
     data[i * 4 + 3] = 255;
   }
   return encode({ width: size, height: size, data });

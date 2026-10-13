@@ -75,7 +75,20 @@ if (engineName === "quire-runtime" || engineName === "@actalk/quire") {
 }
 const { ensureProjectDirectoryInitialized } = await load("dist/project-bootstrap.js");
 
-await ensureProjectDirectoryInitialized(ROOT, { language: "en" });
+// Settings are the app's own (workspace.mjs CONFIG_HOME). A first run still
+// bootstraps the workspace - its folders are the work's - and then the
+// settings it wrote move out of it, so Output holds only the work.
+{
+  const { CONFIG_HOME } = await import("./workspace.mjs");
+  if (!existsSync(join(CONFIG_HOME, "quire.json"))) {
+    await ensureProjectDirectoryInitialized(ROOT, { language: "en" });
+    const { renameSync, mkdirSync } = await import("node:fs");
+    mkdirSync(CONFIG_HOME, { recursive: true });
+    for (const f of ["quire.json", ".env"]) {
+      if (existsSync(join(ROOT, f)) && !existsSync(join(CONFIG_HOME, f))) renameSync(join(ROOT, f), join(CONFIG_HOME, f));
+    }
+  }
+}
 
 // With the staged runtime the entry point is known, so resolveStudioLaunch is
 // not consulted: it hunts for a global npm layout or a monorepo checkout and

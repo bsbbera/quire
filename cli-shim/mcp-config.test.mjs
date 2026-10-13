@@ -4,8 +4,9 @@
 //   node cli-shim/mcp-config.test.mjs
 //
 // 1. It is never committed. The file holds live API keys after the import.
-// 2. The import happens once. If discovery kept running, another app's config
-//    would still be deciding what tools Quire has.
+// 2. Detection only adds. A server another app gains later is picked up, but an
+//    entry already in Quire's file is never rewritten by the source app, and one
+//    the user removed never comes back.
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -42,7 +43,7 @@ const run = (home, script) => execFileSync(process.execPath, ["--input-type=modu
   cwd: here,
 });
 
-check("discovery is copied in once, then the file is the only source", () => {
+check("detection adds new servers, never rewrites or revives one, and pasted ones are added", () => {
   const home = mkdtempSync(join(tmpdir(), "quire-mcp-"));
   try {
     // One discoverable server, in the plainest place discovery looks.
@@ -62,12 +63,29 @@ check("discovery is copied in once, then the file is the only source", () => {
     assert.equal(written.mcpServers.borrowed.env.API_KEY, "sk-test",
       "the credential was not copied, so the server would need reconnecting");
 
-    // Now take the source away. An app Quire no longer reads.
-    rmSync(join(desktop, "claude_desktop_config.json"));
+    // The source app changes the server and gains a new one; Cursor gets one too
+    // (a Store-style Claude path is not needed: any listed app is enough here).
+    writeFileSync(join(desktop, "claude_desktop_config.json"), JSON.stringify({
+      mcpServers: { borrowed: { command: "changed" }, later: { command: "node", args: ["y.mjs"] } },
+    }));
+    mkdirSync(join(home, ".cursor"), { recursive: true });
+    writeFileSync(join(home, ".cursor", "mcp.json"), JSON.stringify({ mcpServers: { cursed: { command: "uvx", args: ["c"] }, remote: { url: "https://x" } } }));
     const second = JSON.parse(run(home,
-      `const m = await import(${url}); console.log(JSON.stringify(m.servers()));`));
-    assert.ok(second.borrowed, "the server vanished when its original config did");
+      `const m = await import(${url}); m.rescan(); console.log(JSON.stringify(m.servers()));`));
+    assert.equal(second.borrowed.command, "node", "the source app rewrote an entry Quire already had");
+    assert.ok(second.later && second.cursed, "a server added later in another app was not picked up");
+    assert.ok(!second.remote, "a url-only server was listed, and nothing here can start it");
     assert.ok(second.quire?.bundled, "the bundled server should always be present");
+
+    // Removed by the user: Rescan must not bring it back.
+    const third = JSON.parse(run(home,
+      `const m = await import(${url}); m.remove("later"); m.rescan(); console.log(JSON.stringify(m.servers()));`));
+    assert.ok(!third.later, "a removed server came back on rescan");
+
+    // Added by hand, from a pasted config block.
+    const fourth = JSON.parse(run(home,
+      `const m = await import(${url}); m.add('{"mcpServers":{"Hand Made":{"command":"npx","args":["-y","z"]}}}'); console.log(JSON.stringify(m.servers()));`));
+    assert.equal(fourth["hand-made"]?.source, "user", "a pasted server was not added");
   } finally {
     rmSync(home, { recursive: true, force: true });
   }

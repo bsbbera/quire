@@ -9,10 +9,14 @@ worse than none: it is a guess wearing the clothes of a fact.
 
 ## Two installs, one machine
 
-| | folder | shim | studio | workspace |
-|---|---|---|---|---|
-| dev | `~/IDEAVERSE/Quire-Dev` | 8788 | 4568 | `~/Quire-dev` |
-| prod | `~/IDEAVERSE/Quire-Prod` | 8787 | 4567 | `QUIRE_WORKSPACE`, else `~/Quire` |
+| | folder | shim | studio | workspace | settings |
+|---|---|---|---|---|---|
+| dev | `~/IDEAVERSE/Quire-Dev` | 8788 | 4568 | shared: `~/IDEAVERSE/Output` | `~/.quire-dev` |
+| prod | `~/IDEAVERSE/Quire-Prod` | 8787 | 4567 | shared: `~/Quire` (a junction to Output) | `~/.quire` |
+
+**The work is shared; the settings are not.** Both apps read and write the
+same issues and books. Each has its own models and routing, keys, MCP,
+connections, chat sessions, tasks and log. See "Settings" below.
 
 Ports are compiled in: `desktop/build-dev.mjs` sets `QUIRE_SHIM_PORT` /
 `QUIRE_STUDIO_PORT`, read by `option_env!` in `desktop/src-tauri/src/main.rs`.
@@ -26,12 +30,13 @@ Under Git Bash a leading `/` is rewritten to a Windows path — prefix with
 
 ## Names
 
-Quire's own names only: `<workspace>/.quire/` for app state (sessions,
-tasks, the search index), `<workspace>/quire.json` for config,
-`<workspace>/research/` for gathered pages, `~/.quire/` for machine
-settings (`.env`, `mcp.json`, the workspace pointer, API keys in
-`secrets.json`, connection results in `connections.json`, extra providers in
-`providers.json`), `QUIRE_*` for environment settings, `quire` for the CLI.
+Quire's own names only: the app's settings folder (`QUIRE_CONFIG_DIR`, see
+"Settings") for `quire.json`, `.env`, `mcp.json`, `secrets.json`,
+`connections.json`, `providers.json`, sessions, tasks and the log;
+`<workspace>/.quire/` for state about the work (uploads, research reports,
+the search index, findings, audit state); `<workspace>/research/` for
+gathered pages; `~/.quire/workspace.<instance>.json` for the workspace
+pointer; `QUIRE_*` for environment settings, `quire` for the CLI.
 
 The InkOS names (`.inkos/`, `inkos.json`, `INKOS_*`) survive in two
 places and nowhere else:
@@ -68,6 +73,25 @@ in prod's books no matter what else was arranged.
 
 The config file lives in `~/.quire/`, never inside the workspace — the file
 that says where the workspace is cannot live in it.
+
+## Settings
+
+`cli-shim/workspace.mjs` sets `QUIRE_CONFIG_DIR` before anything is spawned:
+`~/.quire` for prod, `~/.quire-<instance>` for any other install. Core reads it
+through `core/src/utils/config-dir.ts` (`configFile`, `configDir`, `stateDir`)
+and `GLOBAL_CONFIG_DIR`; nothing may join `quire.json`, `.env`, sessions or
+tasks onto the workspace root directly. Unset (the CLI on a project) it falls
+back to the project, as before.
+
+`adoptSettings()` runs once per start and never overwrites: it copies
+`quire.json` and app state out of a workspace that still holds them, and a new
+dev folder starts from prod's (`mcp.json`, `connections.json`, keys, `.env`).
+
+Why: the settings lived in the workspace, so dev and prod shared one model
+routing, one set of sessions - and a run's owner was unknown, so one app
+booting marked the other's live run interrupted. Run files
+(`<production>/pipeline.json`) stay with the work, and carry the owning pid
+while running; `markInterrupted` skips a run whose owner is alive.
 
 ## Where the model comes from
 
@@ -387,6 +411,303 @@ overwrite, so a re-render went to `name_1.png` and the stale picture was scored)
   `scope.world`; a tweak and a redesign each ran the model (~2 min), which wrote valid blocks, laid
   out and scored 98 and 89; the 89 had 21 words overset, now caught (T 40) and mended to 96. UI measured
   at 1440, 746 and 375 px: page column 675/482 at 1440, one column below, no horizontal overflow.
+
+## The house and the layout engine (Phases 7-8)
+
+Plan: `analysis/26-design-engine.md`. The brand is a grammar, not a look: the
+house fixes what never changes, a section's world picks how it looks, and the
+model chooses while code computes.
+
+**House book.** `<brand>/house.json` (the magazine's output folder, so every
+publication type writing there shares it):
+- what it holds: masthead, type pair, scale (body x ratio), paper and ink,
+  margin, gutter, baseline, the grid systems allowed, the devices (panel and rule
+  style, folio, kicker), and the art styles it carries
+- code: `core/src/pipeline/house.ts`, routes `studio/src/api/house.ts`
+  (`GET/PUT /api/v1/house`, `POST /house/propose` (a model job), `POST /house/approve`),
+  screen `pages/HousePage.tsx` (rail: House)
+- any edit makes it a draft again; only an approved house binds the design stage
+- approval refuses when Affinity is closed: the faces are checked against
+  Affinity's installed list, and an unchecked face would fall back in every build
+
+**Art styles.** The builtin library is `core/art-styles/library.json` (10 styles),
+with the workspace's `art-styles.json` layered over it by id. A style has:
+- a register and technique from the STYLES catalogue, and the domains it suits
+- its generators, a field rule (paper · tint · ink · accent-tint), and a ComfyUI prompt and negative
+
+**Design under a house.** `runDesign`:
+- tells the model what is fixed (`houseBlock`) and asks for an accent, a
+  `grid.system` and a `style` per section
+- `applyHouse` then enforces the house: the type, paper, ink and scale come from it,
+  each world's field from its style, and an unknown or neighbouring-duplicate style
+  is a design problem
+- `fixed.masthead`, `fixed.panel` and `fixed.rule` carry the house to the shim
+- with no approved house the stage behaves as before and says so
+
+**Layout engine.** `core/src/pipeline/layout-engine.ts`:
+- `geometryOf(spec)` makes cells and baselines for `columns` · `modular` (6 x 8
+  fields) · `thirds` · `golden` (.382 / .236 / .382) · `canon` (Van de Graaf:
+  inner 1/9, outer 2/9, head 1/9, foot 2/9; recto and verso differ; the note cell
+  is last)
+- `PATTERNS` holds 36 patterns, each tagged by system and role (cover, back, opener,
+  feature, figure, timeline, closing). Blocks are cells across and fractions of the
+  depth down
+- the model returns `pattern`, `mirror`, `art`, `seed`, `kicker` and `panelTitle` per page
+- `resolveLayouts` → `choosePattern` → `resolvePattern` → `settle`:
+  - fits the copy with a conservative capacity estimate, and prefers a pattern the copy fills (≥ 60 %)
+  - skips figure patterns on pages with no figure, and avoids repeating the previous page's pattern
+  - sizes titles and decks to their slots
+  - gives a short page's spare lines to its top art band
+  - adds the running head (never on covers)
+- every block carries its mm `box` and every page its grid `edges`; the shim draws
+  the box, and the score checks alignment against the edges
+- a page the model placed by hand (blocks, no pattern) keeps its blocks; the
+  one-page redesign offers patterns first
+
+**Shim.**
+- `T.drawn` (tk.js) has 13 seeded generators: contours, rain, rings, flow, hatch,
+  halftone, burst, spiral, hex, tri, voronoi, blobs, bauhaus. Positions come from the
+  seed, at most one accent mark is drawn, strokes stop short of type sitting on the art,
+  and each page is capped at 900 nodes
+- `T.rule` draws the house's rule style
+- `blockPage`:
+  - type on art picks ink or paper by contrast; deck, pull and panel values are fitted
+  - panels follow the house style
+  - covers carry no running head or folio, and front and back matter wear the
+    first and last section's world (`worldOf`)
+
+Live, 2026-10-08:
+- the house "Filament" (Zodiak / Sitka) was drafted by the model and approved
+- the contour-maps folio rebuilt to 88 · 88 · 91 · 90 · 87 with no findings
+- a copy of Kolam took three styles across its three sections (Wabi earth,
+  Bauhaus primer, Field notes) on the modular system under the same house, and its
+  pages scored 92 · 88 · 88 · 89
+
+## Pages Quire makes right itself (Phase 9)
+
+`core/pipeline/page-look.ts` · `page-score-run.ts` (`perfectPage`, `perfectIssue`) ·
+`publication-runner.ts` (`makePagesRight`, `unprovenPages`, `forkIssue`) ·
+`publication-session.ts` (`look`) · shim `server.mjs` (`imagesOf`) · skill
+`quire-editorial-design` §14-15.
+
+- **The eye.** `lookAtPage` shows the model the page's `render.png` (tag `design-look`, so it
+  answers under the editorial-design skill) with the page's facts: how the story ends (so cut text
+  is seen), the world, the direction, what Affinity measured and the editor's rules. It answers
+  `{first, score, dims, defects[{severity, what, where, fix}], lesson}`; `parseLook` fails any
+  fatal fault whatever the score, and a page passes at `LOOK_PASS` 85. Kept per page in
+  `pages/<nn>/look.json` (latest + 40), stamped with `layoutHash` of the composition judged.
+- **Images reach the model.** `AskFn` takes `{images}`; `createPublicationAsk` then makes one
+  chat call straight to the stage model's endpoint with `image_url` parts (the worker path is
+  text-only). The shim's `imagesOf` reads them: ACP CLIs (Devin) get `image` content blocks,
+  stdin CLIs get the files on disk named in the prompt. Verified live 2026-10-10: Devin
+  swe-2-high read Rain p2's title and its cut last words from the render in 18 s.
+- **The loop.** `perfectPage`: `layoutScored` (place, render, pixel score, cause mends) → eye →
+  while pixels fail, Affinity measured an error, or the eye fails: `redesignPage` told every fault
+  and its fix, at most 3 redesigns. The best round stays (laid out again if a later one was worse).
+  A page whose latest look passed on its current composition is skipped. Lessons go to
+  `_taste/proposals.jsonl` as pending proposals (`proposeLesson`, deduped against proposals and
+  rules); accepted, they reach the composer and the eye through `rulesFor`.
+- **The gate.** The build stage (`build.export`) runs `makePagesRight` first and stops, naming
+  each page's faults, when one cannot be made right. `build()` refuses any page whose proof was
+  never looked at, failed, or was of another composition (`unprovenPages`).
+- **Measured errors added.** INSPECT now makes a body that oversets (`cols.overset`) an error
+  naming the body, and two text frames overlapping by more than 10 mm² (was 40) an error.
+- **Routes.** `POST /publications/:id/perfect {pages?, rounds?}` (a job);
+  `POST /publications/:id/fork` copies the approved copy, research and memory into
+  `<id>--l<k>` without design, art or build, to be designed in another language
+  (`recentBlock` keeps it from repeating the others).
+- **Knowledge.** `quire-editorial-design` 2.2.0 adds §14 Seeing the proof (the order an art
+  director reads a proof in and what each fault costs) and §15 Design languages (a vocabulary
+  of languages and the decisions that make each one); the composer and the eye both read it.
+  2.3.0 adds §16 The minimal editorial standard (read off a reference set of minimalist
+  magazine pages): few elements, one dominant, extreme type contrast, 35-75 character measure,
+  white space as one zone never holes, shared edges, grid-cropped pictures, paper not tint, and
+  display/text/label pairs that are installed in Affinity. The eye names a break of it as major.
+- **The eye has its own agent.** Tag `design-look` routes to `publication-critic` (job "Design
+  critic"), not the designer, so it can be pinned to a model that sees without moving design.
+  Dev pins it to `antigravity/gemini-3.1-pro-high` (tested 2026-10-10: read Rain l2 p2's title
+  and last words from the render in 51 s). Note: a shim model id needs its provider prefix -
+  a bare `gemini-3.1-pro-high` silently falls back to the default model.
+- **Reference pages.** Images under `<Output>/_taste/references/<set>/` (shared by both apps) are
+  the editor's standard. `referencePages` sends the eye three of them after the proof, rotated by
+  page number, and the prompt says to judge against their level, not copy them. The first set,
+  `minimal-editorial`, is 14 pins from a Pinterest "minimalist magazine design" search
+  (`SOURCES.txt` lists each URL).
+- **Several looks are options of one creation, never forks.** `issue.designCount` (1-4, set by
+  `POST /publications/:id/resume {designOptions}` or the Build tab's "designs to choose from")
+  makes `runDesign` call `designOne` that many times; each later option is told what the earlier
+  ones chose (`optionsBlock`) and shown a different few reference pages (`referencePages`,
+  newest set first). All options are kept in `issue.designOptions`, the first is `issue.design`;
+  `POST /publications/:id/design/choose {option}` (`chooseDesign`) makes another the design and
+  drops the sign-off. The issue page shows them above the tabs as "Design options". An option
+  that does not hold up is reported and skipped; the stage fails only when none does.
+  `/fork` still exists but is not how looks are compared (Rain's three forks were retired to
+  `Magazine/_removed/`).
+- **Design stops when stopped.** Composing and drawing check the run's signal between model
+  calls (`PublicationStopped`); before, a cancelled design ran on through every page.
+- **The designer sees the references.** The design call carries the reference images (four per
+  option) beside the prompt, so it goes as one image call to the designer's model.
+- **The composer is held to the standard** (`checkComposition`): a body line over ~78 or under
+  30 characters, more than two of pull / figure / panel, and an empty band across the page
+  between frames (over 8 % of the rows) are each sent back before anything is rendered.
+- **Fixes the loop needed.** The hill-climb redesigns from the best round, not the last
+  (`perfectPage`); art faults reach the artist (`drawArt` note); `cleanBlocks` drops a pull or
+  panel that sits on the body or title, never the body; a fork drops the issue's notes and
+  reference images; fingerprints carry the worlds so a fork does not repeat them; a design whose
+  type is not installed in Affinity (`installedFonts`, shim `/affinity/fonts`) is moved to the
+  closest installed pair, or refused.
+
+## Pages planned by arithmetic (the fast plan)
+
+`core/pipeline/page-plan.ts` (`planPage`, `rerank`, `layoutOfPlan`) · `publication-runner.ts`
+(`composePages`, `replanPage`, `pageSetting`, `installDesign`, `sizeForFrame`) ·
+`page-score-run.ts` (`perfectPage`) · route `POST /publications/:id/design/install`.
+
+- **Why.** The model composer placed every frame itself: ~18 sequential calls for one design of a
+  four-page issue (Rain's three options took 67 min), and the frames it reserved left holes,
+  because Affinity sets a text frame to its copy (Rain p1's body was planned 45 mm and laid 19).
+- **The plan.** `planPage` lays a few editorial arrangements on the issue's own grid - picture
+  across the head, across the foot, down one side (the system's minor/major spans) - with the
+  title at full voice or compact, and none, one or two extras in a rail beside the body. Every
+  frame is sized to what it carries (title rows at full size, deck lines, body words at the
+  column count nearest 60 characters, +8 %). Spare rows go to the picture up to 62 % of the
+  depth; past that they are one white zone at the head or foot, never a band between frames.
+  Each candidate goes through `checkComposition` and is ranked by the page score's own numbers
+  (one dominant at 40-60 %, title at full size, readable measure, few extras, not the
+  neighbour's arrangement). `spec.composer: "model"` keeps the model composer; an editor's note
+  (`redesignPage`) still goes to the model, since only words can carry it.
+- **Planned pages carry a picture, and a drawn layer when the look layers.** `drawArt` (one model
+  call a page) skips a page with `plan`; the picture slot is an `image` block, rendered at the
+  frame's own aspect (`sizeForFrame`, ~1.5 MP in steps of 64) with the treatment its slot
+  implies. When the issue's look layers colour, `layoutOfPlan` adds `layerShapes`: the drawn
+  layer computed from the frames, no model call (see "Looks" below).
+- **The visual loop walks the ranking.** In `perfectPage` a planned page's next round is
+  `replanPage`: the best untried arrangement, re-ranked for what the proof lacked (`rerank`:
+  crowded -> fewer extras and a bigger picture; empty space -> arrangements whose picture takes
+  the slack; reading path -> picture out of the text's way). No model call; a round is a layout
+  and a look. Every arrangement laid is remembered so none is tried twice.
+- **Outside plans.** `installDesign` takes a whole design (spec with per-page blocks in grid
+  slots) as one more design option: frames are checked and boxed from the grid exactly as a
+  planned page, problems kept on the page rather than refused, pages it leaves out planned by
+  Quire and said in the design notes.
+- **Which routes can see.** Tested 2026-10-11 with Birds p6's render: Devin (ACP, images as
+  content blocks) sees - `devin/gemini-3-1-pro-high` read the title in 17 s, Haiku in 13 s.
+  Antigravity and Codex get the image as a file path and answer that they cannot open it, so the
+  critic pin moved from `antigravity/gemini-3.1-pro-high` to `devin/gemini-3-1-pro-high`. Every
+  eye score given through Antigravity before that was given blind.
+- **Pictures cut to their frame and stand on the paper.** `tk.js img` clips a covering picture
+  inside an empty rectangle at its box (a 0.5 picture in an 81 mm column was laid 148 mm wide over
+  the body). A picture in a frame short of the whole page is a cutout (`artPage` `sharesPaper`),
+  placed whole (`contain`), and the cutout key reads the ground the picture actually painted off
+  its corner patches when it is not the colour asked for, with a tolerance as wide as its grain
+  (`postprocess.mjs patchGround`). The art prompt is told the frame's shape and to face into the
+  page (`placementOf`). `publication_art` redoes the page's picture (`artPage {redo}`) instead of
+  keeping the old one.
+- **The eye's model is recorded.** `look()` writes a telemetry row with the model it called, so a
+  pin that fell back to the default can be seen in `_telemetry/llm.jsonl`.
+
+## Brands: the fixed layer above the house
+
+Added 2026-10-13. Without a brand every issue and section invents its own colours, faces and art
+(house.ts drafts a house, visual-language.ts a palette per section, the recent-designs block forbids
+repeating them). A work marked with a brand is held to it in code instead.
+
+- **Where:** `vendor/studio/packages/core/brands/<id>/` (shipped: "brands" is in core's `files`, so
+  vendor-studio stages it to `engine/node_modules/@actalk/quire-core/brands`). Ochin is the first:
+  `brand.json` (colours, section colours, pairs by topic, contrast table, faces + ladder, house,
+  shapes with meanings and rations, finish, image style, devices, voice), `DESIGN-SYSTEM.md` (the
+  rules, injected into the design prompt and used as the critic's standard), `design-system.html`,
+  `references/*.jpg` (Ochin 01 spreads, shown to the design stage and the critic), `fonts/` (OFL, for
+  shaping), `kit/ochin-kit.js` (geo-lite + shapes.js + finish.js + ochin-shape-tool.js, built by
+  `kit/build.sh` from `Output/Brand/photo-film`).
+- **Set:** `issue.brand`, via `PUT /api/v1/publications/:id/brand {brand}`; `GET /api/v1/brands` lists
+  them. The next issue of a series inherits it (`startNextIssue`). Applies from the next design.
+- **Selected brand:** `<workspace>/.quire/brand.json {brand}` (`selectedBrand`/`selectBrand`); every new
+  issue starts held to it (`createIssue`). The **Brand** page (`#/brand`, `pages/BrandPage.tsx`) selects
+  it and shows the brand's `design-system.html` and reference spreads: `PUT /api/v1/brands/selected`,
+  `GET /api/v1/brands/:id`, `/brands/:id/design-system`, `/brands/:id/references/:file`.
+- **Core (`pipeline/brand.ts`):** `loadBrand`, `brandHouse` (the brand is the house; the series
+  cannot redraft it), `brandBlock` (prompt), `pairOf` + `brandLanguage` (a section's colours are
+  rebuilt from its two section colours; panels lose radius/cut/shadow/rotation), `holdBrandSpec`
+  (palette, faces, ladder, image direction), `offBrandColours` (the colour check), `BRAND_KINDS` +
+  `holdBrandShapes` (page-art kinds `lalpaar matra kantha alpana bird bpanel ornament`, rationed per
+  page by `placeOf`).
+- **Runner (`publication-runner.ts`):** design uses the brand house, brand references (4 per option)
+  and the brand image style; skips `recentBlock`; `optionsBlock` varies pairs/devices, not faces;
+  `brandWorld` holds every section (register "Ochin · neel + holud", `pair`, `lead`, `bn`); `checkDesign`
+  skips the 50-register test for brand worlds; the section redesign and planned pages are held too;
+  the page writer gets `bilingualLine` and keeps `wordbox` / `bengali-line` furniture (`bilingualBlocks`).
+- **Critic (`page-look.ts`):** shown the brand's spreads, judges brand fidelity; lessons scope to
+  `world: <brand name>` so they gather across the brand's issues.
+- **Shim:** `brandOf(issue)` reads the brand and its kit; `buildPage` evals the kit before tk.js
+  (defines `G`, `ochinShape`); `cli-shim/bengali.mjs` shapes every Bengali string of the page with
+  HarfBuzz (`cli-shim/assets/harfbuzzjs`, MIT) in the brand's fonts; tk.js `bn()` draws them as one
+  outline node, `brandShape()` draws brand kinds through the kit. Under a brand the page gets: matra
+  over the title, sindur kicker + the section's Bengali name, Bengali-digit folio + "Ochin · title",
+  and the Bengali line and word box placed in free space (`bilingual()`). INSPECT counts the outlines
+  as type for overlap. Verified live 2026-10-13 on a test page (render in session).
+- **Skills:** `quire-editorial-design` 3.0, `quire-illustration` 2.0, `quire-magazine-page` 2.0 are
+  brand-first; the Claude skills `mag-design` / `mag-taste` read the same brand folder.
+- Unbranded works are unchanged: no brand, no hold.
+
+
+### Authored spreads (a brand with `author/`)
+
+A brand that ships `brands/<id>/author/` (lib.js, LIB.md, its defining issue's spread scripts in
+`exemplars/`) is not built through page specs. `core/src/pipeline/spread-author.ts` designs each
+opening (cover alone, pairs, back alone) the way that issue was made: the designer names archive
+pictures (shim `commons.mjs`, Wikimedia Commons, free licences only, credits in
+`_assets/sources.json`), then writes the spread's text blocks and its Affinity script, shown the copy,
+LIB.md, three exemplar scripts and their renders. The shim shapes the blocks (`spread.mjs`: English
+measured with HarfBuzz and set live, Bengali as outlines) and runs the script (`affinity.mjs`
+`runSpread`, `POST /affinity/spread`). Code checks (`faultsOf`: ran, every word placed, no overrun,
+collision, fold or margin breach, folios) and the critic's eye against the exemplar renders decide
+whether it is revised (3 rounds); the best version stands and is saved under
+`<issue>/spreads/sNN/`, so a rebuild replays it without a model. The build stage takes this path
+(`buildAuthored`); the art stage is skipped. `POST /api/v1/publications/:id/spreads {only, rounds}`
+runs it for chosen pages, `GET` shows where each spread stands. Model tags: `design-spread-N`,
+`design-pictures-N`, `design-pick-N` (designer), `design-look` (critic).
+
+## Looks: the aesthetic is the editor's choice, per issue
+
+`core/pipeline/looks.ts` (`lookOf`, `listLooks`, `imageStyleOf`, `saveImageStyle`) ·
+`publication-runner.ts` (`setIssueLook`, `pageSetting`, `designOne`, `artPage {from}`) ·
+`page-look.ts` (`referencePages`, `lookPrompt`) · `composition.ts` (`PageSetting.extras/layers`) ·
+`page-plan.ts` (`layerShapes`) · skill `quire-editorial-design` §16 · routes
+`PUT /publications/:id/look`, `GET /looks`, `GET|PUT /taste/image-style` · chat tool
+`publication_look`.
+
+- **Why.** One look (minimal editorial), asked for on Rain, had become every issue's law in five
+  places: skill §16 ("whatever language a work speaks"), the eye's prompt, the composition check
+  (two extras at most), the planner's ranking (-4 an extra) and the reference pages (the newest
+  set was shown to every issue). A colourful Birds design was marked down for its coloured
+  panels and cut-out birds, and pictures and drawn colour were never used together.
+- **A look** is a folder of reference pages, `_taste/references/<look>/` in the shared Output,
+  with `STANDARD.md` (what its best pages share, in the editor's words) and `look.json`
+  (`extras`: most of pull/figure/panel a page carries, `layers`: pictures on drawn shapes). The
+  issue keeps `look: {name, extras, layers}`. The design stage is told the look and its
+  standard and shown only its pages; the eye judges by them; `checkComposition` limits extras
+  only to the look's number; the planner counts an extra +4 in a layered look, -4 under a
+  limit, 0 with none. **No look chosen imposes none**: no references, no standard, no limit.
+- **The layered layer** (`layerShapes`, roles only, never colours): a picture stands on a shape
+  that echoes its frame (an arch in a tall frame, a broad band under the subject in a wide
+  one, colour `second`), the deck on a block of `third` clear of title and body, an `accent`
+  band at the foot unless running text reaches it. The shim counts back shapes as grounds
+  (`affinity.mjs`), so type on them takes ink or paper by contrast. An installed plan keeps its
+  own `shapes`, through `holdShapes`.
+- **The image style** the editor chose is `_taste/image-style.json`; every world's
+  `imagePrompt` and `spec.imageDirection` are set to it after the design returns, and the design
+  prompt designs around it. It changes only through `PUT /taste/image-style`.
+- **Existing pictures.** `artPage {from}` (and `publication_art from`) copies a picture already
+  made into the page's art, keeps it as the original in `.raw/`, and runs only its treatment
+  through the shim's `/image/post`; the recipe records `reused`.
+- **The cutout** (`postprocess.mjs`) fits the ground as a quadratic surface to the picture's
+  border on a 3 px blurred copy (twice, dropping where the subject touches the edge), keys what
+  sits as close to it as the ground does to itself, walks the edge back on the sharp pixels,
+  drops specks and closes bites narrower than 1.2 % of the picture. It keys grainy and vignetted
+  grounds and keeps an ivory casque on cream. No segmentation model is installed (Comfy's
+  `background_removal` folder is empty).
+- **Installing the same plan again** replaces its option (matched by label) instead of adding one.
 
 ## Skills
 
@@ -851,6 +1172,38 @@ show nothing) and follows the stream from there. The rail card and the run
 screen both render from that one list, and `POST /jobs/:id/cancel` is reachable
 from either.
 
+**One status for every kind** (`studio/src/api/work.ts`). `GET /api/v1/work/:kind/:id`
+answers title, kind label, stages, gates and the live job for any work — a
+magazine through `publicationWorkflow`, a book through `bookWorkflow`, the
+other kinds through `readAuditProject`. `GET /api/v1/now` lists every live job
+with that status (`live`) plus jobs that ended in the last 6 hours (`recent`).
+`hooks/use-live-runs.ts` reads it once in `App.tsx`; the same list feeds the
+rail card, the topbar **Now pill** and its drawer (`components/shell/NowDrawer.tsx`,
+on every screen, floating on chat which has no topbar), and chat's in-thread
+cards (`components/chat/ChatWorkCards.tsx`: a live card per run, an end card
+when a run this chat saw ends, the waiting count). `/publications/live` remains
+for older callers.
+
+**Audit is the workspace** (`#/audit[/<kind>/<id>]`, `pages/AuditPage.tsx`), its
+own rail entry. Across the top, `WorkStrip`: the work, every count about it
+(read, signed, open, blocking, reads, rewrites, de-AI, notes, voice) and its
+stages - from the live run in `/now` while one is going, else from the audit
+detail's workflow. Below, three equal columns (`useColumns("audit-workspace")`):
+every work grouped by kind with its counts from `/workspace/summary` and its
+pages under it | the .md reader/editor | this page's counts, findings, sign-off,
+rewrite, verdict, pictures, then the gates and the run (foldable) and the world
+card. Any work opens here: the rail, chat cards, crumbs and `#/work/<kind>/<id>`
+(an older link) all route to it.
+
+**The Library is the bookshelf** (`#/library[/<kind>]`, `pages/ProductionsPage.tsx`).
+One shelf per kind. A work whose stages are all done (`GET /work/:kind/:id`)
+stands with its cover - its chosen picture, else a lettered cover; anything else
+shows its stage, progress and counts. Every work opens in Audit; a finished one
+is meant to open its finished reader, which is not built yet. `#/books` and
+`#/magazines` parse to it. A magazine's Brief/Sections/Pages/Proofs/Build stay on
+`#/publication/<id>` and a book's chapters and export on `#/book/<id>/settings`,
+linked from the strip.
+
 Work that runs beside the queue is listed with `track()` in the same file: it
 appears in `GET /jobs` and on the rail, and cancelling it aborts the
 controller the work already holds, but it never takes the queue's single
@@ -1216,3 +1569,18 @@ the composer from the same list, so the current conversation carries
 `aria-current="true"` and vermilion.css marks it.
 
 The thread still does not refresh from a turn it did not originate.
+
+## The audit runs only when asked
+
+A run stops where it is told (`stopAt`, default `write`): the audit is never added on after writing.
+It runs from the issue's Audit button (`POST /api/v1/publications/:id/audit`) or a run told
+`stopAt: "audit"`. (2026-08-26 to 2026-10-13 the runner forced it after every write; removed.)
+An issue whose every page is in reads `written`, not `writing`.
+
+## Driving Quire from an agent over MCP
+
+`desktop/quire-mcp.mjs` is an MCP server over the whole HTTP API: `quire_api {stage, method, path,
+body}`, `quire_status`, `quire_up`, `quire_down`. Registered in Claude Code with
+`claude mcp add -s user quire -- node <path>`. (`cli-shim/mcp-server.mjs` is the other direction:
+tools Quire hands its own model CLIs.)
+

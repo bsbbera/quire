@@ -13,7 +13,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { root } from "./workspace.mjs";
+import { CONFIG_HOME, root } from "./workspace.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BUILTIN_DIR = join(HERE, "workflows");
@@ -23,7 +23,7 @@ const BUILTIN_DIR = join(HERE, "workflows");
 export const WORKSPACE = root();
 
 const USER_DIR = join(WORKSPACE, "workflows");
-const CONFIG = join(WORKSPACE, ".quire", "comfy.json");
+const CONFIG = join(CONFIG_HOME, "comfy.json");
 
 /** Everything a workflow must carry before it can be run or installed. */
 export function validate(w) {

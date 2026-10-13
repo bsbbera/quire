@@ -59,6 +59,13 @@ writing (+ design signals)
 Phase numbers continue `00-overview.md`.
 
 ### Phase 7 — House book and style library
+
+**Built 2026-10-08, verified live** (ARCHITECTURE.md "The house and the layout engine"):
+- the model drafted "Filament", which was approved against Affinity's installed fonts
+- the folio and a Kolam copy share its masthead, type, colours and devices, and
+  Kolam's three sections took three different styles
+- the library ships 10 styles
+
 1. `house.json` per series:
    - masthead, type pair, scale ratio, margin canon
    - allowed grid systems, colour logic, signature devices
@@ -76,6 +83,21 @@ Done when: two issues of one series share the masthead, type and devices, and
 their sections use different styles from the library.
 
 ### Phase 8 — Layout engine
+
+**Built 2026-10-08, verified live:** the folio rebuilt to 88 · 88 · 91 · 90 · 87,
+with no findings, no text lost and no overlap.
+
+Deviations from the plan:
+- the library has 36 patterns, not 40–60. Each has a mirror variant, so 72
+  arrangements, but the roles with only one pattern per system repeat; Kolam's
+  modular openers came out the same three times
+- the capacity estimate is calibrated by hand, so some pages still end with
+  white space at the foot (folio p.2)
+
+Still weak to the eye:
+- the Bauhaus and rain generators scatter their shapes rather than compose them
+- those, the white space at the foot of short pages and more patterns per role go to Phase 9
+
 1. Grid systems as sets of lines, all addressed by the same slot form:
    columns, modular, thirds, golden ratio (φ), the Van de Graaf canon.
 2. A pattern library: 40–60 parametrised layouts, each tagged by archetype,

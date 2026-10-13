@@ -14,6 +14,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { WORKSPACE } from "./workflows.mjs";
+import { CONFIG_HOME } from "./workspace.mjs";
 
 const MCP_URL = process.env.CANVA_MCP_URL || "https://mcp.canva.com/mcp";
 const API_URL = process.env.CANVA_API_URL || "https://api.canva.com/rest/v1";
@@ -30,7 +31,7 @@ export function token() {
   if (process.env.CANVA_TOKEN) return process.env.CANVA_TOKEN.trim();
   // Keys live on the machine now (~/.quire); a workspace that has not been
   // opened by the new Studio yet still holds them in its own .quire.
-  for (const file of [join(homedir(), ".quire", "secrets.json"), join(WORKSPACE, ".quire", "secrets.json")]) {
+  for (const file of [join(CONFIG_HOME, "secrets.json"), join(WORKSPACE, ".quire", "secrets.json")]) {
     if (!existsSync(file)) continue;
     try {
       const key = String(JSON.parse(readFileSync(file, "utf8"))?.services?.canva?.apiKey || "").trim();

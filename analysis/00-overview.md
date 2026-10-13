@@ -71,8 +71,8 @@ and "Done when" for each phase: `26-design-engine.md`.
 
 | Phase | What | Gate it adds |
 |---|---|---|
-| 7 | House book + style library (absorbs the old world/kit library) | House approved once |
-| 8 | Layout engine: grid systems, pattern library, fitting solver, vector kit, the five folio faults | — |
+| 7 | House book + style library (absorbs the old world/kit library) · **built 2026-10-08** | House approved once |
+| 8 | Layout engine: grid systems, pattern library, fitting solver, vector kit, the five folio faults · **built 2026-10-08** | — |
 | 9 | Design signals from writing + art direction with 2–3 world options | Gate 1: choose a world |
 | 10 | Wireframe proof: Affinity build with placeholders, scored | Gate 2: approve spreads |
 | 11 | Pictures driven by the design (09; GPU safety first) | Regenerate art at the beauty gate |

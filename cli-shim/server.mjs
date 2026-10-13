@@ -8,10 +8,10 @@ import * as score from "./score.mjs";
 import { createServer } from "node:http";
 import { collectMeta, newMeta, usageBody } from "./usage.mjs";
 import { spawn, execFileSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync, mkdtempSync } from "node:fs";
 import { join, dirname, extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { homedir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 // The one tool channel. Its own file so it can be run directly for its
 // self-check; server.mjs starts listening on import.
 import {
@@ -29,9 +29,13 @@ const STUDIO_URL = process.env.STUDIO_URL || `http://localhost:${process.env.STU
 // Integrations. Loaded eagerly: a broken module should fail at boot with a
 // stack, not at 3am inside a request handler.
 const mcp = await import("./mcp.mjs");
+// Servers other agents gained since the last launch are added now, so a newly
+// installed MCP shows up in Quire without anyone pressing Rescan.
+try { mcp.rescan(); } catch { /* detection is best effort; the file still works */ }
 const comfy = await import("./comfy.mjs");
 const engines = await import("./engines.mjs");
 const affinity = await import("./affinity.mjs");
+const commons = await import("./commons.mjs");
 const preflight = await import("./preflight.mjs");
 const comfyInstall = await import("./comfy-install.mjs");
 const workflows = await import("./workflows.mjs");
@@ -349,7 +353,7 @@ const expandPath = (p) => p.replace(/^~(?=[\/])/, HOME).replace(/%([A-Z_]+)%/gi,
 /** Every runnable CLI the catalogue names. Read on each detect sweep, so an edit needs no restart. */
 export function loadAgents() {
   const byId = new Map(readCatalogue(CATALOGUE).map((p) => [p.id, p]));
-  for (const p of readCatalogue(join(HOME, ".quire", "providers.json"))) byId.set(p.id, { ...byId.get(p.id), ...p });
+  for (const p of readCatalogue(join(workspace.CONFIG_HOME, "providers.json"))) byId.set(p.id, { ...byId.get(p.id), ...p });
   return [...byId.values()]
     .filter((p) => p?.kind === "cli" && /Cli$/.test(p.id) && p.protocol && Array.isArray(p.bins) && p.bins.length)
     .map((p) => {
@@ -435,7 +439,7 @@ const FALLBACK_TTL = 15000;
  * ponytail: one process per run is kept, a shared ACP process would change
  * how Stop works. Revisit if first-run latency, not the list, is the problem.
  */
-const LIVE_FILE = join(HOME, ".quire", "cli-models.json");
+const LIVE_FILE = join(workspace.CONFIG_HOME, "cli-models.json");
 const lastLive = (() => { try { return JSON.parse(readFileSync(LIVE_FILE, "utf-8")); } catch { return {}; } })();
 const saveLive = () => { try { mkdirSync(dirname(LIVE_FILE), { recursive: true }); writeFileSync(LIVE_FILE, JSON.stringify(lastLive)); } catch { /* a cache */ } };
 
@@ -582,9 +586,26 @@ function cancelRun(id) {
  * Generous, because a real tool loop is genuinely silent for minutes — the
  * heartbeat keeps the connection honest meanwhile.
  */
-const RUN_IDLE_MS = Number(process.env.SHIM_RUN_IDLE_MS) || 600_000;
+// 19 minutes: agy prints nothing until a turn ends, and a designer revising from renders ran past 9. Quire waits 20.
+const RUN_IDLE_MS = Number(process.env.SHIM_RUN_IDLE_MS) || 1_140_000;
 
-async function complete({ agent, model, prompt, streaming, res, fullModel, tools, runId }) {
+/**
+ * The pictures in an OpenAI chat request, as base64 with their type. Only
+ * inline `data:` URLs: a CLI cannot be trusted to fetch a remote one.
+ */
+export function imagesOf(messages) {
+  const out = [];
+  for (const m of Array.isArray(messages) ? messages : []) {
+    for (const p of Array.isArray(m?.content) ? m.content : []) {
+      const url = p?.type === "image_url" ? (p.image_url?.url ?? p.image_url) : null;
+      const hit = typeof url === "string" ? /^data:([^;]+);base64,(.+)$/s.exec(url) : null;
+      if (hit) out.push({ mimeType: hit[1], data: hit[2] });
+    }
+  }
+  return out;
+}
+
+async function complete({ agent, model, prompt, streaming, res, fullModel, tools, runId, images = [] }) {
   let got = "";
   // What the CLI reports about the turn besides the prose. `usage.mjs` was
   // imported and its call site written, but nothing ever created the object —
@@ -734,8 +755,9 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
 
   if (agent.stream === "acp") {
     let rpc = null, sid = null;
+    // ACP carries pictures as content blocks beside the text.
     const sendPrompt = () => rpc(4, "session/prompt",
-      { sessionId: sid, prompt: [{ type: "text", text: prompt }] });
+      { sessionId: sid, prompt: [{ type: "text", text: prompt }, ...images.map((i) => ({ type: "image", data: i.data, mimeType: i.mimeType }))] });
     const handler = {
       onChild: (proc) => {
         run.stop = () => { try { proc.kill("SIGTERM"); } catch { /* already gone */ } };
@@ -791,9 +813,21 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
     return;
   }
 
+  // A CLI read from stdin has no picture channel; it is an agent that can open a file. Written
+  // before the spawn: agy reads only inside its workspace, so the folder is added to it.
+  let picDir = null, picFiles = [];
+  if (images.length) {
+    picDir = mkdtempSync(join(tmpdir(), "quire-look-"));
+    picFiles = images.map((i, k) => {
+      const f = join(picDir, `image-${k + 1}.${(i.mimeType.split("/")[1] || "png").replace("jpeg", "jpg")}`);
+      writeFileSync(f, Buffer.from(i.data, "base64"));
+      return f;
+    });
+  }
+  const extra = picDir && agent.id === "antigravity" ? ["--add-dir", picDir] : [];
   let child;
   try {
-    child = spawn(agent.bin, agent.args(model),
+    child = spawn(agent.bin, [...agent.args(model), ...extra],
       { cwd: WORKSPACE, env: childEnv, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
   } catch (spawnError) {
     return fail(classify({ spawnError }), spawnError.message);
@@ -830,7 +864,11 @@ async function complete({ agent, model, prompt, streaming, res, fullModel, tools
     }
   });
   child.stdin.on("error", () => {});
-  child.stdin.write(prompt);
+  let said = prompt;
+  if (picFiles.length) {
+    said = [prompt, "", "The picture(s) for this request are on disk; open and look at each before you answer:", ...picFiles].join("\n");
+  }
+  child.stdin.write(said);
   child.stdin.end();
   const exitCode = await new Promise((r) => child.on("close", r));
   if (buf.trim()) onLine(buf.trim());
@@ -1031,7 +1069,16 @@ createServer((req, res) => {
   }
 
   if (path === "/mcp/servers") {
-    return handle(Promise.resolve({ servers: mcp.servers() }));
+    return handle(Promise.resolve({ servers: mcp.servers(), config: mcp.configPath() }));
+  }
+  if (path === "/mcp/rescan" && req.method === "POST") {
+    return handle(Promise.resolve().then(() => mcp.rescan()));
+  }
+  if (path === "/mcp/add" && req.method === "POST") {
+    return handle(bodyOf().then((b) => mcp.add(b.json ?? b)));
+  }
+  if (path === "/mcp/remove" && req.method === "POST") {
+    return handle(bodyOf().then((b) => mcp.remove(b.server)));
   }
   if (path === "/mcp/tools") {
     const name = new URL(req.url, "http://x").searchParams.get("server");
@@ -1042,7 +1089,7 @@ createServer((req, res) => {
   }
   if (path === "/mcp/toggle" && req.method === "POST") {
     return handle(bodyOf().then((b) => {
-      const f = join(HOME, ".quire", "mcp.json");
+      const f = join(workspace.CONFIG_HOME, "mcp.json");
       const cfg = existsSync(f) ? JSON.parse(readFileSync(f, "utf8")) : {};
       // Two lists, not one: a server the source app ships disabled needs an
       // explicit opt-in, so clearing `disabled` alone would not switch it on.
@@ -1129,6 +1176,29 @@ createServer((req, res) => {
     return handle(bodyOf().then(async (b) => {
       if (b.page === undefined) throw new Error("page is required");
       return affinity.renderPage(b.issue, Number(b.page), b.out);
+    }));
+  }
+  // An authored spread (core spread-author.ts): the designer's own script on the open document.
+  if (path === "/affinity/spread" && req.method === "POST") {
+    return handle(bodyOf().then(async (b) => {
+      if (!b.issue || !Array.isArray(b.pages) || !b.script) throw new Error("issue, pages and script are required");
+      if (b.issueDir) await affinity.openIssue(b.issue, { issueDir: b.issueDir, pdf: b.pdf });
+      return affinity.runSpread(b.issue, { pages: b.pages, script: b.script, texts: b.texts || {}, issueDir: b.issueDir });
+    }));
+  }
+  // Archive pictures (commons.mjs): free-licence search with thumbnails to look at, then the file itself.
+  if (path === "/pictures/search" && req.method === "POST") {
+    return handle(bodyOf().then(async (b) => {
+      if (!b.query) throw new Error("query is required");
+      const list = await commons.search(b.query, { limit: b.limit || 6 });
+      const files = b.thumbDir ? await commons.thumbs(list, b.thumbDir) : [];
+      return { ok: true, results: list.map((r, i) => ({ ...r, thumbFile: files[i] || null })) };
+    }));
+  }
+  if (path === "/pictures/fetch" && req.method === "POST") {
+    return handle(bodyOf().then(async (b) => {
+      if (!b.title || !b.issueDir || !b.name) throw new Error("title, issueDir and name are required");
+      return { ok: true, ...await commons.fetchFile(b.title, join(b.issueDir, "_assets"), b.name) };
     }));
   }
   if (path === "/affinity/close" && req.method === "POST") {
@@ -1273,6 +1343,7 @@ createServer((req, res) => {
       const tools = Array.isArray(body.tools) ? body.tools : [];
       await complete({ agent, model: rest.join("/"),
         prompt: flatten(body.messages || [], tools),
+        images: imagesOf(body.messages),
         streaming, res, fullModel: wanted, tools,
         // The caller names its own run so it can cancel it later. A request
         // without one still works; it just cannot be stopped by name.

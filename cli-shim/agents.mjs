@@ -7,11 +7,12 @@
 // Deliberately machine-level, not per-project: which CLIs are installed and
 // signed in is a fact about this computer, and moving the workspace to another
 // folder must not silently re-enable a CLI the user turned off.
+import { CONFIG_HOME } from "./workspace.mjs";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-const CONFIG_DIR = join(homedir(), ".quire");
+const CONFIG_DIR = CONFIG_HOME;
 const CONFIG = join(CONFIG_DIR, "agents.json");
 
 function read() {

@@ -19,6 +19,8 @@ const WS = mkdtempSync(join(tmpdir(), "quire-engines-"));
 const INSTANCE = `test${process.pid}`;
 process.env.QUIRE_INSTANCE = INSTANCE;
 process.env[`QUIRE_WORKSPACE_${INSTANCE.toUpperCase()}`] = WS;
+// Settings in the throwaway workspace too, never in a real home folder.
+process.env.QUIRE_CONFIG_DIR = join(WS, ".quire");
 
 const engines = await import("./engines.mjs");
 const canva = await import("./canva.mjs");

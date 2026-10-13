@@ -27,7 +27,7 @@ export const hexRgb = (hex) => {
 };
 
 const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
-const ROLES = ["paper", "ink", "hue", "field"];
+const ROLES = ["paper", "ink", "hue", "field", "accent", "second", "third"];
 /** Past this ΔE_OK from every declared colour a pixel is "off palette" (design-skill §12b, C). */
 export const OFF_PALETTE = 0.12;
 /** A cell is empty when nearly all of it is paper. */
