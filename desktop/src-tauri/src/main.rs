@@ -253,9 +253,26 @@ fn spawn_child(mut cmd: Command, log_dir: Option<&Path>, name: &str) -> Option<C
     cmd.spawn().ok()
 }
 
+/// One line per launch in ~/.quire/launches.log: when, which build, which exe,
+/// and what happened. Prod was seen opening a lower version after an update had
+/// installed; this says which copy ran, and whether a second launch was handed
+/// to one already running, the next time it happens.
+fn diary(app: &tauri::AppHandle, what: &str) {
+    let Ok(home) = app.path().home_dir() else { return };
+    let dir = home.join(if app.package_info().name == "Quire" { ".quire" } else { ".quire-dev" });
+    let exe = std::env::current_exe().map(|p| p.display().to_string()).unwrap_or_default();
+    let secs = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(dir.join("launches.log")) {
+        use std::io::Write;
+        let _ = writeln!(f, "{secs}	{BUILD}	{what}	{exe}");
+    }
+}
+
 #[tauri::command]
 fn boot(app: tauri::AppHandle, children: State<Children>) -> Boot {
     let mut notes = Vec::new();
+
+    diary(&app, "started");
 
     let log_dir = app.path().app_log_dir().ok();
     match log_dir.as_deref() {
@@ -378,6 +395,9 @@ fn main() {
         // the first window's shim and workbench — two windows, one backend,
         // identical content and no clue why. Focus the live window instead.
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            // A second launch lands here, in the copy already running: if that
+            // copy is an old build, this is the old version reappearing.
+            diary(app, "second launch handed to this running copy");
             if let Some(w) = app.get_webview_window("main") {
                 let _ = w.unminimize();
                 let _ = w.set_focus();

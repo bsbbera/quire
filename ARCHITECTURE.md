@@ -1597,3 +1597,17 @@ body}`, `quire_status`, `quire_up`, `quire_down`. Registered in Claude Code with
 `claude mcp add -s user quire -- node <path>`. (`cli-shim/mcp-server.mjs` is the other direction:
 tools Quire hands its own model CLIs.)
 
+
+## Delete, pick up, and the launch diary (0.1.31)
+
+- **Delete any work**: `DELETE /api/v1/work/:kind/:id` (`studio/src/api/work.ts`). Refused while a job
+  is on it. The work's folders (`<outDir>/<id>`, and for a magazine `<outDir>/issues/<id>`) move to
+  `<workspace>/.quire/trash/<stamp>-<kind>-<id>/`, out of every listing; put back by moving them home.
+  Buttons: the Audit screen's right column ("Delete this …") and the magazine page header.
+- **A run that died with the app** writes no `lastError`, so it had no continue button.
+  `publicationWorkflow` now reports a half-done stage (`partial`, or an `-ing` status) with nothing
+  running as a stopped run at that stage (`cutShort`), so the "Pick up from …" card shows on the
+  magazine page and the Audit screen, and the Library card says where it stopped.
+- **Launch diary**: every launch appends `secs, build, what, exe` to `~/.quire/launches.log`
+  (`~/.quire-dev/` for dev), including "second launch handed to this running copy" from the
+  single-instance hand-off. Kept to catch prod reopening on a lower version after an update.
